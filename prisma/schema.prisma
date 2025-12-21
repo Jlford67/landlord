@@ -1,0 +1,336 @@
+// prisma/schema.prisma
+// Prisma 7+ note: datasource `url` is configured in prisma.config.ts (not here).
+
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  owner
+  spouse
+  readonly
+}
+
+enum LeaseStatus {
+  upcoming
+  active
+  ended
+}
+
+enum NotificationStatus {
+  new
+  read
+  done
+  dismissed
+}
+
+enum CategoryType {
+  income
+  expense
+  transfer
+}
+
+enum TransactionSource {
+  manual
+  pm_import
+  tax_year_import
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(owner)
+  createdAt    DateTime @default(now())
+
+  notificationRules NotificationRule[]
+  notifications     Notification[]
+  sessions          Session[]
+}
+
+model Entity {
+  id        String   @id @default(cuid())
+  name      String
+  type      String // "personal", "llc", etc.
+  notes     String?
+  createdAt DateTime @default(now())
+
+  ownerships PropertyOwnership[]
+}
+
+model Property {
+  id        String   @id @default(cuid())
+  nickname  String?
+  street    String
+  city      String
+  state     String
+  zip       String
+  doors     Int?
+  beds      Float?
+  baths     Float?
+  sqFt      Int?
+  status    String   @default("active") // active/sold/watchlist
+  notes     String?
+  createdAt DateTime @default(now())
+
+  ownerships    PropertyOwnership[]
+  loans         Loan[]
+  taxAccounts   PropertyTaxAccount[]
+  insurance     InsurancePolicy[]
+  pmAssignments PropertyManagerAssignment[]
+  leases        Lease[]
+  transactions  Transaction[]
+  notifications Notification[]
+}
+
+model PropertyOwnership {
+  id           String    @id @default(cuid())
+  propertyId   String
+  entityId     String
+  ownershipPct Float     @default(100)
+  startDate    DateTime?
+  endDate      DateTime?
+
+  property Property @relation(fields: [propertyId], references: [id])
+  entity   Entity   @relation(fields: [entityId], references: [id])
+
+  @@index([propertyId])
+  @@index([entityId])
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  leaseTenants LeaseTenant[]
+}
+
+model Lease {
+  id          String      @id @default(cuid())
+  propertyId  String
+  startDate   DateTime
+  endDate     DateTime?
+  rentAmount  Float
+  dueDay      Int         @default(1)
+  deposit     Float?
+  status      LeaseStatus @default(active)
+  managedByPm Boolean     @default(true)
+  notes       String?
+  createdAt   DateTime    @default(now())
+
+  property     Property      @relation(fields: [propertyId], references: [id])
+  leaseTenants LeaseTenant[]
+}
+
+model LeaseTenant {
+  id       String @id @default(cuid())
+  leaseId  String
+  tenantId String
+  role     String @default("primary")
+
+  lease  Lease  @relation(fields: [leaseId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([leaseId, tenantId])
+}
+
+model PropertyManager {
+  id          String  @id @default(cuid())
+  companyName String
+  contactName String?
+  email       String?
+  phone       String?
+  website     String?
+  address1    String?
+  city        String?
+  state       String?
+  zip         String?
+
+  assignments PropertyManagerAssignment[]
+}
+
+model PropertyManagerAssignment {
+  id         String    @id @default(cuid())
+  propertyId String
+  pmId       String
+  startDate  DateTime?
+  endDate    DateTime?
+  feeType    String? // "percent" or "flat"
+  feeValue   Float?
+  notes      String?
+
+  property Property        @relation(fields: [propertyId], references: [id])
+  pm       PropertyManager @relation(fields: [pmId], references: [id])
+
+  @@index([propertyId])
+  @@index([pmId])
+}
+
+model Loan {
+  id         String    @id @default(cuid())
+  propertyId String
+  lenderName String?
+  bankNumber String?
+  origAmount Float?
+  origDate   DateTime?
+  ratePct    Float?
+  termYears  Int?
+  payoffDate DateTime?
+  notes      String?
+
+  property  Property       @relation(fields: [propertyId], references: [id])
+  snapshots LoanSnapshot[]
+}
+
+model LoanSnapshot {
+  id        String   @id @default(cuid())
+  loanId    String
+  asOfDate  DateTime
+  balance   Float
+  principal Float?
+  interest  Float?
+  extraPrin Float?
+
+  loan Loan @relation(fields: [loanId], references: [id])
+
+  @@index([loanId, asOfDate])
+}
+
+model PropertyTaxAccount {
+  id           String    @id @default(cuid())
+  propertyId   String
+  annualAmount Float?
+  dueDate      DateTime? // annual
+  lastPaid     DateTime?
+  parcel       String?
+  billNumber   String?
+  phone        String?
+  name         String?
+  address1     String?
+  address2     String?
+  city         String?
+  state        String?
+  zip          String?
+  web          String?
+  email        String?
+
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId])
+}
+
+model InsurancePolicy {
+  id          String    @id @default(cuid())
+  propertyId  String
+  insurer     String?
+  policyNum   String?
+  premium     Float?
+  dueDate     DateTime?
+  paidDate    DateTime?
+  phone       String?
+  webPortal   String?
+  allPolicies String?
+  bank        String?
+  loanRef     String?
+
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId])
+}
+
+model Category {
+  id     String       @id @default(cuid())
+  type   CategoryType
+  name   String
+  active Boolean      @default(true)
+
+  parentId String?
+  parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryParent")
+
+  transactions Transaction[]
+
+  @@index([type])
+  @@index([parentId])
+}
+
+model Transaction {
+  id         String            @id @default(cuid())
+  propertyId String
+  date       DateTime
+  categoryId String
+  amount     Float // +income, -expense
+  payee      String?
+  memo       String?
+  source     TransactionSource @default(manual)
+  deletedAt  DateTime?
+
+
+  // monthly reconciliation helpers
+  statementMonth String? // "2025-11" groups a PM statement month
+  isOwnerPayout  Boolean @default(false) // the deposit you received
+
+  property Property @relation(fields: [propertyId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@index([propertyId, date])
+  @@index([statementMonth])
+  @@index([categoryId])
+  @@index([propertyId, deletedAt])
+
+}
+
+model NotificationRule {
+  id         String  @id @default(cuid())
+  userId     String
+  ruleType   String // lease_expiry, tax_due, insurance_due
+  daysBefore Int
+  channels   String // store JSON like ["in_app","email"]
+  enabled    Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Notification {
+  id         String             @id @default(cuid())
+  userId     String
+  propertyId String?
+  dueDate    DateTime?
+  eventType  String
+  title      String
+  body       String?
+  status     NotificationStatus @default(new)
+  createdAt  DateTime           @default(now())
+  sentAt     DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id])
+
+  @@index([userId, status])
+  @@index([propertyId])
+  @@index([dueDate])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}

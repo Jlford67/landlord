@@ -1,0 +1,162 @@
+:root {
+  --bg: #0b1f3a;
+  --panel: #122b4f;
+  --field: #0f2440;
+  --border: rgba(255, 255, 255, 0.25);
+  --muted: rgba(255, 255, 255, 0.75);
+  --text: #ffffff;
+  --link: rgba(255, 255, 255, 0.85);
+  --primary: #1e90ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.ll_page {
+  width: 100%;
+  max-width: 1600px;        /* uses most of desktop */
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.ll_panel {
+  max-width: 1600px;
+  margin: 0 auto;
+  background: var(--panel);
+  border-radius: 10px;
+}
+
+.ll_title {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.ll_subtitle {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.ll_form {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.ll_label {
+  display: grid;
+  gap: 6px;
+}
+
+.ll_label > div {
+  font-weight: 700;
+}
+
+.ll_input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--field);
+  color: var(--text);
+}
+
+.ll_row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.ll_btn {
+  padding: 10px 14px;
+  font-weight: 800;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ll_btnSecondary {
+  padding: 10px 14px;
+  font-weight: 800;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ll_list {
+  margin-top: 12px;
+  padding-left: 18px;
+}
+
+.ll_topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.ll_topbarRight {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.ll_userEmail {
+  color: var(--muted);
+}
+
+.ll_table thead th {
+  background: rgba(255, 255, 255, 0.06); /* subtle contrast */
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 12px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.ll_table thead tr {
+  box-shadow: inset 0 -1px rgba(255, 255, 255, 0.1);
+}
+
+.ll_table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ll_table thead th:not(:last-child),
+.ll_table tbody td:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ll_table thead th:nth-child(4),
+.ll_table thead th:nth-child(5) {
+  text-align: right;
+}
+
