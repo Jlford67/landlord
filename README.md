@@ -2,6 +2,25 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+# Landlord Web App
+
+Personal landlord management system built with Next.js, Prisma, and PostgreSQL.
+
+## Features
+- Properties
+- Tenants
+- Leases
+- Ledgers
+- Payments
+
+## Dev Setup
+
+npm install
+npm run dev
+
+App runs at:
+http://localhost:3000
+
 First, run the development server:
 
 ```bash
