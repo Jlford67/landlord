@@ -15,6 +15,12 @@ function money(n: number) {
   });
 }
 
+function moneyColor(n: number) {
+  if (n < 0) return "var(--danger, #ff6b6b)";
+  if (n > 0) return "var(--success, #5dd3a6)";
+  return undefined;
+}
+
 export default async function TenantDetailPage({
   params,
 }: {
@@ -163,7 +169,12 @@ export default async function TenantDetailPage({
                         fontSize: 13,
                       }}
                     >
-                      Rent {money(l.rentAmount)} · Due day {l.dueDay}
+                      Rent
+                      <span style={{ color: moneyColor(l.rentAmount) || "inherit" }}>
+                        {" "}
+                        {money(l.rentAmount)}
+                      </span>
+                      {" "}· Due day {l.dueDay}
                     </div>
 
                     <div style={{ marginTop: 8, display: "flex", gap: 10 }}>

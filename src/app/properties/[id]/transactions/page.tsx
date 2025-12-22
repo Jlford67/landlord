@@ -6,6 +6,12 @@ import { prisma } from "@/lib/db";
 function money(n: number) {
   return n.toLocaleString(undefined, { style: "currency", currency: "USD" });
 }
+
+function moneyColor(n: number) {
+  if (n < 0) return "var(--danger, #ff6b6b)";
+  if (n > 0) return "var(--success, #5dd3a6)";
+  return undefined;
+}
 function fmtDate(d: Date) {
   return new Date(d).toLocaleDateString();
 }
@@ -58,7 +64,11 @@ export default async function PropertyTransactionsPage({
 
         <div style={{ marginTop: 16, opacity: 0.9 }}>
           <div style={{ fontWeight: 700 }}>Total (shown)</div>
-          <div style={{ fontSize: 18, fontWeight: 800 }}>{money(total)}</div>
+          <div
+            style={{ fontSize: 18, fontWeight: 800, color: moneyColor(total) || "inherit" }}
+          >
+            {money(total)}
+          </div>
         </div>
 
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
@@ -89,7 +99,13 @@ export default async function PropertyTransactionsPage({
                     </div>
                   </div>
 
-                  <div style={{ fontWeight: 800, whiteSpace: "nowrap" }}>
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      whiteSpace: "nowrap",
+                      color: moneyColor(t.amount) || "inherit",
+                    }}
+                  >
                     {money(t.amount)}
                   </div>
                 </div>

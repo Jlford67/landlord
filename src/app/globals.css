@@ -7,6 +7,8 @@
   --text: #ffffff;
   --link: rgba(255, 255, 255, 0.85);
   --primary: #1e90ff;
+  --success: #5dd3a6;
+  --danger: #ff6b6b;
 }
 
 * {

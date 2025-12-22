@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
 export const COOKIE_NAME = "ll_session";
@@ -29,5 +30,10 @@ export async function getCurrentUser() {
 
 export async function requireUser() {
   const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
   return user;
 }
