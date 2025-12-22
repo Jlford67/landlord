@@ -32,13 +32,18 @@ function fmtMoney(n: number) {
 
 function moneySpan(n: number) {
   const isNegative = n < 0;
+  const isPositive = n > 0;
 
   return (
     <span
       style={{
         whiteSpace: "nowrap",
         fontWeight: 700,
-        color: isNegative ? "var(--danger, #ff6b6b)" : "inherit",
+        color: isNegative
+          ? "var(--danger, #ff6b6b)"
+          : isPositive
+            ? "var(--success, #5dd3a6)"
+            : "inherit",
       }}
     >
       {fmtMoney(n)}

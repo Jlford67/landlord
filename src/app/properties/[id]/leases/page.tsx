@@ -9,6 +9,12 @@ function money(n: number) {
   return n.toLocaleString(undefined, { style: "currency", currency: "USD" });
 }
 
+function moneyColor(n: number) {
+  if (n < 0) return "var(--danger, #ff6b6b)";
+  if (n > 0) return "var(--success, #5dd3a6)";
+  return undefined;
+}
+
 function fmtDate(d?: Date | null) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString();
@@ -156,8 +162,19 @@ export default async function PropertyLeasesPage({
                     </div>
 
                     <div style={{ opacity: 0.85, marginTop: 6 }}>
-                      Rent {money(l.rentAmount)} · Due day {l.dueDay} · Deposit{" "}
-                      {l.deposit === null || l.deposit === undefined ? "—" : money(l.deposit)}
+                      Rent
+                      <span style={{ color: moneyColor(l.rentAmount) || "inherit" }}>
+                        {" "}
+                        {money(l.rentAmount)}
+                      </span>
+                      {" "}· Due day {l.dueDay} · Deposit{" "}
+                      {l.deposit === null || l.deposit === undefined ? (
+                        "—"
+                      ) : (
+                        <span style={{ color: moneyColor(l.deposit) || "inherit" }}>
+                          {money(l.deposit)}
+                        </span>
+                      )}
                     </div>
 
                     <div style={{ opacity: 0.8, marginTop: 4 }}>

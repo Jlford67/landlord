@@ -14,15 +14,30 @@ function money(n?: number | null) {
   return n < 0 ? `(${abs})` : `$${abs}`;
 }
 
+function moneyColor(n?: number | null) {
+  if (n === null || n === undefined) return undefined;
+  if (n < 0) return "var(--danger, #ff6b6b)";
+  if (n > 0) return "var(--success, #5dd3a6)";
+  return undefined;
+}
+
 function moneyParts(n?: number | null) {
-  if (n === null || n === undefined) return { text: "—", isNegative: false };
+  if (n === null || n === undefined) return { text: "—", color: undefined };
 
   const abs = Math.abs(n).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  return n < 0 ? { text: `(${abs})`, isNegative: true } : { text: `$${abs}`, isNegative: false };
+  const color = moneyColor(n);
+
+  return n < 0 ? { text: `(${abs})`, color } : { text: `$${abs}`, color };
+}
+
+function Money({ value }: { value?: number | null }) {
+  const color = moneyColor(value);
+
+  return <span style={{ color }}>{money(value)}</span>;
 }
 
 function fmtDate(d?: Date | null) {
@@ -169,7 +184,7 @@ export default async function PropertyDetailPage({
                 {activeLease.dueDay})
               </div>
               <div>
-                Rent: {money(activeLease.rentAmount)} | Deposit: {money(activeLease.deposit)}
+                Rent: <Money value={activeLease.rentAmount} /> | Deposit: <Money value={activeLease.deposit} />
               </div>
               <div>Managed by PM: {activeLease.managedByPm ? "Yes" : "No"}</div>
               <div>
@@ -192,7 +207,7 @@ export default async function PropertyDetailPage({
                 {property.leases.map((l) => (
                   <div key={l.id} style={{ opacity: 0.9 }}>
                     {l.status.toUpperCase()} · {fmtDate(l.startDate)} →{" "}
-                    {l.endDate ? fmtDate(l.endDate) : "—"} · {money(l.rentAmount)}
+                    {l.endDate ? fmtDate(l.endDate) : "—"} · <Money value={l.rentAmount} />
                   </div>
                 ))}
               </div>
@@ -277,7 +292,7 @@ export default async function PropertyDetailPage({
                       <div
                         style={{
                           whiteSpace: "nowrap",
-                          color: m.isNegative ? "var(--danger, #ff6b6b)" : "inherit",
+                          color: m.color || "inherit",
                           fontWeight: 700,
                         }}
                       >
@@ -317,7 +332,7 @@ export default async function PropertyDetailPage({
                   {property.loans.map((l) => (
                     <div key={l.id}>
                       {l.lenderName ?? "—"} · Rate {l.ratePct ?? "—"}% · Term {l.termYears ?? "—"}{" "}
-                      yrs · Orig {money(l.origAmount)}
+                      yrs · Orig <Money value={l.origAmount} />
                     </div>
                   ))}
                 </div>
@@ -332,7 +347,7 @@ export default async function PropertyDetailPage({
                 <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
                   {property.taxAccounts.map((t) => (
                     <div key={t.id}>
-                      Annual {money(t.annualAmount)} · Due {fmtDate(t.dueDate)} · Last paid{" "}
+                      Annual <Money value={t.annualAmount} /> · Due {fmtDate(t.dueDate)} · Last paid{" "}
                       {fmtDate(t.lastPaid)}
                     </div>
                   ))}
@@ -348,7 +363,7 @@ export default async function PropertyDetailPage({
                 <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
                   {property.insurance.map((i) => (
                     <div key={i.id}>
-                      {i.insurer ?? "—"} · Premium {money(i.premium)} · Due {fmtDate(i.dueDate)} ·
+                      {i.insurer ?? "—"} · Premium <Money value={i.premium} /> · Due {fmtDate(i.dueDate)} ·
                       Paid {fmtDate(i.paidDate)}
                     </div>
                   ))}
