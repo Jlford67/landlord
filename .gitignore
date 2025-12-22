@@ -26,6 +26,8 @@
 
 # database
 prisma/*.db
+prisma/*.db-wal
+prisma/*.db-shm
 
 # debug
 npm-debug.log*
