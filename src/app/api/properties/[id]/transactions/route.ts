@@ -17,6 +17,25 @@ function isIsoDateOnly(s: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
+function safeReturnTo(returnTo: string | undefined, propertyId: string) {
+  const trimmed = (returnTo ?? "").trim();
+  return trimmed.startsWith("/") ? trimmed : `/properties/${propertyId}/ledger`;
+}
+
+function redirectWithMsg(
+  req: Request,
+  path: string,
+  msg: string,
+  extra?: { month?: string }
+) {
+  const url = new URL(path, req.url);
+  url.searchParams.set("msg", msg);
+  if (extra?.month && /^\d{4}-\d{2}$/.test(extra.month)) {
+    url.searchParams.set("month", extra.month);
+  }
+  return NextResponse.redirect(url);
+}
+
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ id: string }> | { id: string } }
@@ -28,6 +47,7 @@ export async function POST(
 
   const form = await req.formData();
 
+  const returnTo = safeReturnTo(toStringTrim(form.get("returnTo")), propertyId);
   const month = toStringTrim(form.get("month")); // current ledger month (may differ from txn date)
   const dateStr = toStringTrim(form.get("date"));
   const categoryId = toStringTrim(form.get("categoryId"));
@@ -37,25 +57,16 @@ export async function POST(
   const amountRaw = toNumber(form.get("amount"));
 
   // If invalid, redirect back to the current month (best effort) with an error msg
-  const fallbackQs =
-    month && /^\d{4}-\d{2}$/.test(month) ? `&month=${encodeURIComponent(month)}` : "";
-
   if (!isIsoDateOnly(dateStr)) {
-    return NextResponse.redirect(
-      new URL(`/properties/${propertyId}/ledger?msg=invalid_date${fallbackQs}`, req.url)
-    );
+    return redirectWithMsg(req, returnTo, "invalid_date", { month });
   }
 
   if (!categoryId) {
-    return NextResponse.redirect(
-      new URL(`/properties/${propertyId}/ledger?msg=missing_category${fallbackQs}`, req.url)
-    );
+    return redirectWithMsg(req, returnTo, "missing_category", { month });
   }
 
   if (!Number.isFinite(amountRaw) || amountRaw === 0) {
-    return NextResponse.redirect(
-      new URL(`/properties/${propertyId}/ledger?msg=invalid_amount${fallbackQs}`, req.url)
-    );
+    return redirectWithMsg(req, returnTo, "invalid_amount", { month });
   }
 
   const category = await prisma.category.findUnique({
@@ -64,9 +75,7 @@ export async function POST(
   });
 
   if (!category || !category.active) {
-    return NextResponse.redirect(
-      new URL(`/properties/${propertyId}/ledger?msg=invalid_category${fallbackQs}`, req.url)
-    );
+    return redirectWithMsg(req, returnTo, "invalid_category", { month });
   }
 
   // Normalize amount based on category type
@@ -101,9 +110,5 @@ export async function POST(
   const redirectMonth =
     monthFromDate && /^\d{4}-\d{2}$/.test(monthFromDate) ? monthFromDate : "";
 
-  const redirectQs = redirectMonth ? `&month=${encodeURIComponent(redirectMonth)}` : "";
-
-  return NextResponse.redirect(
-    new URL(`/properties/${propertyId}/ledger?msg=created${redirectQs}`, req.url)
-  );
+  return redirectWithMsg(req, returnTo, "created", { month: redirectMonth || month });
 }

@@ -192,6 +192,17 @@ export default async function PropertyLedgerPage({
 
         <div className="ll_panelInner">
           {msg === "deleted" ? <div className="ll_notice">Transaction deleted.</div> : null}
+          {msg === "created" ? (
+            <div className="ll_notice">Transaction added.</div>
+          ) : msg === "invalid_date" ? (
+            <div className="ll_notice">Please use a valid date (YYYY-MM-DD).</div>
+          ) : msg === "missing_category" ? (
+            <div className="ll_notice">Select a category before adding the transaction.</div>
+          ) : msg === "invalid_category" ? (
+            <div className="ll_notice">Category is invalid or inactive.</div>
+          ) : msg === "invalid_amount" ? (
+            <div className="ll_notice">Enter a non-zero amount.</div>
+          ) : null}
 
           <div className="ll_rowBetween" style={{ alignItems: "flex-end", gap: 12, marginTop: 10 }}>
             <div>
@@ -237,15 +248,16 @@ export default async function PropertyLedgerPage({
           </div>
 
           <div className="ll_panel" style={{ marginTop: 12 }}>
-            <div className="ll_panelInner">
-              <h2 style={{ marginTop: 0 }}>Add transaction</h2>
-              <form className="ll_form" action={`/api/properties/${property.id}/transactions`} method="post">
-                <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
-                <div className="ll_grid2">
-                  <div>
-                    <label className="ll_label" htmlFor="date">
-                      Date
-                    </label>
+          <div className="ll_panelInner">
+            <h2 style={{ marginTop: 0 }}>Add transaction</h2>
+            <form className="ll_form" action={`/api/properties/${property.id}/transactions`} method="post">
+              <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
+              <input type="hidden" name="month" value={month} />
+              <div className="ll_grid2">
+                <div>
+                  <label className="ll_label" htmlFor="date">
+                    Date
+                  </label>
                     <input
                       className="ll_input"
                       id="date"
@@ -281,12 +293,19 @@ export default async function PropertyLedgerPage({
                     </div>
                   </div>
 
-                  <div>
-                    <label className="ll_label" htmlFor="memo">
-                      Memo
-                    </label>
-                    <input className="ll_input" id="memo" name="memo" type="text" />
-                  </div>
+                <div>
+                  <label className="ll_label" htmlFor="payee">
+                    Payee (optional)
+                  </label>
+                  <input className="ll_input" id="payee" name="payee" type="text" />
+                </div>
+
+                <div>
+                  <label className="ll_label" htmlFor="memo">
+                    Memo
+                  </label>
+                  <input className="ll_input" id="memo" name="memo" type="text" />
+                </div>
                 </div>
 
                 <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
@@ -331,15 +350,18 @@ export default async function PropertyLedgerPage({
 
                         return (
                           <tr key={t.id} style={isDeletedRow ? { opacity: 0.65 } : undefined}>
-                            <td style={{ whiteSpace: "nowrap" }}>{fmtDate(t.date)}</td>
-                          
+                          <td style={{ whiteSpace: "nowrap" }}>{fmtDate(t.date)}</td>
+
                             <td style={{ whiteSpace: "normal" }}>
                               <span className="ll_muted">{t.category.type.toUpperCase()}</span>{" - "}
                               {t.category.name}
                             </td>
-                          
+
                             <td style={{ whiteSpace: "normal" }}>
-                              {t.memo || <span className="ll_muted">(none)</span>}
+                              {t.payee ? (
+                                <div style={{ fontWeight: 650 }}>{t.payee}</div>
+                              ) : null}
+                              {t.memo ? <div>{t.memo}</div> : <span className="ll_muted">(none)</span>}
                             </td>
                           
                             <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>{moneySpan(t.amount)}</td>
