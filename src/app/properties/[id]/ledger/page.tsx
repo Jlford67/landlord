@@ -22,9 +22,28 @@ function parseMonth(month: string) {
 }
 
 function fmtMoney(n: number) {
-  const sign = n < 0 ? "-" : "";
-  const abs = Math.abs(n);
-  return `${sign}$${abs.toFixed(2)}`;
+  const abs = Math.abs(n).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return n < 0 ? `(${abs})` : `$${abs}`;
+}
+
+function moneySpan(n: number) {
+  const isNegative = n < 0;
+
+  return (
+    <span
+      style={{
+        whiteSpace: "nowrap",
+        fontWeight: 700,
+        color: isNegative ? "var(--danger, #ff6b6b)" : "inherit",
+      }}
+    >
+      {fmtMoney(n)}
+    </span>
+  );
 }
 
 function fmtDate(d: Date) {
@@ -323,9 +342,9 @@ export default async function PropertyLedgerPage({
                               {t.memo || <span className="ll_muted">(none)</span>}
                             </td>
                           
-                            <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>{fmtMoney(t.amount)}</td>
+                            <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>{moneySpan(t.amount)}</td>
                           
-                            <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>{fmtMoney(balance)}</td>
+                            <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>{moneySpan(balance)}</td>
                           
                             <td style={{ textAlign: "right" }}>
                               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>

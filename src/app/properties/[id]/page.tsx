@@ -5,7 +5,24 @@ import { prisma } from "@/lib/db";
 
 function money(n?: number | null) {
   if (n === null || n === undefined) return "—";
-  return n.toLocaleString(undefined, { style: "currency", currency: "USD" });
+
+  const abs = Math.abs(n).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return n < 0 ? `(${abs})` : `$${abs}`;
+}
+
+function moneyParts(n?: number | null) {
+  if (n === null || n === undefined) return { text: "—", isNegative: false };
+
+  const abs = Math.abs(n).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return n < 0 ? { text: `(${abs})`, isNegative: true } : { text: `$${abs}`, isNegative: false };
 }
 
 function fmtDate(d?: Date | null) {
@@ -85,7 +102,9 @@ export default async function PropertyDetailPage({
         <div style={{ marginTop: 18 }}>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>Summary</div>
           <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
-            <div>Address: {property.street}, {property.city}, {property.state} {property.zip}</div>
+            <div>
+              Address: {property.street}, {property.city}, {property.state} {property.zip}
+            </div>
             <div>Status: {property.status}</div>
             <div>
               Doors: {property.doors ?? "—"} | Beds: {property.beds ?? "—"} | Baths:{" "}
@@ -96,7 +115,13 @@ export default async function PropertyDetailPage({
         </div>
 
         {/* Ownership */}
-        <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
           <div style={{ fontWeight: 700, marginBottom: 8 }}>Ownership</div>
           {property.ownerships.length ? (
             <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
@@ -114,7 +139,13 @@ export default async function PropertyDetailPage({
         </div>
 
         {/* Lease */}
-        <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
           <div
             style={{
               display: "flex",
@@ -124,11 +155,8 @@ export default async function PropertyDetailPage({
             }}
           >
             <div style={{ fontWeight: 700 }}>Leases</div>
-        
-            <Link
-              className="ll_btnSecondary"
-              href={`/properties/${property.id}/leases`}
-            >
+
+            <Link className="ll_btnSecondary" href={`/properties/${property.id}/leases`}>
               View all
             </Link>
           </div>
@@ -137,10 +165,12 @@ export default async function PropertyDetailPage({
             <div style={{ marginTop: 10, opacity: 0.9, lineHeight: 1.6 }}>
               <div>
                 Active lease: {fmtDate(activeLease.startDate)} →{" "}
-                {activeLease.endDate ? fmtDate(activeLease.endDate) : "open-ended"} (
-                due day {activeLease.dueDay})
+                {activeLease.endDate ? fmtDate(activeLease.endDate) : "open-ended"} (due day{" "}
+                {activeLease.dueDay})
               </div>
-              <div>Rent: {money(activeLease.rentAmount)} | Deposit: {money(activeLease.deposit)}</div>
+              <div>
+                Rent: {money(activeLease.rentAmount)} | Deposit: {money(activeLease.deposit)}
+              </div>
               <div>Managed by PM: {activeLease.managedByPm ? "Yes" : "No"}</div>
               <div>
                 Tenants:{" "}
@@ -152,9 +182,7 @@ export default async function PropertyDetailPage({
               </div>
             </div>
           ) : (
-            <div style={{ marginTop: 10, opacity: 0.75 }}>
-              No active lease found.
-            </div>
+            <div style={{ marginTop: 10, opacity: 0.75 }}>No active lease found.</div>
           )}
 
           {property.leases.length ? (
@@ -173,7 +201,13 @@ export default async function PropertyDetailPage({
         </div>
 
         {/* Property Manager */}
-        <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
           <div style={{ fontWeight: 700, marginBottom: 8 }}>Property manager</div>
           {property.pmAssignments.length ? (
             <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
@@ -192,48 +226,87 @@ export default async function PropertyDetailPage({
           )}
         </div>
 
-        {/* Money */}
-        <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* Money (Recent transactions) */}
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
             <div style={{ fontWeight: 700 }}>Recent transactions</div>
-            <Link className="ll_btnSecondary" href={`/properties/${property.id}/transactions`}>
+            <Link className="ll_btnSecondary" href={`/properties/${property.id}/ledger`}>
               View all
             </Link>
           </div>
 
-          {property.transactions.length ? (
-            <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-              {property.transactions.map((t) => (
-                <div
-                  key={t.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    opacity: 0.92,
-                  }}
-                >
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>
-                      {fmtDate(t.date)} · {t.category.name}
-                    </div>
-                    <div style={{ opacity: 0.8, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {t.payee ?? "—"}{t.memo ? ` · ${t.memo}` : ""}
-                    </div>
-                  </div>
-                  <div style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
-                    {money(t.amount)}
-                  </div>
-                </div>
-              ))}
+          <div className="ll_list ll_txnList">
+            <div className="ll_listHeader">
+              <div>Date</div>
+              <div>Category</div>
+              <div>Amount</div>
             </div>
-          ) : (
-            <div style={{ marginTop: 10, opacity: 0.75 }}>No transactions yet.</div>
-          )}
+
+            <div className="ll_listBody">
+              {property.transactions.length ? (
+                property.transactions.map((t) => (
+                  <div key={t.id} className="ll_listRow">
+                    <div style={{ whiteSpace: "nowrap" }}>{fmtDate(t.date)}</div>
+                    <div style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {t.category ? (
+                        <>
+                          <span className="ll_muted">{t.category.type.toUpperCase()}</span>{" "}
+                          {" - "}
+                          {t.category.name}
+                        </>
+                      ) : (
+                        <span className="ll_muted">(no category)</span>
+                      )}
+                    </div>
+                    {(() => {
+                    const m = moneyParts(t.amount);
+                    return (
+                      <div
+                        style={{
+                          whiteSpace: "nowrap",
+                          color: m.isNegative ? "var(--danger, #ff6b6b)" : "inherit",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {m.text}
+                      </div>
+                    );
+                  })()}
+
+                  </div>
+                ))
+              ) : (
+                <div className="ll_listRow">
+                  <div className="ll_muted">(none)</div>
+                  <div />
+                  <div />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Loans / Tax / Insurance */}
-        <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
           <div style={{ fontWeight: 700, marginBottom: 10 }}>Accounts</div>
 
           <div style={{ display: "grid", gap: 14 }}>
@@ -243,7 +316,8 @@ export default async function PropertyDetailPage({
                 <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
                   {property.loans.map((l) => (
                     <div key={l.id}>
-                      {l.lenderName ?? "—"} · Rate {l.ratePct ?? "—"}% · Term {l.termYears ?? "—"} yrs · Orig {money(l.origAmount)}
+                      {l.lenderName ?? "—"} · Rate {l.ratePct ?? "—"}% · Term {l.termYears ?? "—"}{" "}
+                      yrs · Orig {money(l.origAmount)}
                     </div>
                   ))}
                 </div>
@@ -258,7 +332,8 @@ export default async function PropertyDetailPage({
                 <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
                   {property.taxAccounts.map((t) => (
                     <div key={t.id}>
-                      Annual {money(t.annualAmount)} · Due {fmtDate(t.dueDate)} · Last paid {fmtDate(t.lastPaid)}
+                      Annual {money(t.annualAmount)} · Due {fmtDate(t.dueDate)} · Last paid{" "}
+                      {fmtDate(t.lastPaid)}
                     </div>
                   ))}
                 </div>
@@ -273,7 +348,8 @@ export default async function PropertyDetailPage({
                 <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
                   {property.insurance.map((i) => (
                     <div key={i.id}>
-                      {i.insurer ?? "—"} · Premium {money(i.premium)} · Due {fmtDate(i.dueDate)} · Paid {fmtDate(i.paidDate)}
+                      {i.insurer ?? "—"} · Premium {money(i.premium)} · Due {fmtDate(i.dueDate)} ·
+                      Paid {fmtDate(i.paidDate)}
                     </div>
                   ))}
                 </div>

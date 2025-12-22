@@ -160,3 +160,127 @@ a:hover {
   text-align: right;
 }
 
+/* Zebra striping for readability */
+.ll_table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Hover highlight (helps when scanning across columns) */
+.ll_table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Categories table: slightly tighter rows */
+.ll_table.ll_categories tbody td {
+  padding: 8px 12px;
+}
+
+/* Categories list styling to match table look */
+.ll_list {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ll_listHeader,
+.ll_listRow {
+  display: grid;
+  grid-template-columns: 1fr 140px 180px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+
+  /* default everything to left */
+  justify-items: start;
+}
+
+/* explicitly left-align the Actions column */
+.ll_listHeader > div:nth-child(3),
+.ll_listRow > div:nth-child(3) {
+  justify-self: start;
+}
+
+.ll_listHeader {
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+}
+
+.ll_listRow {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Zebra striping */
+.ll_listRow:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Hover highlight */
+.ll_listRow:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ll_btnDanger,
+.ll_btnDeactivate {
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 650;
+  padding: 10px 16px;
+
+  /* 👇 fixes wrapping */
+  min-width: 220px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.ll_btnDanger {
+  border: 1px solid rgba(255,255,255,0.18);
+  background: transparent;
+  color: rgba(255,255,255,0.92);
+}
+
+.ll_btnDanger:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.ll_btnDanger,
+.ll_btnDeactivate {
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 650;
+  padding: 10px 14px;
+
+  min-width: 180px;   /* fits Actions column */
+  max-width: 100%;    /* never overflow container */
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Transaction list (Date | Category | Amount) */
+.ll_list.ll_txnList .ll_listHeader,
+.ll_list.ll_txnList .ll_listRow {
+  /* shrink Date, grow Category, keep Amount fixed */
+  grid-template-columns: 110px 1fr 140px;
+
+  /* ensure content aligns naturally */
+  justify-items: start;
+}
+
+.ll_list.ll_txnList .ll_listHeader > div:nth-child(2),
+.ll_list.ll_txnList .ll_listRow > div:nth-child(2) {
+  /* Category: use the available width and do not wrap */
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ll_list.ll_txnList .ll_listHeader > div:nth-child(3),
+.ll_list.ll_txnList .ll_listRow > div:nth-child(3) {
+  /* Amount: right aligned */
+  justify-self: end;
+  text-align: right;
+  white-space: nowrap;
+}
+
+

@@ -218,7 +218,6 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
   }
 
   const roots = byParent.get(null) ?? [];
-
   const rendered: JSX.Element[] = [];
 
   const renderNode = (node: CategoryRow, depth: number) => {
@@ -226,41 +225,42 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
     const children = byParent.get(node.id) ?? [];
 
     rendered.push(
-      <div key={node.id} className={`ll_card ${node.active ? "" : "ll_dim"}`}>
-        <div className="ll_catRow">
-           <div
-             className="ll_catLeft"
-             style={{ paddingLeft: depth === 0 ? 0 : 64 + (depth - 1) * 26 }}
-           >
+      <div key={node.id} className={`ll_listRow ${node.active ? "" : "ll_dim"}`}>
+        {/* Column 1: Category */}
+        <div
+          className="ll_catLeft"
+          style={{ paddingLeft: depth === 0 ? 0 : 64 + (depth - 1) * 26 }}
+        >
+          {depth === 0 ? <span className="ll_badge">{title}</span> : <span className="ll_bullet">↳</span>}
 
-            {depth === 0 ? <span className="ll_badge">{title}</span> : <span className="ll_bullet">↳</span>}
-
-            <div style={{ minWidth: 0 }}>
-              <div className="ll_catTitle">{node.name}</div>
-              <div className="ll_catMeta">
-                {node._count.children > 0 ? (
-                  <>
-                    Children: <span className="ll_code">{node._count.children}</span> •{" "}
-                  </>
-                ) : null}
-                Txns: <span className="ll_code">{node._count.transactions}</span>
-                {!node.active ? " • Inactive" : ""}
-              </div>
+          <div style={{ minWidth: 0 }}>
+            <div className="ll_catTitle">{node.name}</div>
+            <div className="ll_catMeta">
+              {node._count.children > 0 ? (
+                <>
+                  Children: <span className="ll_code">{node._count.children}</span> •{" "}
+                </>
+              ) : null}
+              Txns: <span className="ll_code">{node._count.transactions}</span>
             </div>
           </div>
+        </div>
 
-          <div className="ll_actionsRight">
-            <form method="post" action={`/api/categories/${node.id}`} style={{ margin: 0 }}>
-              <input type="hidden" name="returnTo" value="/categories" />
-              <button
-                className={info.canDelete ? "ll_btnDanger" : "ll_btnDeactivate"}
-                type="submit"
-                suppressHydrationWarning
-              >
-                {info.label}
-              </button>
-            </form>
-          </div>
+        {/* Column 2: Status */}
+        <div className="ll_muted">{node.active ? "Active" : "Inactive"}</div>
+
+        {/* Column 3: Actions */}
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <form method="post" action={`/api/categories/${node.id}`} style={{ margin: 0 }}>
+            <input type="hidden" name="returnTo" value="/categories" />
+            <button
+              className={info.canDelete ? "ll_btnDanger" : "ll_btnDeactivate"}
+              type="submit"
+              suppressHydrationWarning
+            >
+              {info.label}
+            </button>
+          </form>
         </div>
       </div>
     );
@@ -273,7 +273,17 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
   return (
     <div>
       <div className="ll_sectionTitle">{title}</div>
-      <div className="ll_list">{rendered}</div>
+
+      <div className="ll_list">
+        <div className="ll_listHeader">
+          <div>Category</div>
+          <div>Status</div>
+          <div style={{ textAlign: "right" }}>Actions</div>
+        </div>
+
+        <div className="ll_listBody">{rendered}</div>
+      </div>
     </div>
   );
 }
+
