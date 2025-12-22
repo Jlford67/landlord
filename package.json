@@ -6,10 +6,13 @@
     "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "scripts": {
+    "predev": "prisma generate",
     "dev": "next dev --webpack",
+    "prebuild": "prisma generate",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prepare": "prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.2.0",
