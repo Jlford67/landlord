@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
@@ -8,5 +8,5 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   await prisma.insurancePolicy.delete({ where: { id } });
 
-  redirect("/insurance?msg=deleted");
+  return NextResponse.redirect(new URL("/insurance?msg=deleted", req.url));
 }

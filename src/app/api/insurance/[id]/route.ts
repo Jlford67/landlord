@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
@@ -30,7 +30,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!propertyId) return new Response("propertyId required", { status: 400 });
 
   const existing = await prisma.insurancePolicy.findUnique({ select: { id: true }, where: { id } });
-  if (!existing) redirect("/insurance?msg=notfound");
+  if (!existing) return NextResponse.redirect(new URL("/insurance?msg=notfound", req.url));
 
   await prisma.insurancePolicy.update({
     where: { id },
@@ -51,5 +51,5 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     },
   });
 
-  redirect("/insurance?msg=updated");
+  return NextResponse.redirect(new URL("/insurance?msg=updated", req.url));
 }

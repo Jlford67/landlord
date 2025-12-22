@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
@@ -47,5 +47,5 @@ export async function POST(req: Request) {
     },
   });
 
-  redirect("/insurance?msg=created");
+  return NextResponse.redirect(new URL("/insurance?msg=created", req.url));
 }
