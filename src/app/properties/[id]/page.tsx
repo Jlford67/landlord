@@ -74,7 +74,7 @@ export default async function PropertyDetailPage({
       },
       loans: { orderBy: [{ origDate: "desc" }], take: 3 },
       taxAccounts: { orderBy: [{ dueDate: "desc" }], take: 3 },
-      insurance: { orderBy: [{ dueDate: "desc" }], take: 3 },
+      insurance: { orderBy: [{ dueDate: "desc" }], take: 5 },
       ownerships: { include: { entity: true } },
     },
   });
@@ -314,7 +314,67 @@ export default async function PropertyDetailPage({
           </div>
         </div>
 
-        {/* Loans / Tax / Insurance */}
+        {/* Insurance */}
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
+            <div style={{ fontWeight: 700 }}>Insurance</div>
+            <Link
+              className="ll_btnSecondary"
+              href={`/insurance?q=${encodeURIComponent(property.nickname?.trim() || property.street)}`}
+            >
+              View all
+            </Link>
+          </div>
+
+          <div className="ll_list ll_insuranceMini">
+            <div className="ll_listHeader">
+              <div>Insurer</div>
+              <div>Policy #</div>
+              <div>Premium</div>
+              <div>Due</div>
+              <div>Paid</div>
+            </div>
+
+            <div className="ll_listBody">
+              {property.insurance.length ? (
+                property.insurance.map((i) => (
+                  <div key={i.id} className="ll_listRow">
+                    <div>{i.insurer ?? "—"}</div>
+                    <div>{i.policyNum ?? "—"}</div>
+                    <div>
+                      <Money value={i.premium} />
+                    </div>
+                    <div>{fmtDate(i.dueDate)}</div>
+                    <div>{fmtDate(i.paidDate)}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="ll_listRow">
+                  <div className="ll_muted">(none)</div>
+                  <div />
+                  <div />
+                  <div />
+                  <div />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Loans / Tax */}
         <div
           style={{
             marginTop: 18,
@@ -354,22 +414,6 @@ export default async function PropertyDetailPage({
                 </div>
               ) : (
                 <div style={{ opacity: 0.75 }}>No tax accounts yet.</div>
-              )}
-            </div>
-
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>Insurance</div>
-              {property.insurance.length ? (
-                <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
-                  {property.insurance.map((i) => (
-                    <div key={i.id}>
-                      {i.insurer ?? "—"} · Premium <Money value={i.premium} /> · Due {fmtDate(i.dueDate)} ·
-                      Paid {fmtDate(i.paidDate)}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ opacity: 0.75 }}>No insurance policies yet.</div>
               )}
             </div>
           </div>

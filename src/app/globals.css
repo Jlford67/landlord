@@ -221,6 +221,34 @@ a:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.ll_rowActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ll_list.ll_insuranceList .ll_listHeader,
+.ll_list.ll_insuranceList .ll_listRow {
+  grid-template-columns:
+    1.2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.8fr 0.9fr 0.9fr 1fr 1fr 0.9fr 1fr 1fr
+    0.9fr;
+}
+
+.ll_list.ll_insuranceList .ll_listHeader > div:nth-child(6),
+.ll_list.ll_insuranceList .ll_listRow > div:nth-child(6) {
+  justify-self: end;
+}
+
+.ll_list.ll_insuranceMini .ll_listHeader,
+.ll_list.ll_insuranceMini .ll_listRow {
+  grid-template-columns: 1.1fr 1fr 0.9fr 0.9fr 0.9fr;
+}
+
+.ll_list.ll_insuranceMini .ll_listHeader > div:nth-child(3),
+.ll_list.ll_insuranceMini .ll_listRow > div:nth-child(3) {
+  justify-self: end;
+}
+
 .ll_btnDanger,
 .ll_btnDeactivate {
   border-radius: 10px;

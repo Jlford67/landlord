@@ -233,6 +233,7 @@ model InsurancePolicy {
   propertyId  String
   insurer     String?
   policyNum   String?
+  agentName   String?
   premium     Float?
   dueDate     DateTime?
   paidDate    DateTime?
@@ -240,6 +241,7 @@ model InsurancePolicy {
   webPortal   String?
   allPolicies String?
   bank        String?
+  bankNumber  String?
   loanRef     String?
 
   property Property @relation(fields: [propertyId], references: [id])
