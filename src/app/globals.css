@@ -232,11 +232,8 @@ a:hover {
   grid-template-columns:
     1.2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.8fr 0.9fr 0.9fr 1fr 1fr 0.9fr 1fr 1fr
     0.9fr;
-}
-
-.ll_list.ll_insuranceList .ll_listHeader > div:nth-child(6),
-.ll_list.ll_insuranceList .ll_listRow > div:nth-child(6) {
-  justify-self: end;
+  justify-items: start;
+  text-align: left;
 }
 
 .ll_list.ll_insuranceMini .ll_listHeader,
