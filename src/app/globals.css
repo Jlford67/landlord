@@ -162,6 +162,17 @@ a:hover {
   text-align: right;
 }
 
+.ll_insuranceTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.ll_insuranceTable th,
+.ll_insuranceTable td {
+  text-align: left;
+  word-break: break-word;
+}
+
 /* Zebra striping for readability */
 .ll_table tbody tr:nth-child(even) td {
   background: rgba(255, 255, 255, 0.03);
