@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import EstimatedValueEditor from "./EstimatedValueEditor";
 
 function money(n?: number | null) {
   if (n === null || n === undefined) return "—";
@@ -45,6 +46,28 @@ function fmtDate(d?: Date | null) {
   return new Date(d).toLocaleDateString();
 }
 
+function formatCentsToDollars(cents?: number | null) {
+  if (cents === null || cents === undefined) return "—";
+  const dollars = cents / 100;
+  return dollars.toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+function buildAddressQuery(property: {
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+}) {
+  if (!property.street || !property.city || !property.state) return "";
+  const address = `${property.street}, ${property.city}, ${property.state} ${property.zip ?? ""}`.trim();
+  return encodeURIComponent(address);
+}
+
 export default async function PropertyDetailPage({
   params,
 }: {
@@ -86,6 +109,7 @@ export default async function PropertyDetailPage({
     `${property.street}, ${property.city}, ${property.state} ${property.zip}`;
 
   const activeLease = property.leases.find((l) => l.status === "active");
+  const addressQuery = buildAddressQuery(property);
 
   return (
     <div className="ll_page">
@@ -127,6 +151,61 @@ export default async function PropertyDetailPage({
             </div>
             <div>Notes: {property.notes ?? "—"}</div>
           </div>
+        </div>
+
+        {/* Estimated value */}
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+            }}
+          >
+            <div style={{ fontWeight: 700 }}>Estimated value</div>
+            {addressQuery ? (
+              <div style={{ display: "flex", gap: 8 }}>
+                <a
+                  className="ll_btnSecondary"
+                  href={`https://www.zillow.com/homes/${addressQuery}_rb/`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  View on Zillow
+                </a>
+                <a
+                  className="ll_btnSecondary"
+                  href={`https://www.redfin.com/search?q=${addressQuery}`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  View on Redfin
+                </a>
+              </div>
+            ) : (
+              <div style={{ opacity: 0.7, fontSize: 13 }}>
+                Add full address to enable Zillow/Redfin links.
+              </div>
+            )}
+          </div>
+
+          <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
+            <div>Estimated value: {formatCentsToDollars(property.estimatedValueCents)}</div>
+            <div>Updated: {fmtDate(property.estimatedValueUpdatedAt)}</div>
+            <div>Source: {property.estimatedValueSource ?? "—"}</div>
+          </div>
+
+          <EstimatedValueEditor
+            propertyId={property.id}
+            initialValueDollars={property.estimatedValueCents ? String(Math.round(property.estimatedValueCents / 100)) : ""}
+          />
         </div>
 
         {/* Ownership */}

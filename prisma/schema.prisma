@@ -75,6 +75,10 @@ model Property {
   sqFt      Int?
   status    String   @default("active") // active/sold/watchlist
   notes     String?
+  estimatedValueCents       Int?
+  estimatedValueUpdatedAt   DateTime?
+  estimatedValueSource      String?
+  estimatedValueProviderRef String?
   createdAt DateTime @default(now())
 
   ownerships    PropertyOwnership[]
