@@ -173,6 +173,12 @@ a:hover {
   word-break: break-word;
 }
 
+/* Override generic right-alignment so all insurance headers stay left aligned */
+.ll_insuranceTable thead th:nth-child(4),
+.ll_insuranceTable thead th:nth-child(5) {
+  text-align: left;
+}
+
 /* Zebra striping for readability */
 .ll_table tbody tr:nth-child(even) td {
   background: rgba(255, 255, 255, 0.03);
