@@ -22,6 +22,9 @@ export default function TopNav({ userEmail }: { userEmail: string }) {
             <Link className="ll_btnSecondary" href="/categories">
               Categories
             </Link>
+            <Link className="ll_btnSecondary" href="/property-tax">
+              Property Tax
+            </Link>
             <Link className="ll_btnSecondary" href="/insurance">
               Insurance
             </Link>
