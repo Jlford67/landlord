@@ -36,19 +36,15 @@ function propertyLabel(p: {
 }
 
 const insuranceColumns = [
-  1.2, // Property
-  0.9, // Insurer
-  0.9, // Policy #
-  0.9, // Agent
-  0.9, // Phone
-  0.8, // Premium
+  1.4, // Property
+  1, // Insurer
+  1, // Policy #
+  1, // Agent
+  1, // Phone
+  0.9, // Premium
   0.9, // Due Date
   0.9, // Paid Date
-  1, // Web Portal
-  1, // All Policies
-  0.9, // Bank
-  1, // Bank Number
-  1, // Loan Ref
+  1.6, // Web Portal
   0.9, // Actions
 ];
 
@@ -199,10 +195,6 @@ export default async function InsurancePage({
                   <th scope="col">Due Date</th>
                   <th scope="col">Paid Date</th>
                   <th scope="col">Web Portal</th>
-                  <th scope="col">All Policies</th>
-                  <th scope="col">Bank</th>
-                  <th scope="col">Bank Number</th>
-                  <th scope="col">Loan Ref</th>
                   <th scope="col">Actions</th>
                 </tr>
               </thead>
@@ -229,18 +221,6 @@ export default async function InsurancePage({
                         "—"
                       )}
                     </td>
-                    <td>
-                      {p.allPolicies ? (
-                        <a href={p.allPolicies} style={{ color: "inherit" }}>
-                          {p.allPolicies}
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td>{p.bank || "—"}</td>
-                    <td>{p.bankNumber || "—"}</td>
-                    <td>{p.loanRef || "—"}</td>
                     <td>
                       <div className="ll_rowActions">
                         <Link className="ll_btnSecondary" href={`/insurance/${p.id}/edit`}>
