@@ -35,6 +35,11 @@ function propertyLabel(p: {
   return p.nickname?.trim() || `${p.street}, ${p.city}, ${p.state} ${p.zip}`;
 }
 
+const insuranceColumnsStyle = {
+  gridTemplateColumns:
+    "1.2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.8fr 0.9fr 0.9fr 1fr 1fr 0.9fr 1fr 1fr 0.9fr",
+};
+
 type SearchParams = Record<string, string | string[] | undefined>;
 
 export default async function InsurancePage({
@@ -160,7 +165,7 @@ export default async function InsurancePage({
         <div style={{ marginTop: 16 }}>
           {policies.length ? (
             <div className="ll_list ll_insuranceList">
-              <div className="ll_listHeader">
+              <div className="ll_listHeader" style={insuranceColumnsStyle}>
                 <div>Property</div>
                 <div>Insurer</div>
                 <div>Policy #</div>
@@ -179,7 +184,7 @@ export default async function InsurancePage({
 
               <div className="ll_listBody">
                 {policies.map((p) => (
-                  <div key={p.id} className="ll_listRow">
+                  <div key={p.id} className="ll_listRow" style={insuranceColumnsStyle}>
                     <div style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
                       {propertyLabel(p.property)}
                     </div>
