@@ -162,6 +162,23 @@ a:hover {
   text-align: right;
 }
 
+.ll_insuranceTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.ll_insuranceTable th,
+.ll_insuranceTable td {
+  text-align: left;
+  word-break: break-word;
+}
+
+/* Override generic right-alignment so all insurance headers stay left aligned */
+.ll_insuranceTable thead th:nth-child(4),
+.ll_insuranceTable thead th:nth-child(5) {
+  text-align: left;
+}
+
 /* Zebra striping for readability */
 .ll_table tbody tr:nth-child(even) td {
   background: rgba(255, 255, 255, 0.03);
@@ -232,11 +249,8 @@ a:hover {
   grid-template-columns:
     1.2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.8fr 0.9fr 0.9fr 1fr 1fr 0.9fr 1fr 1fr
     0.9fr;
-}
-
-.ll_list.ll_insuranceList .ll_listHeader > div:nth-child(6),
-.ll_list.ll_insuranceList .ll_listRow > div:nth-child(6) {
-  justify-self: end;
+  justify-items: start;
+  text-align: left;
 }
 
 .ll_list.ll_insuranceMini .ll_listHeader,

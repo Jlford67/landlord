@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { toDate } from "../route";
 
 function toFloat(value: FormDataEntryValue | null) {
   const str = String(value ?? "").replace(/,/g, "").trim();
   if (!str) return null;
   const n = parseFloat(str);
   return Number.isFinite(n) ? n : null;
-}
-
-function toDate(value: FormDataEntryValue | null) {
-  const str = String(value ?? "").trim();
-  if (!str) return null;
-  const d = new Date(str);
-  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function toStr(value: FormDataEntryValue | null) {
@@ -29,6 +23,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const propertyId = String(form.get("propertyId") ?? "").trim();
   if (!propertyId) return new Response("propertyId required", { status: 400 });
 
+  const dueDate = toDate(form.get("dueDate"), "dueDate");
+  if ("error" in dueDate) return new Response(dueDate.error, { status: 400 });
+
+  const paidDate = toDate(form.get("paidDate"), "paidDate");
+  if ("error" in paidDate) return new Response(paidDate.error, { status: 400 });
+
   const existing = await prisma.insurancePolicy.findUnique({ select: { id: true }, where: { id } });
   if (!existing) return NextResponse.redirect(new URL("/insurance?msg=notfound", req.url));
 
@@ -41,8 +41,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       agentName: toStr(form.get("agentName")),
       phone: toStr(form.get("phone")),
       premium: toFloat(form.get("premium")),
-      dueDate: toDate(form.get("dueDate")),
-      paidDate: toDate(form.get("paidDate")),
+      dueDate: dueDate.value,
+      paidDate: paidDate.value,
       webPortal: toStr(form.get("webPortal")),
       allPolicies: toStr(form.get("allPolicies")),
       bank: toStr(form.get("bank")),

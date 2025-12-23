@@ -35,6 +35,24 @@ function propertyLabel(p: {
   return p.nickname?.trim() || `${p.street}, ${p.city}, ${p.state} ${p.zip}`;
 }
 
+const insuranceColumns = [
+  1.4, // Property
+  1, // Insurer
+  1, // Policy #
+  1, // Agent
+  1, // Phone
+  0.9, // Premium
+  0.9, // Due Date
+  0.9, // Paid Date
+  1.6, // Web Portal
+  0.9, // Actions
+];
+
+const insuranceColumnPercents = (() => {
+  const total = insuranceColumns.reduce((sum, n) => sum + n, 0);
+  return insuranceColumns.map((n) => `${(n / total) * 100}%`);
+})();
+
 type SearchParams = Record<string, string | string[] | undefined>;
 
 export default async function InsurancePage({
@@ -159,38 +177,42 @@ export default async function InsurancePage({
 
         <div style={{ marginTop: 16 }}>
           {policies.length ? (
-            <div className="ll_list ll_insuranceList">
-              <div className="ll_listHeader">
-                <div>Property</div>
-                <div>Insurer</div>
-                <div>Policy #</div>
-                <div>Agent</div>
-                <div>Phone</div>
-                <div>Premium</div>
-                <div>Due Date</div>
-                <div>Paid Date</div>
-                <div>Web Portal</div>
-                <div>All Policies</div>
-                <div>Bank</div>
-                <div>Bank Number</div>
-                <div>Loan Ref</div>
-                <div>Actions</div>
-              </div>
+            <table className="ll_table ll_insuranceTable">
+              <colgroup>
+                {insuranceColumnPercents.map((width, idx) => (
+                  <col key={idx} style={{ width }} />
+                ))}
+              </colgroup>
 
-              <div className="ll_listBody">
+              <thead>
+                <tr>
+                  <th scope="col">Property</th>
+                  <th scope="col">Insurer</th>
+                  <th scope="col">Policy #</th>
+                  <th scope="col">Agent</th>
+                  <th scope="col">Phone</th>
+                  <th scope="col">Premium</th>
+                  <th scope="col">Due Date</th>
+                  <th scope="col">Paid Date</th>
+                  <th scope="col">Web Portal</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
                 {policies.map((p) => (
-                  <div key={p.id} className="ll_listRow">
-                    <div style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <tr key={p.id}>
+                    <td style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
                       {propertyLabel(p.property)}
-                    </div>
-                    <div>{p.insurer || "—"}</div>
-                    <div>{p.policyNum || "—"}</div>
-                    <div>{p.agentName || "—"}</div>
-                    <div>{p.phone || "—"}</div>
-                    <div style={{ whiteSpace: "nowrap" }}>{money(p.premium)}</div>
-                    <div>{fmtDate(p.dueDate)}</div>
-                    <div>{fmtDate(p.paidDate)}</div>
-                    <div>
+                    </td>
+                    <td>{p.insurer || "—"}</td>
+                    <td>{p.policyNum || "—"}</td>
+                    <td>{p.agentName || "—"}</td>
+                    <td>{p.phone || "—"}</td>
+                    <td style={{ whiteSpace: "nowrap" }}>{money(p.premium)}</td>
+                    <td>{fmtDate(p.dueDate)}</td>
+                    <td>{fmtDate(p.paidDate)}</td>
+                    <td>
                       {p.webPortal ? (
                         <a href={p.webPortal} style={{ color: "inherit" }}>
                           {p.webPortal}
@@ -198,20 +220,8 @@ export default async function InsurancePage({
                       ) : (
                         "—"
                       )}
-                    </div>
-                    <div>
-                      {p.allPolicies ? (
-                        <a href={p.allPolicies} style={{ color: "inherit" }}>
-                          {p.allPolicies}
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </div>
-                    <div>{p.bank || "—"}</div>
-                    <div>{p.bankNumber || "—"}</div>
-                    <div>{p.loanRef || "—"}</div>
-                    <div>
+                    </td>
+                    <td>
                       <div className="ll_rowActions">
                         <Link className="ll_btnSecondary" href={`/insurance/${p.id}/edit`}>
                           Edit
@@ -222,11 +232,11 @@ export default async function InsurancePage({
                           </button>
                         </form>
                       </div>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            </div>
+              </tbody>
+            </table>
           ) : (
             <div className="ll_notice">No insurance policies found.</div>
           )}
