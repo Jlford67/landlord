@@ -374,6 +374,72 @@ export default async function PropertyDetailPage({
           </div>
         </div>
 
+        {/* Property Tax */}
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
+            <div style={{ fontWeight: 700 }}>Property Tax</div>
+            <Link
+              className="ll_btnSecondary"
+              href={`/property-tax?propertyId=${property.id}`}
+            >
+              View all
+            </Link>
+          </div>
+
+          <div className="ll_list ll_insuranceMini">
+            <div className="ll_listHeader">
+              <div>Billing authority</div>
+              <div>Bill #</div>
+              <div>Parcel #</div>
+              <div>Annual</div>
+              <div>Due</div>
+              <div>Last paid</div>
+              <div>Phone</div>
+            </div>
+
+            <div className="ll_listBody">
+              {property.taxAccounts.length ? (
+                property.taxAccounts.map((t) => (
+                  <div key={t.id} className="ll_listRow">
+                    <div>{t.name ?? "—"}</div>
+                    <div>{t.billNumber ?? "—"}</div>
+                    <div>{t.parcel ?? "—"}</div>
+                    <div>
+                      <Money value={t.annualAmount} />
+                    </div>
+                    <div>{fmtDate(t.dueDate)}</div>
+                    <div>{fmtDate(t.lastPaid)}</div>
+                    <div>{t.phone ?? "—"}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="ll_listRow">
+                  <div className="ll_muted">(none)</div>
+                  <div />
+                  <div />
+                  <div />
+                  <div />
+                  <div />
+                  <div />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Loans / Tax */}
         <div
           style={{
@@ -398,22 +464,6 @@ export default async function PropertyDetailPage({
                 </div>
               ) : (
                 <div style={{ opacity: 0.75 }}>No loans yet.</div>
-              )}
-            </div>
-
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>Property tax</div>
-              {property.taxAccounts.length ? (
-                <div style={{ opacity: 0.9, lineHeight: 1.6 }}>
-                  {property.taxAccounts.map((t) => (
-                    <div key={t.id}>
-                      Annual <Money value={t.annualAmount} /> · Due {fmtDate(t.dueDate)} · Last paid{" "}
-                      {fmtDate(t.lastPaid)}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ opacity: 0.75 }}>No tax accounts yet.</div>
               )}
             </div>
           </div>
