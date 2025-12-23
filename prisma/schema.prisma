@@ -84,6 +84,7 @@ model Property {
   pmAssignments PropertyManagerAssignment[]
   leases        Lease[]
   transactions  Transaction[]
+  recurringTransactions RecurringTransaction[]
   notifications Notification[]
 }
 
@@ -260,6 +261,7 @@ model Category {
   children Category[] @relation("CategoryParent")
 
   transactions Transaction[]
+  recurringTransactions RecurringTransaction[]
 
   @@index([type])
   @@index([parentId])
@@ -289,6 +291,43 @@ model Transaction {
   @@index([categoryId])
   @@index([propertyId, deletedAt])
 
+}
+
+model RecurringTransaction {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  amountCents Int
+  memo        String?
+  dayOfMonth  Int      @default(1) // 1-28 recommended
+  startMonth  String   // "YYYY-MM"
+  endMonth    String?  // "YYYY-MM" optional
+  isActive    Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postings RecurringPosting[]
+
+  @@index([propertyId])
+  @@index([categoryId])
+}
+
+model RecurringPosting {
+  id                     String               @id @default(cuid())
+  recurringTransactionId String
+  recurringTransaction   RecurringTransaction @relation(fields: [recurringTransactionId], references: [id], onDelete: Cascade)
+
+  month               String // "YYYY-MM"
+  ledgerTransactionId String @unique
+  createdAt           DateTime @default(now())
+
+  @@unique([recurringTransactionId, month])
+  @@index([month])
 }
 
 model NotificationRule {
