@@ -69,10 +69,15 @@ function signedAmount(amountCents: number, categoryType: string) {
   return base;
 }
 
-function redirectToLedger(propertyId: string, month: string, msg?: string) {
+function redirectToLedger(propertyId: string, month: string, msg?: string, extra?: Record<string, string | undefined>) {
   const qs = new URLSearchParams();
   qs.set("month", month);
   if (msg) qs.set("msg", msg);
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (value) qs.set(key, value);
+    }
+  }
   redirect(`/properties/${propertyId}/ledger?${qs.toString()}`);
 }
 
@@ -104,26 +109,56 @@ async function createRecurringTransaction(formData: FormData) {
     currentMonth: (formData.get("currentMonth") as string | null) ?? undefined,
   };
 
+  // Debug proof: server console should show this line whenever the handler runs.
+  console.log("[recurring] createRecurringTransaction invoked", {
+    propertyId: raw.propertyId,
+    categoryId: raw.categoryId,
+    amount: raw.amount,
+    startMonth: raw.startMonth,
+    currentMonth: raw.currentMonth,
+  });
+
   const parsed = createRecurringSchema.safeParse(raw);
   if (!parsed.success) {
     const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
-    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error");
+    console.warn("[recurring] validation failed", { propertyId: raw.propertyId, issues: parsed.error.issues });
+    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { reason: "validation" });
   }
 
   const data = parsed.data;
 
-  await prisma.recurringTransaction.create({
-    data: {
+  try {
+    await prisma.recurringTransaction.create({
+      data: {
+        propertyId: data.propertyId,
+        categoryId: data.categoryId,
+        amountCents: data.amount,
+        memo: data.memo,
+        dayOfMonth: data.dayOfMonth,
+        startMonth: data.startMonth,
+        endMonth: data.endMonth || undefined,
+        isActive: data.isActive,
+      },
+    });
+  } catch (error) {
+    console.error("[recurring] failed to create recurring transaction", {
       propertyId: data.propertyId,
       categoryId: data.categoryId,
       amountCents: data.amount,
-      memo: data.memo,
-      dayOfMonth: data.dayOfMonth,
       startMonth: data.startMonth,
-      endMonth: data.endMonth || undefined,
+      endMonth: data.endMonth,
+      dayOfMonth: data.dayOfMonth,
       isActive: data.isActive,
-    },
-  });
+      error,
+    });
+
+    const viewMonth = raw.currentMonth || data.startMonth;
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
+      return redirectToLedger(data.propertyId, viewMonth, "recurring_missing_table");
+    }
+
+    return redirectToLedger(data.propertyId, viewMonth, "recurring_error", { reason: "exception" });
+  }
 
   const viewMonth = raw.currentMonth || data.startMonth;
   redirectToLedger(data.propertyId, viewMonth, "recurring_created");
@@ -258,6 +293,7 @@ export default async function PropertyLedgerPage({
   const month = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : ym(new Date());
 
   const msg = typeof sp.msg === "string" ? sp.msg : undefined;
+  const msgReason = typeof sp.reason === "string" ? sp.reason : undefined;
   const undoId = typeof sp.undoId === "string" ? sp.undoId : undefined;
 
   const { y, m0 } = parseMonth(month);
@@ -429,6 +465,17 @@ export default async function PropertyLedgerPage({
           {msg === "recurring_updated" ? <div className="ll_notice">Recurring item updated.</div> : null}
           {msg === "recurring_deleted" ? <div className="ll_notice">Recurring item deleted.</div> : null}
           {msg === "recurring_toggled" ? <div className="ll_notice">Recurring status updated.</div> : null}
+          {msg === "recurring_error" ? (
+            <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
+              Could not save recurring item. {msgReason === "validation" ? "Check all required fields and month order." : "Please try again."}
+            </div>
+          ) : null}
+          {msg === "recurring_missing_table" ? (
+            <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
+              Recurring tables are missing in your database. Run <code>npx prisma migrate dev</code> to apply{" "}
+              <code>recurring_transactions</code>.
+            </div>
+          ) : null}
           {!recurringTablesReady ? (
             <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
               Recurring tables are missing in your database. Run <code>npx prisma migrate dev</code> to apply{' '}
