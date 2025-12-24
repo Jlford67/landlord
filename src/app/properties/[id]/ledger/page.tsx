@@ -118,12 +118,22 @@ async function createRecurringTransaction(formData: FormData) {
     currentMonth: raw.currentMonth,
   });
 
+  if (!raw.categoryId) {
+    const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
+    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail: "missing_category" });
+  }
+
+  if (!raw.startMonth) {
+    const viewMonth = raw.currentMonth || ym(new Date());
+    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail: "missing_startMonth" });
+  }
+
   const parsed = createRecurringSchema.safeParse(raw);
   if (!parsed.success) {
     const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
     console.warn("[recurring] validation failed", { propertyId: raw.propertyId, issues: parsed.error.issues });
     const detail = parsed.error.issues.map((i) => i.message).join("; ");
-    return redirectToLedger(raw.propertyId, viewMonth, "recurring-error", { reason: "validation", detail });
+    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { reason: "validation", detail });
   }
 
   const data = parsed.data;
@@ -143,7 +153,7 @@ async function createRecurringTransaction(formData: FormData) {
     });
     console.log("[recurring] created", { id: created.id, propertyId: data.propertyId, month: data.startMonth });
   } catch (error) {
-    console.error("[recurring] failed to create recurring transaction", {
+    console.error("[recurring] create failed", {
       propertyId: data.propertyId,
       categoryId: data.categoryId,
       amountCents: data.amount,
@@ -156,14 +166,14 @@ async function createRecurringTransaction(formData: FormData) {
 
     const viewMonth = raw.currentMonth || data.startMonth;
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
-      return redirectToLedger(data.propertyId, viewMonth, "recurring-missing-table");
+      return redirectToLedger(data.propertyId, viewMonth, "recurring_error", { detail: "missing_table" });
     }
 
-    return redirectToLedger(data.propertyId, viewMonth, "recurring-error", { reason: "exception", detail: "Unexpected error while saving." });
+    return redirectToLedger(data.propertyId, viewMonth, "recurring_error", { detail: "prisma_error" });
   }
 
   const viewMonth = raw.currentMonth || data.startMonth;
-  redirectToLedger(data.propertyId, viewMonth, "recurring-created");
+  redirectToLedger(data.propertyId, viewMonth, "recurring_created");
 }
 
 async function updateRecurringTransaction(formData: FormData) {
@@ -187,7 +197,7 @@ async function updateRecurringTransaction(formData: FormData) {
   if (!parsed.success) {
     const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
     const detail = parsed.error.issues.map((i) => i.message).join("; ");
-    return redirectToLedger(raw.propertyId, viewMonth, "recurring-error", { reason: "validation", detail });
+    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { reason: "validation", detail });
   }
 
   const data = parsed.data;
@@ -253,10 +263,10 @@ async function postRecurringForMonth(formData: FormData) {
     scheduled = await getScheduledRecurringForMonth(propertyId, month);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
-      return redirectToLedger(propertyId, month, "recurring-missing-table");
+      return redirectToLedger(propertyId, month, "recurring_error", { detail: "missing_table" });
     }
     console.error("[recurring] failed to load scheduled recurring", { propertyId, month, error });
-    return redirectToLedger(propertyId, month, "recurring-error", { reason: "exception", detail: "Failed to load scheduled items." });
+    return redirectToLedger(propertyId, month, "recurring_error", { detail: "prisma_error_load" });
   }
 
   const toPost = scheduled.filter((r) => !r.alreadyPosted && r.category);
@@ -303,9 +313,9 @@ async function postRecurringForMonth(formData: FormData) {
   } catch (error) {
     console.error("[recurring] failed to post recurring", { propertyId, month, error });
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
-      return redirectToLedger(propertyId, month, "recurring-missing-table");
+      return redirectToLedger(propertyId, month, "recurring_error", { detail: "missing_table" });
     }
-    return redirectToLedger(propertyId, month, "recurring-error", { reason: "exception", detail: "Failed to post recurring items." });
+    return redirectToLedger(propertyId, month, "recurring_error", { detail: "prisma_error_post" });
   }
 
   if (postedCount === 0) {
@@ -464,6 +474,27 @@ export default async function PropertyLedgerPage({
         .reduce((acc, r) => acc + signedAmount(r.amountCents, r.category.type), 0)
     : 0;
 
+  const friendlyRecurringError = (detail?: string, reason?: string) => {
+    if (!detail && reason === "validation") return "Validation failed. Check required fields and month order.";
+    switch (detail) {
+      case "missing_category":
+        return "Select a category for this recurring item.";
+      case "missing_startMonth":
+        return "Provide a start month for this recurring item.";
+      case "prisma_error":
+        return "Unexpected database error while saving. Please retry.";
+      case "missing_table":
+        return "Recurring tables are missing. Run `npx prisma migrate dev`.";
+      case "prisma_error_load":
+        return "Could not load scheduled recurring items.";
+      case "prisma_error_post":
+        return "Could not post recurring items.";
+      default:
+        if (detail) return detail;
+        return "Please try again.";
+    }
+  };
+
   const monthOptions: string[] = [];
   const now = new Date();
   for (let i = 0; i < 24; i++) {
@@ -500,7 +531,7 @@ export default async function PropertyLedgerPage({
         <div className="ll_panelInner">
           {msg === "deleted" ? <div className="ll_notice">Transaction deleted.</div> : null}
           {msg === "postedRecurring" ? <div className="ll_notice">Recurring posted for this month.</div> : null}
-          {msg === "recurring_created" || msg === "recurring-created" ? <div className="ll_notice">Recurring item added.</div> : null}
+          {msg === "recurring_created" ? <div className="ll_notice">Recurring item added.</div> : null}
           {msg === "recurring_updated" ? <div className="ll_notice">Recurring item updated.</div> : null}
           {msg === "recurring_deleted" ? <div className="ll_notice">Recurring item deleted.</div> : null}
           {msg === "recurring_toggled" ? <div className="ll_notice">Recurring status updated.</div> : null}
@@ -512,13 +543,7 @@ export default async function PropertyLedgerPage({
               No recurring items were posted for {monthLabel(month)}.{msgDetail ? ` ${msgDetail}` : ""}
             </div>
           ) : null}
-          {msg === "recurring_error" || msg === "recurring-error" ? (
-            <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
-              Could not save recurring item.{msgReason === "validation" ? " Check all required fields and month order." : " Please try again."}
-              {msgDetail ? ` (${msgDetail})` : ""}
-            </div>
-          ) : null}
-          {msg === "recurring_missing_table" || msg === "recurring-missing-table" ? (
+          {msg === "recurring_error" && msgDetail === "missing_table" ? (
             <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
               Recurring tables are missing in your database. Run <code>npx prisma migrate dev</code> to apply{" "}
               <code>recurring_transactions</code>.
@@ -589,6 +614,12 @@ export default async function PropertyLedgerPage({
               <div className="ll_muted" style={{ marginBottom: 10 }}>
                 Set up monthly items like HOA. Post them into the ledger when ready.
               </div>
+              {msg === "recurring_created" ? <div className="ll_notice">Recurring item added.</div> : null}
+              {msg === "recurring_error" ? (
+                <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
+                  Could not add recurring item: {friendlyRecurringError(msgDetail, msgReason)}
+                </div>
+              ) : null}
               {categories.length === 0 ? (
                 <div className="ll_notice" style={{ background: "rgba(255, 193, 7, 0.12)", color: "#8a6d3b" }}>
                   No categories available. Create categories first so you can assign recurring items.
