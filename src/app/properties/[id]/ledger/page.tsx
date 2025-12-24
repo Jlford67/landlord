@@ -122,13 +122,14 @@ async function createRecurringTransaction(formData: FormData) {
   if (!parsed.success) {
     const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
     console.warn("[recurring] validation failed", { propertyId: raw.propertyId, issues: parsed.error.issues });
-    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { reason: "validation" });
+    const detail = parsed.error.issues.map((i) => i.message).join("; ");
+    return redirectToLedger(raw.propertyId, viewMonth, "recurring-error", { reason: "validation", detail });
   }
 
   const data = parsed.data;
 
   try {
-    await prisma.recurringTransaction.create({
+    const created = await prisma.recurringTransaction.create({
       data: {
         propertyId: data.propertyId,
         categoryId: data.categoryId,
@@ -140,6 +141,7 @@ async function createRecurringTransaction(formData: FormData) {
         isActive: data.isActive,
       },
     });
+    console.log("[recurring] created", { id: created.id, propertyId: data.propertyId, month: data.startMonth });
   } catch (error) {
     console.error("[recurring] failed to create recurring transaction", {
       propertyId: data.propertyId,
@@ -154,14 +156,14 @@ async function createRecurringTransaction(formData: FormData) {
 
     const viewMonth = raw.currentMonth || data.startMonth;
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
-      return redirectToLedger(data.propertyId, viewMonth, "recurring_missing_table");
+      return redirectToLedger(data.propertyId, viewMonth, "recurring-missing-table");
     }
 
-    return redirectToLedger(data.propertyId, viewMonth, "recurring_error", { reason: "exception" });
+    return redirectToLedger(data.propertyId, viewMonth, "recurring-error", { reason: "exception", detail: "Unexpected error while saving." });
   }
 
   const viewMonth = raw.currentMonth || data.startMonth;
-  redirectToLedger(data.propertyId, viewMonth, "recurring_created");
+  redirectToLedger(data.propertyId, viewMonth, "recurring-created");
 }
 
 async function updateRecurringTransaction(formData: FormData) {
@@ -245,37 +247,71 @@ async function postRecurringForMonth(formData: FormData) {
   const propertyId = String(formData.get("propertyId") || "");
   const month = String(formData.get("month") || ym(new Date()));
 
-  const scheduled = await getScheduledRecurringForMonth(propertyId, month);
+  let scheduled: Awaited<ReturnType<typeof getScheduledRecurringForMonth>> = [];
+  try {
+    scheduled = await getScheduledRecurringForMonth(propertyId, month);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
+      return redirectToLedger(propertyId, month, "recurring-missing-table");
+    }
+    console.error("[recurring] failed to load scheduled recurring", { propertyId, month, error });
+    return redirectToLedger(propertyId, month, "recurring-error", { reason: "exception", detail: "Failed to load scheduled items." });
+  }
+
   const toPost = scheduled.filter((r) => !r.alreadyPosted && r.category);
 
   if (toPost.length === 0) {
-    return redirectToLedger(propertyId, month);
+    const detail =
+      scheduled.length === 0
+        ? "No active recurring items in range for this month."
+        : "Everything for this month is already posted.";
+    return redirectToLedger(propertyId, month, "recurring-none", { detail });
   }
 
-  await prisma.$transaction(async (tx) => {
-    for (const rec of toPost) {
-      const txn = await tx.transaction.create({
-        data: {
-          propertyId,
-          date: dueDateForMonth(month, rec.dayOfMonth),
-          categoryId: rec.categoryId,
-          amount: signedAmount(rec.amountCents, rec.category.type),
-          memo: rec.memo ? `Recurring: ${rec.memo}` : `Recurring: ${rec.category.name}`,
-          source: "manual",
-        },
-      });
+  let postedCount = 0;
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const rec of toPost) {
+        const existing = await tx.recurringPosting.findFirst({
+          where: { recurringTransactionId: rec.id, month },
+          select: { id: true },
+        });
+        if (existing) continue;
 
-      await tx.recurringPosting.create({
-        data: {
-          recurringTransactionId: rec.id,
-          month,
-          ledgerTransactionId: txn.id,
-        },
-      });
+        const txn = await tx.transaction.create({
+          data: {
+            propertyId,
+            date: dueDateForMonth(month, rec.dayOfMonth),
+            categoryId: rec.categoryId,
+            amount: signedAmount(rec.amountCents, rec.category.type),
+            memo: rec.memo ? `Recurring: ${rec.memo}` : `Recurring: ${rec.category.name}`,
+            source: "manual",
+          },
+        });
+
+        await tx.recurringPosting.create({
+          data: {
+            recurringTransactionId: rec.id,
+            month,
+            ledgerTransactionId: txn.id,
+          },
+        });
+        postedCount += 1;
+      }
+    });
+  } catch (error) {
+    console.error("[recurring] failed to post recurring", { propertyId, month, error });
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
+      return redirectToLedger(propertyId, month, "recurring-missing-table");
     }
-  });
+    return redirectToLedger(propertyId, month, "recurring-error", { reason: "exception", detail: "Failed to post recurring items." });
+  }
 
-  redirectToLedger(propertyId, month, "postedRecurring");
+  if (postedCount === 0) {
+    return redirectToLedger(propertyId, month, "recurring-none", { detail: "Nothing new to post for this month." });
+  }
+
+  redirectToLedger(propertyId, month, "recurring-posted", { posted: String(postedCount) });
 }
 
 export default async function PropertyLedgerPage({
@@ -294,6 +330,8 @@ export default async function PropertyLedgerPage({
 
   const msg = typeof sp.msg === "string" ? sp.msg : undefined;
   const msgReason = typeof sp.reason === "string" ? sp.reason : undefined;
+  const msgDetail = typeof sp.detail === "string" ? sp.detail : undefined;
+  const msgPosted = typeof sp.posted === "string" ? sp.posted : undefined;
   const undoId = typeof sp.undoId === "string" ? sp.undoId : undefined;
 
   const { y, m0 } = parseMonth(month);
@@ -461,16 +499,25 @@ export default async function PropertyLedgerPage({
         <div className="ll_panelInner">
           {msg === "deleted" ? <div className="ll_notice">Transaction deleted.</div> : null}
           {msg === "postedRecurring" ? <div className="ll_notice">Recurring posted for this month.</div> : null}
-          {msg === "recurring_created" ? <div className="ll_notice">Recurring item added.</div> : null}
+          {msg === "recurring_created" || msg === "recurring-created" ? <div className="ll_notice">Recurring item added.</div> : null}
           {msg === "recurring_updated" ? <div className="ll_notice">Recurring item updated.</div> : null}
           {msg === "recurring_deleted" ? <div className="ll_notice">Recurring item deleted.</div> : null}
           {msg === "recurring_toggled" ? <div className="ll_notice">Recurring status updated.</div> : null}
-          {msg === "recurring_error" ? (
-            <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
-              Could not save recurring item. {msgReason === "validation" ? "Check all required fields and month order." : "Please try again."}
+          {msg === "recurring-posted" ? (
+            <div className="ll_notice">Posted {msgPosted || "recurring"} item{msgPosted === "1" ? "" : "s"} for {monthLabel(month)}.</div>
+          ) : null}
+          {msg === "recurring-none" ? (
+            <div className="ll_notice">
+              No recurring items were posted for {monthLabel(month)}.{msgDetail ? ` ${msgDetail}` : ""}
             </div>
           ) : null}
-          {msg === "recurring_missing_table" ? (
+          {msg === "recurring_error" || msg === "recurring-error" ? (
+            <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
+              Could not save recurring item.{msgReason === "validation" ? " Check all required fields and month order." : " Please try again."}
+              {msgDetail ? ` (${msgDetail})` : ""}
+            </div>
+          ) : null}
+          {msg === "recurring_missing_table" || msg === "recurring-missing-table" ? (
             <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
               Recurring tables are missing in your database. Run <code>npx prisma migrate dev</code> to apply{" "}
               <code>recurring_transactions</code>.
@@ -541,6 +588,11 @@ export default async function PropertyLedgerPage({
               <div className="ll_muted" style={{ marginBottom: 10 }}>
                 Set up monthly items like HOA. Post them into the ledger when ready.
               </div>
+              {categories.length === 0 ? (
+                <div className="ll_notice" style={{ background: "rgba(255, 193, 7, 0.12)", color: "#8a6d3b" }}>
+                  No categories available. Create categories first so you can assign recurring items.
+                </div>
+              ) : null}
               {recurringTablesReady ? (
                 <>
                   <div style={{ overflowX: "auto" }}>
