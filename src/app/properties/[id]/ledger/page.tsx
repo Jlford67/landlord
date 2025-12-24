@@ -142,6 +142,15 @@ async function createRecurringTransaction(formData: FormData) {
 
     const data = parsed.data;
 
+    console.log("[recurring] create", {
+      propertyId: data.propertyId,
+      categoryId: data.categoryId,
+      amount: data.amount,
+      startMonth: data.startMonth,
+      dayOfMonth: data.dayOfMonth,
+      isActive: data.isActive,
+    });
+
     const created = await prisma.recurringTransaction.create({
       data: {
         propertyId: data.propertyId,
@@ -475,6 +484,8 @@ export default async function PropertyLedgerPage({
         return "Provide a start month for this recurring item.";
       case "invalid_amount":
         return "Enter a valid amount.";
+      case "validation_error":
+        return "Validation failed. Check required fields and month order.";
       case "prisma_error":
         return "Unexpected database error while saving. Please retry.";
       case "missing_table":
