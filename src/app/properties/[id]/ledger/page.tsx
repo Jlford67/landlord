@@ -126,6 +126,12 @@ async function createRecurringTransaction(formData: FormData) {
       return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail: "missing_category" });
     }
 
+    if (raw.amount === "" || raw.amount === null) {
+      const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
+      console.error("[recurring] create failed", { detail: "missing_amount", propertyId: raw.propertyId });
+      return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail: "missing_amount" });
+    }
+
     if (!raw.startMonth) {
       const viewMonth = raw.currentMonth || ym(new Date());
       console.error("[recurring] create failed", { detail: "missing_startMonth", propertyId: raw.propertyId });
@@ -377,6 +383,7 @@ export default async function PropertyLedgerPage({
   }
 
   const categories = await prisma.category.findMany({
+    where: { active: true },
     orderBy: [{ type: "asc" }, { name: "asc" }],
     select: { id: true, name: true, type: true, parentId: true },
   });
@@ -482,6 +489,8 @@ export default async function PropertyLedgerPage({
         return "Select a category for this recurring item.";
       case "missing_startMonth":
         return "Provide a start month for this recurring item.";
+      case "missing_amount":
+        return "Enter an amount.";
       case "invalid_amount":
         return "Enter a valid amount.";
       case "validation_error":
@@ -586,6 +595,15 @@ export default async function PropertyLedgerPage({
               <h2 style={{ marginTop: 0 }}>Recurring</h2>
               <div className="ll_muted" style={{ marginBottom: 10 }}>
                 Set up monthly items like HOA. Post them into the ledger when ready.
+              </div>
+              <div className="ll_notice" style={{ background: "rgba(0,0,0,0.04)", color: "#333" }}>
+                Loaded categories: {categories.length}
+                {categories.length === 0 ? (
+                  <span>
+                    {" "}
+                    • No categories found. Go to <a href="/categories">/categories</a> and add an EXPENSE category first.
+                  </span>
+                ) : null}
               </div>
               {msg === "recurring_created" ? <div className="ll_notice" style={{ background: "rgba(93, 211, 166, 0.12)", color: "#2e8b57" }}>Recurring item added.</div> : null}
               {msg === "recurring_error" ? (
