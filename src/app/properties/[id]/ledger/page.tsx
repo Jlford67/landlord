@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import React from "react";
 import { dueDateForMonth, getScheduledRecurringForMonth } from "@/lib/recurring";
 import { createRecurringSchema, updateRecurringSchema } from "@/lib/validation/recurring";
+import { MonthPicker } from "@/components/ledger/MonthPicker";
 
 function ym(d: Date) {
   const y = d.getFullYear();
@@ -557,39 +558,7 @@ export default async function PropertyLedgerPage({
           ) : null}
 
           <div className="ll_rowBetween" style={{ alignItems: "flex-end", gap: 12, marginTop: 10 }}>
-            <div>
-              <div className="ll_muted">Month</div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <a className="ll_btnSecondary" href={`/properties/${property.id}/ledger?month=${ym(new Date())}`}>
-                  This month
-                </a>
-                <a
-                  className="ll_btnSecondary"
-                  href={`/properties/${property.id}/ledger?month=${ym(
-                    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1)
-                  )}`}
-                >
-                  Last month
-                </a>
-                <form
-                  method="get"
-                  action={`/properties/${property.id}/ledger`}
-                  style={{ display: "flex", gap: 8 }}
-                  suppressHydrationWarning
-                >
-                  <select name="month" className="ll_input" defaultValue={month} suppressHydrationWarning>
-                    {monthOptions.map((m) => (
-                      <option key={m} value={m}>
-                        {monthLabel(m)}
-                      </option>
-                    ))}
-                  </select>
-                  <button className="ll_btnSecondary" type="submit">
-                    Go
-                  </button>
-                </form>
-              </div>
-            </div>
+            <MonthPicker propertyId={property.id} month={month} monthOptions={monthOptions} />
 
             <div style={{ textAlign: "right" }}>
               <div className="ll_muted">Summary</div>
@@ -685,7 +654,6 @@ export default async function PropertyLedgerPage({
                                                 name="categoryId"
                                                 defaultValue={r.categoryId}
                                                 required
-                                                suppressHydrationWarning
                                               >
                                                 <option value="">Select…</option>
                                                 {categories.map((c) => (
@@ -707,7 +675,6 @@ export default async function PropertyLedgerPage({
                                                 step="0.01"
                                                 defaultValue={(r.amountCents / 100).toFixed(2)}
                                                 required
-                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -720,7 +687,6 @@ export default async function PropertyLedgerPage({
                                                 name="memo"
                                                 type="text"
                                                 defaultValue={r.memo ?? ""}
-                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -736,7 +702,6 @@ export default async function PropertyLedgerPage({
                                                 max={28}
                                                 defaultValue={r.dayOfMonth}
                                                 required
-                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -750,7 +715,6 @@ export default async function PropertyLedgerPage({
                                                 type="month"
                                                 defaultValue={r.startMonth}
                                                 required
-                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -763,7 +727,6 @@ export default async function PropertyLedgerPage({
                                                 name="endMonth"
                                                 type="month"
                                                 defaultValue={r.endMonth ?? ""}
-                                                suppressHydrationWarning
                                               />
                                             </div>
                                           </div>
@@ -808,7 +771,7 @@ export default async function PropertyLedgerPage({
                   <div className="ll_panel" style={{ marginTop: 12 }}>
                     <div className="ll_panelInner">
                       <h3 style={{ marginTop: 0 }}>Add recurring</h3>
-                      <form className="ll_form" action={createRecurringTransaction} suppressHydrationWarning>
+                      <form className="ll_form" action={createRecurringTransaction}>
                         <input type="hidden" name="propertyId" value={property.id} />
                         <input type="hidden" name="currentMonth" value={month} />
                         <div className="ll_grid2">
@@ -816,7 +779,7 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-categoryId">
                               Category
                             </label>
-                            <select className="ll_input" id="rec-categoryId" name="categoryId" required suppressHydrationWarning>
+                            <select className="ll_input" id="rec-categoryId" name="categoryId" required>
                               <option value="">Select…</option>
                               {categories.map((c) => (
                                 <option key={c.id} value={c.id}>
@@ -830,7 +793,7 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-amount">
                               Amount
                             </label>
-                            <input className="ll_input" id="rec-amount" name="amount" type="number" step="0.01" required suppressHydrationWarning />
+                            <input className="ll_input" id="rec-amount" name="amount" type="number" step="0.01" required />
                             <div className="ll_muted" style={{ marginTop: 6 }}>
                               Enter a positive number. (Direction is based on category.)
                             </div>
@@ -840,7 +803,7 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-memo">
                               Memo
                             </label>
-                            <input className="ll_input" id="rec-memo" name="memo" type="text" suppressHydrationWarning />
+                            <input className="ll_input" id="rec-memo" name="memo" type="text" />
                           </div>
 
                           <div>
@@ -856,7 +819,6 @@ export default async function PropertyLedgerPage({
                                 max={28}
                                 defaultValue={1}
                                 required
-                                suppressHydrationWarning
                               />
                           </div>
 
@@ -871,7 +833,6 @@ export default async function PropertyLedgerPage({
                               type="month"
                               defaultValue={month}
                               required
-                              suppressHydrationWarning
                             />
                           </div>
 
@@ -879,7 +840,7 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-end">
                               End month (optional)
                             </label>
-                            <input className="ll_input" id="rec-end" name="endMonth" type="month" suppressHydrationWarning />
+                            <input className="ll_input" id="rec-end" name="endMonth" type="month" />
                           </div>
                         </div>
 
@@ -888,7 +849,7 @@ export default async function PropertyLedgerPage({
                         </label>
 
                         <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                          <button className="ll_btn" type="submit" suppressHydrationWarning>
+                          <button className="ll_btn" type="submit">
                             Add recurring
                           </button>
                         </div>
@@ -916,7 +877,6 @@ export default async function PropertyLedgerPage({
                 <button
                   className="ll_btn"
                   type="submit"
-                  suppressHydrationWarning
                 >
                   Post recurring for {monthLabel(month)}
                 </button>
@@ -948,7 +908,7 @@ export default async function PropertyLedgerPage({
           <div className="ll_panel" style={{ marginTop: 12 }}>
             <div className="ll_panelInner">
               <h2 style={{ marginTop: 0 }}>Add transaction</h2>
-              <form className="ll_form" action={`/api/properties/${property.id}/transactions`} method="post" suppressHydrationWarning>
+              <form className="ll_form" action={`/api/properties/${property.id}/transactions`} method="post">
                 <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
                 <div className="ll_grid2">
                   <div>
@@ -962,7 +922,6 @@ export default async function PropertyLedgerPage({
                       type="date"
                       defaultValue={fmtDate(new Date())}
                       required
-                      suppressHydrationWarning
                     />
                   </div>
 
@@ -970,7 +929,7 @@ export default async function PropertyLedgerPage({
                     <label className="ll_label" htmlFor="categoryId">
                       Category
                     </label>
-                    <select className="ll_input" id="categoryId" name="categoryId" required suppressHydrationWarning>
+                    <select className="ll_input" id="categoryId" name="categoryId" required>
                       <option value="">Select…</option>
                       {categories.map((c) => (
                         <option key={c.id} value={c.id}>
@@ -984,7 +943,7 @@ export default async function PropertyLedgerPage({
                     <label className="ll_label" htmlFor="amount">
                       Amount
                     </label>
-                          <input className="ll_input" id="amount" name="amount" type="number" step="0.01" required suppressHydrationWarning />
+                    <input className="ll_input" id="amount" name="amount" type="number" step="0.01" required />
                     <div className="ll_muted" style={{ marginTop: 6 }}>
                       Enter a positive number. (We will handle expense/income direction based on category.)
                     </div>
@@ -994,12 +953,12 @@ export default async function PropertyLedgerPage({
                     <label className="ll_label" htmlFor="memo">
                       Memo
                     </label>
-                    <input className="ll_input" id="memo" name="memo" type="text" suppressHydrationWarning />
+                    <input className="ll_input" id="memo" name="memo" type="text" />
                   </div>
                 </div>
 
                 <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                  <button className="ll_btn" type="submit" suppressHydrationWarning>
+                  <button className="ll_btn" type="submit">
                     Add
                   </button>
                 </div>
@@ -1076,24 +1035,24 @@ export default async function PropertyLedgerPage({
                                       style={{ display: "inline" }}
                                     >
                                       <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
-                                      <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
+                                      <button className="ll_btnSecondary" type="submit">
                                         Delete
                                       </button>
                                     </form>
                                   </>
                                 ) : showUndo ? (
-                                  <form
-                                    action={`/api/properties/${property.id}/transactions/${t.id}/undelete`}
-                                    method="post"
-                                    style={{ display: "inline" }}
-                                  >
-                                    <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
-                                    <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-                                      Undo
-                                    </button>
-                                  </form>
-                                ) : (
-                                  <span className="ll_muted">Deleted</span>
+                                    <form
+                                      action={`/api/properties/${property.id}/transactions/${t.id}/undelete`}
+                                      method="post"
+                                      style={{ display: "inline" }}
+                                    >
+                                      <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
+                                      <button className="ll_btnSecondary" type="submit">
+                                        Undo
+                                      </button>
+                                    </form>
+                                  ) : (
+                                    <span className="ll_muted">Deleted</span>
                                 )}
                               </div>
                             </td>
