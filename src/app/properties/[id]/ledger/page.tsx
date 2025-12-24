@@ -278,7 +278,7 @@ export default async function PropertyLedgerPage({
 
   if (!property) {
     return (
-      <div className="ll_page">
+      <div className="ll_page" suppressHydrationWarning>
         <div className="ll_panel">
           <div className="ll_panelInner">
             <h1>Ledger</h1>
@@ -397,7 +397,7 @@ export default async function PropertyLedgerPage({
   }
 
   return (
-    <div className="ll_page">
+    <div className="ll_page" suppressHydrationWarning>
       <div className="ll_panel">
         <div className="ll_rowBetween">
           <div>
@@ -451,7 +451,12 @@ export default async function PropertyLedgerPage({
                 >
                   Last month
                 </a>
-                <form method="get" action={`/properties/${property.id}/ledger`} style={{ display: "flex", gap: 8 }}>
+                <form
+                  method="get"
+                  action={`/properties/${property.id}/ledger`}
+                  style={{ display: "flex", gap: 8 }}
+                  suppressHydrationWarning
+                >
                   <select name="month" className="ll_input" defaultValue={month}>
                     {monthOptions.map((m) => (
                       <option key={m} value={m}>
@@ -666,7 +671,7 @@ export default async function PropertyLedgerPage({
                   <div className="ll_panel" style={{ marginTop: 12 }}>
                     <div className="ll_panelInner">
                       <h3 style={{ marginTop: 0 }}>Add recurring</h3>
-                      <form className="ll_form" action={createRecurringTransaction}>
+                      <form className="ll_form" action={createRecurringTransaction} suppressHydrationWarning>
                         <input type="hidden" name="propertyId" value={property.id} />
                         <input type="hidden" name="currentMonth" value={month} />
                         <div className="ll_grid2">
@@ -805,7 +810,7 @@ export default async function PropertyLedgerPage({
           <div className="ll_panel" style={{ marginTop: 12 }}>
             <div className="ll_panelInner">
               <h2 style={{ marginTop: 0 }}>Add transaction</h2>
-              <form className="ll_form" action={`/api/properties/${property.id}/transactions`} method="post">
+              <form className="ll_form" action={`/api/properties/${property.id}/transactions`} method="post" suppressHydrationWarning>
                 <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
                 <div className="ll_grid2">
                   <div>
