@@ -98,48 +98,50 @@ async function createRecurringTransaction(formData: FormData) {
   "use server";
   await requireUser();
 
-  const raw: RecurringForm = {
-    propertyId: String(formData.get("propertyId") || ""),
-    categoryId: String(formData.get("categoryId") || ""),
-    amount: formData.get("amount") || "0",
-    memo: (formData.get("memo") as string | null) ?? undefined,
-    dayOfMonth: formData.get("dayOfMonth") || "1",
-    startMonth: String(formData.get("startMonth") || ""),
-    endMonth: (formData.get("endMonth") as string | null) ?? undefined,
-    isActive: (formData.get("isActive") as string | null) ?? undefined,
-    currentMonth: (formData.get("currentMonth") as string | null) ?? undefined,
-  };
-
-  // Debug proof: server console should show this line whenever the handler runs.
-  console.log("[recurring] createRecurringTransaction invoked", {
-    propertyId: raw.propertyId,
-    categoryId: raw.categoryId,
-    amount: raw.amount,
-    startMonth: raw.startMonth,
-    currentMonth: raw.currentMonth,
-  });
-
-  if (!raw.categoryId) {
-    const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
-    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail: "missing_category" });
-  }
-
-  if (!raw.startMonth) {
-    const viewMonth = raw.currentMonth || ym(new Date());
-    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail: "missing_startMonth" });
-  }
-
-  const parsed = createRecurringSchema.safeParse(raw);
-  if (!parsed.success) {
-    const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
-    console.warn("[recurring] validation failed", { propertyId: raw.propertyId, issues: parsed.error.issues });
-    const detail = parsed.error.issues.map((i) => i.message).join("; ");
-    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { reason: "validation", detail });
-  }
-
-  const data = parsed.data;
-
   try {
+    const raw: RecurringForm = {
+      propertyId: String(formData.get("propertyId") || ""),
+      categoryId: String(formData.get("categoryId") || ""),
+      amount: formData.get("amount") || "0",
+      memo: (formData.get("memo") as string | null) ?? undefined,
+      dayOfMonth: formData.get("dayOfMonth") || "1",
+      startMonth: String(formData.get("startMonth") || ""),
+      endMonth: (formData.get("endMonth") as string | null) ?? undefined,
+      isActive: (formData.get("isActive") as string | null) ?? undefined,
+      currentMonth: (formData.get("currentMonth") as string | null) ?? undefined,
+    };
+
+    // Debug proof: server console should show this line whenever the handler runs.
+    console.log("[recurring] createRecurringTransaction invoked", {
+      propertyId: raw.propertyId,
+      categoryId: raw.categoryId,
+      amount: raw.amount,
+      startMonth: raw.startMonth,
+      currentMonth: raw.currentMonth,
+    });
+
+    if (!raw.categoryId) {
+      const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
+      console.error("[recurring] create failed", { detail: "missing_category", propertyId: raw.propertyId });
+      return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail: "missing_category" });
+    }
+
+    if (!raw.startMonth) {
+      const viewMonth = raw.currentMonth || ym(new Date());
+      console.error("[recurring] create failed", { detail: "missing_startMonth", propertyId: raw.propertyId });
+      return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail: "missing_startMonth" });
+    }
+
+    const parsed = createRecurringSchema.safeParse(raw);
+    if (!parsed.success) {
+      const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
+      const detail = parsed.error.issues.map((i) => i.message).join("; ");
+      console.error("[recurring] create failed", { detail, propertyId: raw.propertyId, issues: parsed.error.issues });
+      return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { reason: "validation", detail });
+    }
+
+    const data = parsed.data;
+
     const created = await prisma.recurringTransaction.create({
       data: {
         propertyId: data.propertyId,
@@ -153,28 +155,18 @@ async function createRecurringTransaction(formData: FormData) {
       },
     });
     console.log("[recurring] created", { id: created.id, propertyId: data.propertyId, month: data.startMonth });
-  } catch (error) {
-    console.error("[recurring] create failed", {
-      propertyId: data.propertyId,
-      categoryId: data.categoryId,
-      amountCents: data.amount,
-      startMonth: data.startMonth,
-      endMonth: data.endMonth,
-      dayOfMonth: data.dayOfMonth,
-      isActive: data.isActive,
-      error,
-    });
 
     const viewMonth = raw.currentMonth || data.startMonth;
+    redirectToLedger(data.propertyId, viewMonth, "recurring_created");
+  } catch (error) {
+    console.error("[recurring] create failed", { detail: "prisma_error", err: error });
+    const propertyId = String(formData.get("propertyId") || "");
+    const currentMonth = String(formData.get("currentMonth") || formData.get("startMonth") || ym(new Date()));
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
-      return redirectToLedger(data.propertyId, viewMonth, "recurring_error", { detail: "missing_table" });
+      return redirectToLedger(propertyId, currentMonth, "recurring_error", { detail: "missing_table" });
     }
-
-    return redirectToLedger(data.propertyId, viewMonth, "recurring_error", { detail: "prisma_error" });
+    return redirectToLedger(propertyId, currentMonth, "recurring_error", { detail: "prisma_error" });
   }
-
-  const viewMonth = raw.currentMonth || data.startMonth;
-  redirectToLedger(data.propertyId, viewMonth, "recurring_created");
 }
 
 async function updateRecurringTransaction(formData: FormData) {
@@ -364,7 +356,7 @@ export default async function PropertyLedgerPage({
 
   if (!property) {
     return (
-      <div className="ll_page" suppressHydrationWarning>
+      <div className="ll_page">
         <div className="ll_panel">
           <div className="ll_panelInner">
             <h1>Ledger</h1>
@@ -504,7 +496,7 @@ export default async function PropertyLedgerPage({
   }
 
   return (
-    <div className="ll_page" suppressHydrationWarning>
+    <div className="ll_page">
       <div className="ll_panel">
         <div className="ll_rowBetween">
           <div>

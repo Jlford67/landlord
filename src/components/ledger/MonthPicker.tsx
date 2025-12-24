@@ -1,8 +1,8 @@
-\"use client\";
+"use client";
 
-import Link from \"next/link\";
-import { useRouter } from \"next/navigation\";
-import { useCallback, useState } from \"react\";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 
 type Props = {
   propertyId: string;
@@ -11,17 +11,17 @@ type Props = {
 };
 
 function monthLabel(month: string) {
-  const [y, m] = month.split(\"-\");
+  const [y, m] = month.split("-");
   const mm = Number(m);
-  const names = [\"Jan\", \"Feb\", \"Mar\", \"Apr\", \"May\", \"Jun\", \"Jul\", \"Aug\", \"Sep\", \"Oct\", \"Nov\", \"Dec\"];
+  const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return `${names[mm - 1]} ${y}`;
 }
 
 function adjacentMonth(month: string, delta: number) {
-  const [y, m] = month.split(\"-\").map(Number);
+  const [y, m] = month.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1 + delta, 1));
   const yy = date.getUTCFullYear();
-  const mm = String(date.getUTCMonth() + 1).padStart(2, \"0\");
+  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
   return `${yy}-${mm}`;
 }
 
@@ -54,23 +54,23 @@ export function MonthPicker({ propertyId, month, monthOptions }: Props) {
 
   return (
     <div>
-      <div className=\"ll_muted\">Month</div>
-      <div style={{ display: \"flex\", gap: 8, alignItems: \"center\", flexWrap: \"wrap\" }}>
-        <Link className=\"ll_btnSecondary\" href={`/properties/${propertyId}/ledger?month=${prevMonth}`}>
+      <div className="ll_muted">Month</div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${prevMonth}`}>
           Last month
         </Link>
-        <Link className=\"ll_btnSecondary\" href={`/properties/${propertyId}/ledger?month=${nextMonth}`}>
+        <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${nextMonth}`}>
           Next month
         </Link>
-        <form onSubmit={handleSubmit} style={{ display: \"flex\", gap: 8 }}>
-          <select name=\"month\" className=\"ll_input\" value={selectedMonth} onChange={handleChange}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+          <select name="month" className="ll_input" value={selectedMonth} onChange={handleChange}>
             {monthOptions.map((m) => (
               <option key={m} value={m}>
                 {monthLabel(m)}
               </option>
             ))}
           </select>
-          <button className=\"ll_btnSecondary\" type=\"submit\">
+          <button className="ll_btnSecondary" type="submit">
             Go
           </button>
         </form>
