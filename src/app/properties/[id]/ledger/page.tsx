@@ -186,7 +186,8 @@ async function updateRecurringTransaction(formData: FormData) {
   const parsed = updateRecurringSchema.safeParse(raw);
   if (!parsed.success) {
     const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
-    return redirectToLedger(raw.propertyId, viewMonth, "recurring_error");
+    const detail = parsed.error.issues.map((i) => i.message).join("; ");
+    return redirectToLedger(raw.propertyId, viewMonth, "recurring-error", { reason: "validation", detail });
   }
 
   const data = parsed.data;
@@ -318,12 +319,12 @@ export default async function PropertyLedgerPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  params: { id: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
   const user = await requireUser();
-  const { id } = await params;
-  const sp = await searchParams;
+  const { id } = params;
+  const sp = searchParams;
 
   const monthParam = typeof sp.month === "string" ? sp.month : undefined;
   const month = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : ym(new Date());
@@ -551,7 +552,7 @@ export default async function PropertyLedgerPage({
                   style={{ display: "flex", gap: 8 }}
                   suppressHydrationWarning
                 >
-                  <select name="month" className="ll_input" defaultValue={month}>
+                  <select name="month" className="ll_input" defaultValue={month} suppressHydrationWarning>
                     {monthOptions.map((m) => (
                       <option key={m} value={m}>
                         {monthLabel(m)}
@@ -653,6 +654,7 @@ export default async function PropertyLedgerPage({
                                                 name="categoryId"
                                                 defaultValue={r.categoryId}
                                                 required
+                                                suppressHydrationWarning
                                               >
                                                 <option value="">Select…</option>
                                                 {categories.map((c) => (
@@ -674,6 +676,7 @@ export default async function PropertyLedgerPage({
                                                 step="0.01"
                                                 defaultValue={(r.amountCents / 100).toFixed(2)}
                                                 required
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -686,6 +689,7 @@ export default async function PropertyLedgerPage({
                                                 name="memo"
                                                 type="text"
                                                 defaultValue={r.memo ?? ""}
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -701,6 +705,7 @@ export default async function PropertyLedgerPage({
                                                 max={28}
                                                 defaultValue={r.dayOfMonth}
                                                 required
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -714,6 +719,7 @@ export default async function PropertyLedgerPage({
                                                 type="month"
                                                 defaultValue={r.startMonth}
                                                 required
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -726,6 +732,7 @@ export default async function PropertyLedgerPage({
                                                 name="endMonth"
                                                 type="month"
                                                 defaultValue={r.endMonth ?? ""}
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                           </div>
@@ -778,7 +785,7 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-categoryId">
                               Category
                             </label>
-                            <select className="ll_input" id="rec-categoryId" name="categoryId" required>
+                            <select className="ll_input" id="rec-categoryId" name="categoryId" required suppressHydrationWarning>
                               <option value="">Select…</option>
                               {categories.map((c) => (
                                 <option key={c.id} value={c.id}>
@@ -792,7 +799,7 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-amount">
                               Amount
                             </label>
-                            <input className="ll_input" id="rec-amount" name="amount" type="number" step="0.01" required />
+                            <input className="ll_input" id="rec-amount" name="amount" type="number" step="0.01" required suppressHydrationWarning />
                             <div className="ll_muted" style={{ marginTop: 6 }}>
                               Enter a positive number. (Direction is based on category.)
                             </div>
@@ -802,23 +809,24 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-memo">
                               Memo
                             </label>
-                            <input className="ll_input" id="rec-memo" name="memo" type="text" />
+                            <input className="ll_input" id="rec-memo" name="memo" type="text" suppressHydrationWarning />
                           </div>
 
                           <div>
                             <label className="ll_label" htmlFor="rec-day">
                               Day of month
                             </label>
-                            <input
-                              className="ll_input"
-                              id="rec-day"
-                              name="dayOfMonth"
-                              type="number"
-                              min={1}
-                              max={28}
-                              defaultValue={1}
-                              required
-                            />
+                              <input
+                                className="ll_input"
+                                id="rec-day"
+                                name="dayOfMonth"
+                                type="number"
+                                min={1}
+                                max={28}
+                                defaultValue={1}
+                                required
+                                suppressHydrationWarning
+                              />
                           </div>
 
                           <div>
@@ -832,6 +840,7 @@ export default async function PropertyLedgerPage({
                               type="month"
                               defaultValue={month}
                               required
+                              suppressHydrationWarning
                             />
                           </div>
 
@@ -839,7 +848,7 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-end">
                               End month (optional)
                             </label>
-                            <input className="ll_input" id="rec-end" name="endMonth" type="month" />
+                            <input className="ll_input" id="rec-end" name="endMonth" type="month" suppressHydrationWarning />
                           </div>
                         </div>
 
@@ -876,7 +885,6 @@ export default async function PropertyLedgerPage({
                 <button
                   className="ll_btn"
                   type="submit"
-                  disabled={scheduledRecurring.length === 0 || scheduledRecurring.every((r) => r.alreadyPosted)}
                   suppressHydrationWarning
                 >
                   Post recurring for {monthLabel(month)}
@@ -931,7 +939,7 @@ export default async function PropertyLedgerPage({
                     <label className="ll_label" htmlFor="categoryId">
                       Category
                     </label>
-                    <select className="ll_input" id="categoryId" name="categoryId" required>
+                    <select className="ll_input" id="categoryId" name="categoryId" required suppressHydrationWarning>
                       <option value="">Select…</option>
                       {categories.map((c) => (
                         <option key={c.id} value={c.id}>
@@ -945,7 +953,7 @@ export default async function PropertyLedgerPage({
                     <label className="ll_label" htmlFor="amount">
                       Amount
                     </label>
-                    <input className="ll_input" id="amount" name="amount" type="number" step="0.01" required />
+                          <input className="ll_input" id="amount" name="amount" type="number" step="0.01" required suppressHydrationWarning />
                     <div className="ll_muted" style={{ marginTop: 6 }}>
                       Enter a positive number. (We will handle expense/income direction based on category.)
                     </div>
@@ -955,7 +963,7 @@ export default async function PropertyLedgerPage({
                     <label className="ll_label" htmlFor="memo">
                       Memo
                     </label>
-                    <input className="ll_input" id="memo" name="memo" type="text" />
+                    <input className="ll_input" id="memo" name="memo" type="text" suppressHydrationWarning />
                   </div>
                 </div>
 
