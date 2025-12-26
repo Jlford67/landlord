@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Props = {
   propertyId: string;
@@ -28,6 +28,10 @@ function adjacentMonth(month: string, delta: number) {
 export function MonthPicker({ propertyId, month, monthOptions }: Props) {
   const router = useRouter();
   const [selectedMonth, setSelectedMonth] = useState(month);
+
+  useEffect(() => {
+    setSelectedMonth(month);
+  }, [month]);
 
   const goToMonth = useCallback(
     (target: string) => {
@@ -62,7 +66,7 @@ export function MonthPicker({ propertyId, month, monthOptions }: Props) {
         <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${nextMonth}`}>
           Next month
         </Link>
-        <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }} suppressHydrationWarning>
           <select
             name="month"
             className="ll_input"

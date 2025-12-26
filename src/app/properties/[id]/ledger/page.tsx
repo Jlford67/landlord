@@ -9,8 +9,8 @@ import { createRecurringSchema, updateRecurringSchema } from "@/lib/validation/r
 import { MonthPicker } from "@/components/ledger/MonthPicker";
 
 function ym(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
 }
 
@@ -24,6 +24,14 @@ function monthLabel(month: string) {
 function parseMonth(month: string) {
   const [y, m] = month.split("-").map(Number);
   return { y, m0: m - 1 };
+}
+
+function monthRangeUtc(month: string) {
+  const { y, m0 } = parseMonth(month);
+  return {
+    start: new Date(Date.UTC(y, m0, 1)),
+    end: new Date(Date.UTC(y, m0 + 1, 1)),
+  };
 }
 
 function fmtMoney(n: number) {
@@ -57,9 +65,9 @@ function moneySpan(n: number) {
 }
 
 function fmtDate(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${dd}`;
 }
 
@@ -349,6 +357,9 @@ async function postRecurringForMonth(formData: FormData) {
             amount: signedAmount(rec.amountCents, rec.category.type),
             memo: rec.memo ? `Recurring: ${rec.memo}` : `Recurring: ${rec.category.name}`,
             source: "manual",
+            statementMonth: month,
+            isOwnerPayout: false,
+            payee: null,
           },
         });
 
@@ -397,9 +408,7 @@ export default async function PropertyLedgerPage({
   const msgPosted = typeof sp.posted === "string" ? sp.posted : undefined;
   const undoId = typeof sp.undoId === "string" ? sp.undoId : undefined;
 
-  const { y, m0 } = parseMonth(month);
-  const start = new Date(y, m0, 1);
-  const end = new Date(y, m0 + 1, 1);
+  const { start, end } = monthRangeUtc(month);
 
   const property = await prisma.property.findFirst({
     where: { id },
@@ -556,7 +565,7 @@ export default async function PropertyLedgerPage({
   const monthOptions: string[] = [];
   const now = new Date();
   for (let i = 0; i < 24; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
     monthOptions.push(ym(d));
   }
 
@@ -705,7 +714,7 @@ export default async function PropertyLedgerPage({
                                     </summary>
                                     <div className="ll_panel" style={{ marginTop: 6 }}>
                                       <div className="ll_panelInner">
-                                        <form className="ll_form" action={updateRecurringTransaction}>
+                                        <form className="ll_form" action={updateRecurringTransaction} suppressHydrationWarning>
                                           <input type="hidden" name="id" value={r.id} />
                                           <input type="hidden" name="propertyId" value={property.id} />
                                           <input type="hidden" name="currentMonth" value={month} />
@@ -815,7 +824,7 @@ export default async function PropertyLedgerPage({
                                     </div>
                                   </details>
                                   <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
-                                    <form action={toggleRecurringTransaction}>
+                                    <form action={toggleRecurringTransaction} suppressHydrationWarning>
                                       <input type="hidden" name="id" value={r.id} />
                                       <input type="hidden" name="propertyId" value={property.id} />
                                       <input type="hidden" name="month" value={month} />
@@ -825,7 +834,7 @@ export default async function PropertyLedgerPage({
                                       </button>
                                     </form>
                                   
-                                    <form action={deleteRecurringTransaction}>
+                                    <form action={deleteRecurringTransaction} suppressHydrationWarning>
                                       <input type="hidden" name="id" value={r.id} />
                                       <input type="hidden" name="propertyId" value={property.id} />
                                       <input type="hidden" name="month" value={month} />
@@ -846,7 +855,7 @@ export default async function PropertyLedgerPage({
                   <div className="ll_panel" style={{ marginTop: 12 }}>
                     <div className="ll_panelInner">
                       <h3 style={{ marginTop: 0 }}>Add recurring</h3>
-                      <form className="ll_form" action={createRecurringTransaction}>
+                      <form className="ll_form" action={createRecurringTransaction} suppressHydrationWarning>
                         <input type="hidden" name="propertyId" value={property.id} />
                         <input type="hidden" name="currentMonth" value={month} />
                         <div className="ll_grid2">
@@ -946,7 +955,7 @@ export default async function PropertyLedgerPage({
                 <h2 style={{ marginTop: 0 }}>Month actions</h2>
                 <div className="ll_muted">{monthLabel(month)}</div>
               </div>
-              <form action={postRecurringForMonth} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <form action={postRecurringForMonth} style={{ display: "flex", gap: 8, alignItems: "center" }} suppressHydrationWarning>
                 <input type="hidden" name="propertyId" value={property.id} />
                 <input type="hidden" name="month" value={month} />
                 <button

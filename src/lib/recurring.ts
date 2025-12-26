@@ -18,9 +18,9 @@ export function dueDateForMonth(month: string, dayOfMonth: number) {
   const [y, m] = month.split("-").map(Number);
   const clampedDay = Math.min(Math.max(dayOfMonth, 1), 28);
 
-  // Use LOCAL time to match ledger month filtering.
-  // Noon avoids DST edge cases.
-  return new Date(y, m - 1, clampedDay, 12, 0, 0, 0);
+  // Use UTC boundaries so the month math matches regardless of server timezone.
+  // Noon avoids DST edge cases while keeping the same calendar day in any locale.
+  return new Date(Date.UTC(y, m - 1, clampedDay, 12, 0, 0, 0));
 }
 
 export function addMonths(month: string, delta: number) {
