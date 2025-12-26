@@ -99,16 +99,47 @@ async function createRecurringTransaction(formData: FormData) {
   await requireUser();
 
   try {
+    // Normalize all inputs (blank strings -> undefined where appropriate)
+    const propertyId = String(formData.get("propertyId") || "").trim();
+    const categoryId = String(formData.get("categoryId") || "").trim();
+
+    const amountRaw = formData.get("amount");
+    const amount = String(amountRaw ?? "0").trim();
+
+    const memoRaw = formData.get("memo");
+    const memo =
+      typeof memoRaw === "string" && memoRaw.trim() !== "" ? memoRaw.trim() : undefined;
+
+    const dayOfMonthRaw = formData.get("dayOfMonth");
+    const dayOfMonth = String(dayOfMonthRaw ?? "1").trim();
+
+    const startMonth = String(formData.get("startMonth") || "").trim();
+
+    const endMonthRaw = formData.get("endMonth");
+    const endMonth =
+      typeof endMonthRaw === "string" && endMonthRaw.trim() !== ""
+        ? endMonthRaw.trim()
+        : undefined;
+
+    const isActiveRaw = formData.get("isActive");
+    const isActive = typeof isActiveRaw === "string" ? isActiveRaw : undefined;
+
+    const currentMonthRaw = formData.get("currentMonth");
+    const currentMonth =
+      typeof currentMonthRaw === "string" && currentMonthRaw.trim() !== ""
+        ? currentMonthRaw.trim()
+        : undefined;
+
     const raw: RecurringForm = {
-      propertyId: String(formData.get("propertyId") || ""),
-      categoryId: String(formData.get("categoryId") || ""),
-      amount: formData.get("amount") || "0",
-      memo: (formData.get("memo") as string | null) ?? undefined,
-      dayOfMonth: formData.get("dayOfMonth") || "1",
-      startMonth: String(formData.get("startMonth") || ""),
-      endMonth: (formData.get("endMonth") as string | null) ?? undefined,
-      isActive: (formData.get("isActive") as string | null) ?? undefined,
-      currentMonth: (formData.get("currentMonth") as string | null) ?? undefined,
+      propertyId,
+      categoryId,
+      amount,
+      memo,
+      dayOfMonth,
+      startMonth,
+      endMonth,
+      isActive,
+      currentMonth,
     };
 
     console.log("[recurring] form", {
@@ -116,6 +147,7 @@ async function createRecurringTransaction(formData: FormData) {
       categoryId: raw.categoryId,
       amount: raw.amount,
       startMonth: raw.startMonth,
+      endMonth: raw.endMonth,
       dayOfMonth: raw.dayOfMonth,
       isActive: raw.isActive,
     });
@@ -142,7 +174,11 @@ async function createRecurringTransaction(formData: FormData) {
     if (!parsed.success) {
       const viewMonth = raw.currentMonth || raw.startMonth || ym(new Date());
       const detail = parsed.error.issues.some((i) => i.path.includes("amount")) ? "invalid_amount" : "validation_error";
-      console.error("[recurring] create failed", { detail, propertyId: raw.propertyId, issues: parsed.error.issues });
+      console.error("[recurring] create failed", {
+        detail,
+        propertyId: raw.propertyId,
+        issues: parsed.error.issues.map((i) => ({ path: i.path, message: i.message })),
+      });
       return redirectToLedger(raw.propertyId, viewMonth, "recurring_error", { detail });
     }
 
@@ -153,6 +189,7 @@ async function createRecurringTransaction(formData: FormData) {
       categoryId: data.categoryId,
       amount: data.amount,
       startMonth: data.startMonth,
+      endMonth: data.endMonth,
       dayOfMonth: data.dayOfMonth,
       isActive: data.isActive,
     });
@@ -165,22 +202,29 @@ async function createRecurringTransaction(formData: FormData) {
         memo: data.memo,
         dayOfMonth: data.dayOfMonth,
         startMonth: data.startMonth,
-        endMonth: data.endMonth || undefined,
+        // IMPORTANT: undefined when blank, so Prisma stores NULL
+        endMonth: data.endMonth ?? undefined,
         isActive: data.isActive,
       },
     });
+
     console.log("[recurring] created", { id: created.id, propertyId: data.propertyId, month: data.startMonth });
 
     const viewMonth = raw.currentMonth || data.startMonth;
-    redirectToLedger(data.propertyId, viewMonth, "recurring_created");
-  } catch (error) {
+    return redirectToLedger(data.propertyId, viewMonth, "recurring_created");
+  } catch (error: any) {
+    // redirect() throws NEXT_REDIRECT intentionally. Do not treat it as an error.
+    if (error?.digest?.startsWith("NEXT_REDIRECT")) throw error;
+
     console.error("[recurring] create failed", { detail: "prisma_error", err: error });
-    const propertyId = String(formData.get("propertyId") || "");
-    const currentMonth = String(formData.get("currentMonth") || formData.get("startMonth") || ym(new Date()));
+
+    const propertyId = String(formData.get("propertyId") || "").trim();
+    const currentMonth = String(formData.get("currentMonth") || formData.get("startMonth") || ym(new Date())).trim();
+
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
       return redirectToLedger(propertyId, currentMonth, "recurring_error", { detail: "missing_table" });
     }
-    return redirectToLedger(propertyId, currentMonth, "recurring_error", { detail: "prisma_error" });
+    return redirectToLedger(propertyId, currentMonth || ym(new Date()), "recurring_error", { detail: "prisma_error" });
   }
 }
 
@@ -337,12 +381,12 @@ export default async function PropertyLedgerPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: Record<string, string | string[] | undefined>;
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await requireUser();
-  const { id } = params;
-  const sp = searchParams;
+  const { id } = await params;
+  const sp = await searchParams;
 
   const monthParam = typeof sp.month === "string" ? sp.month : undefined;
   const month = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : ym(new Date());
@@ -654,8 +698,8 @@ export default async function PropertyLedgerPage({
                               </td>
                               <td>{r.isActive ? "Active" : "Inactive"}</td>
                               <td>
-                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                                  <details style={{ width: "100%" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+                                  <details style={{ display: "inline-block" }}>
                                     <summary className="ll_btnSecondary" style={{ display: "inline-block" }}>
                                       Edit
                                     </summary>
@@ -676,6 +720,7 @@ export default async function PropertyLedgerPage({
                                                 name="categoryId"
                                                 defaultValue={r.categoryId}
                                                 required
+                                                suppressHydrationWarning
                                               >
                                                 <option value="">Select…</option>
                                                 {categories.map((c) => (
@@ -697,6 +742,7 @@ export default async function PropertyLedgerPage({
                                                 step="0.01"
                                                 defaultValue={(r.amountCents / 100).toFixed(2)}
                                                 required
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -709,6 +755,7 @@ export default async function PropertyLedgerPage({
                                                 name="memo"
                                                 type="text"
                                                 defaultValue={r.memo ?? ""}
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -724,6 +771,7 @@ export default async function PropertyLedgerPage({
                                                 max={28}
                                                 defaultValue={r.dayOfMonth}
                                                 required
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -737,6 +785,7 @@ export default async function PropertyLedgerPage({
                                                 type="month"
                                                 defaultValue={r.startMonth}
                                                 required
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                             <div>
@@ -749,6 +798,7 @@ export default async function PropertyLedgerPage({
                                                 name="endMonth"
                                                 type="month"
                                                 defaultValue={r.endMonth ?? ""}
+                                                suppressHydrationWarning
                                               />
                                             </div>
                                           </div>
@@ -756,7 +806,7 @@ export default async function PropertyLedgerPage({
                                             <input type="checkbox" name="isActive" defaultChecked={r.isActive} /> Active
                                           </label>
                                           <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                                            <button className="ll_btn" type="submit">
+                                            <button className="ll_btn" type="submit" suppressHydrationWarning>
                                               Save
                                             </button>
                                           </div>
@@ -764,23 +814,26 @@ export default async function PropertyLedgerPage({
                                       </div>
                                     </div>
                                   </details>
-                                  <form action={toggleRecurringTransaction} style={{ display: "inline" }}>
-                                    <input type="hidden" name="id" value={r.id} />
-                                    <input type="hidden" name="propertyId" value={property.id} />
-                                    <input type="hidden" name="month" value={month} />
-                                    <input type="hidden" name="isActive" value={r.isActive ? "false" : "true"} />
-                                    <button className="ll_btnSecondary" type="submit">
-                                      {r.isActive ? "Disable" : "Enable"}
-                                    </button>
-                                  </form>
-                                  <form action={deleteRecurringTransaction} style={{ display: "inline" }}>
-                                    <input type="hidden" name="id" value={r.id} />
-                                    <input type="hidden" name="propertyId" value={property.id} />
-                                    <input type="hidden" name="month" value={month} />
-                                    <button className="ll_btnSecondary" type="submit">
-                                      Delete
-                                    </button>
-                                  </form>
+                                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
+                                    <form action={toggleRecurringTransaction}>
+                                      <input type="hidden" name="id" value={r.id} />
+                                      <input type="hidden" name="propertyId" value={property.id} />
+                                      <input type="hidden" name="month" value={month} />
+                                      <input type="hidden" name="isActive" value={r.isActive ? "false" : "true"} />
+                                      <button className="ll_btnSecondary" type="submit">
+                                        {r.isActive ? "Disable" : "Enable"}
+                                      </button>
+                                    </form>
+                                  
+                                    <form action={deleteRecurringTransaction}>
+                                      <input type="hidden" name="id" value={r.id} />
+                                      <input type="hidden" name="propertyId" value={property.id} />
+                                      <input type="hidden" name="month" value={month} />
+                                      <button className="ll_btnSecondary" type="submit">
+                                        Delete
+                                      </button>
+                                    </form>
+                                  </div>
                                 </div>
                               </td>
                             </tr>
@@ -801,7 +854,7 @@ export default async function PropertyLedgerPage({
                             <label className="ll_label" htmlFor="rec-categoryId">
                               Category
                             </label>
-                            <select className="ll_input" id="rec-categoryId" name="categoryId" required>
+                            <select className="ll_input" id="rec-categoryId" name="categoryId" required suppressHydrationWarning>
                               <option value="">Select…</option>
                               {categories.map((c) => (
                                 <option key={c.id} value={c.id}>
@@ -871,7 +924,7 @@ export default async function PropertyLedgerPage({
                         </label>
 
                         <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                          <button className="ll_btn" type="submit">
+                          <button className="ll_btn" type="submit" suppressHydrationWarning>
                             Add recurring
                           </button>
                         </div>
@@ -951,7 +1004,7 @@ export default async function PropertyLedgerPage({
                     <label className="ll_label" htmlFor="categoryId">
                       Category
                     </label>
-                    <select className="ll_input" id="categoryId" name="categoryId" required>
+                    <select className="ll_input" id="categoryId" name="categoryId" required suppressHydrationWarning>
                       <option value="">Select…</option>
                       {categories.map((c) => (
                         <option key={c.id} value={c.id}>
@@ -980,7 +1033,7 @@ export default async function PropertyLedgerPage({
                 </div>
 
                 <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                  <button className="ll_btn" type="submit">
+                  <button className="ll_btn" type="submit" suppressHydrationWarning>
                     Add
                   </button>
                 </div>

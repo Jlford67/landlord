@@ -63,14 +63,25 @@ export function MonthPicker({ propertyId, month, monthOptions }: Props) {
           Next month
         </Link>
         <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
-          <select name="month" className="ll_input" value={selectedMonth} onChange={handleChange}>
+          <select
+            name="month"
+            className="ll_input"
+            value={selectedMonth}
+            onChange={handleChange}
+            suppressHydrationWarning
+          >
             {monthOptions.map((m) => (
               <option key={m} value={m}>
                 {monthLabel(m)}
               </option>
             ))}
           </select>
-          <button className="ll_btnSecondary" type="submit">
+        
+          <button
+            className="ll_btnSecondary"
+            type="submit"
+            suppressHydrationWarning
+          >
             Go
           </button>
         </form>
