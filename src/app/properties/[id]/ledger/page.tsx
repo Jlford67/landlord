@@ -1,3 +1,6 @@
+import TransactionRowActions from "@/components/ledger/TransactionRowActions";
+import { fmtMoney } from "@/lib/format";
+import RecurringPanel from "@/components/ledger/RecurringPanel";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
@@ -24,15 +27,6 @@ function monthLabel(month: string) {
 function parseMonth(month: string) {
   const [y, m] = month.split("-").map(Number);
   return { y, m0: m - 1 };
-}
-
-function fmtMoney(n: number) {
-  const abs = Math.abs(n).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-  return n < 0 ? `(${abs})` : `$${abs}`;
 }
 
 function moneySpan(n: number) {
@@ -484,23 +478,38 @@ export default async function PropertyLedgerPage({
     runningById.set(t.id, running);
   }
 
-  let recurringItems: Awaited<ReturnType<typeof prisma.recurringTransaction.findMany>> = [];
+  let recurringItems: {
+    id: string;
+    categoryId: string;
+    amountCents: number;
+    memo: string | null;
+    dayOfMonth: number;
+    startMonth: string;
+    endMonth: string | null;
+    isActive: boolean;
+    category: { id: string; name: string; type: string } | null;
+  }[] = [];
+  
   let recurringTablesReady = true;
+  
   try {
     recurringItems = await prisma.recurringTransaction.findMany({
       where: { propertyId: id },
-      include: {
-        category: true,
-        postings: true,
+      select: {
+        id: true,
+        categoryId: true,
+        amountCents: true,
+        memo: true,
+        dayOfMonth: true,
+        startMonth: true,
+        endMonth: true,
+        isActive: true,
+        category: { select: { id: true, name: true, type: true } },
       },
-      orderBy: [
-        { isActive: "desc" },
-        { dayOfMonth: "asc" },
-        { createdAt: "asc" },
-      ],
+      orderBy: [{ isActive: "desc" }, { dayOfMonth: "asc" }, { createdAt: "asc" }],
     });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
+  } catch (error: any) {
+    if (error?.code === "P2021") {
       recurringTablesReady = false;
     } else {
       throw error;
@@ -634,311 +643,7 @@ export default async function PropertyLedgerPage({
             </div>
           </div>
 
-          <div className="ll_panel" style={{ marginTop: 12 }}>
-            <div className="ll_panelInner">
-              <h2 style={{ marginTop: 0 }}>Recurring</h2>
-              <div className="ll_muted" style={{ marginBottom: 10 }}>
-                Set up monthly items like HOA. Post them into the ledger when ready.
-              </div>
-              <div className="ll_notice" style={{ background: "rgba(0,0,0,0.04)", color: "#333" }}>
-                Loaded categories: {categories.length}
-                {categories.length === 0 ? (
-                  <span>
-                    {" "}
-                    • No categories found. Go to <a href="/categories">/categories</a> and add an EXPENSE category first.
-                  </span>
-                ) : null}
-              </div>
-              {msg === "recurring_created" ? <div className="ll_notice" style={{ background: "rgba(93, 211, 166, 0.12)", color: "#2e8b57" }}>Recurring item added.</div> : null}
-              {msg === "recurring_error" ? (
-                <div className="ll_notice" style={{ background: "rgba(255, 107, 107, 0.1)", color: "#ff6b6b" }}>
-                  Could not add recurring item: {friendlyRecurringError(msgDetail, msgReason)}
-                </div>
-              ) : null}
-              {categories.length === 0 ? (
-                <div className="ll_notice" style={{ background: "rgba(255, 193, 7, 0.12)", color: "#8a6d3b" }}>
-                  No categories available. Create categories first so you can assign recurring items.
-                </div>
-              ) : null}
-              {recurringTablesReady ? (
-                <>
-                  <div style={{ overflowX: "auto" }}>
-                    <table className="ll_table" style={{ width: "100%", tableLayout: "fixed" }}>
-                      <thead>
-                        <tr>
-                          <th style={{ width: "20%" }}>Name</th>
-                          <th style={{ width: "16%" }}>Category</th>
-                          <th style={{ width: "12%" }}>Amount</th>
-                          <th style={{ width: "10%" }}>Day</th>
-                          <th style={{ width: "18%" }}>Range</th>
-                          <th style={{ width: "10%" }}>Status</th>
-                          <th style={{ width: "14%" }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recurringItems.length === 0 ? (
-                          <tr>
-                            <td colSpan={7}>
-                              <div className="ll_muted">No recurring items yet.</div>
-                            </td>
-                          </tr>
-                        ) : (
-                          recurringItems.map((r) => (
-                            <tr key={r.id}>
-                              <td style={{ whiteSpace: "normal" }}>
-                                {r.memo || r.category?.name || <span className="ll_muted">(none)</span>}
-                              </td>
-                              <td>{r.category?.name || <span className="ll_muted">(missing)</span>}</td>
-                              <td>{fmtMoney(r.amountCents / 100)}</td>
-                              <td>{r.dayOfMonth}</td>
-                              <td>
-                                {r.startMonth}
-                                {" → "}
-                                {r.endMonth || <span className="ll_muted">no end</span>}
-                              </td>
-                              <td>{r.isActive ? "Active" : "Inactive"}</td>
-                              <td>
-                                <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
-                                  <details style={{ display: "inline-block" }}>
-                                    <summary className="ll_btnSecondary" style={{ display: "inline-block" }}>
-                                      Edit
-                                    </summary>
-                                    <div className="ll_panel" style={{ marginTop: 6 }}>
-                                      <div className="ll_panelInner">
-                                        <form className="ll_form" action={updateRecurringTransaction}>
-                                          <input type="hidden" name="id" value={r.id} />
-                                          <input type="hidden" name="propertyId" value={property.id} />
-                                          <input type="hidden" name="currentMonth" value={month} />
-                                          <div className="ll_grid2">
-                                            <div>
-                                              <label className="ll_label" htmlFor={`category-${r.id}`}>
-                                                Category
-                                              </label>
-                                              <select
-                                                className="ll_input"
-                                                id={`category-${r.id}`}
-                                                name="categoryId"
-                                                defaultValue={r.categoryId}
-                                                required
-                                                suppressHydrationWarning
-                                              >
-                                                <option value="">Select…</option>
-                                                {categories.map((c) => (
-                                                  <option key={c.id} value={c.id}>
-                                                    {c.type.toUpperCase()} • {c.name}
-                                                  </option>
-                                                ))}
-                                              </select>
-                                            </div>
-                                            <div>
-                                              <label className="ll_label" htmlFor={`amount-${r.id}`}>
-                                                Amount
-                                              </label>
-                                              <input
-                                                className="ll_input"
-                                                id={`amount-${r.id}`}
-                                                name="amount"
-                                                type="number"
-                                                step="0.01"
-                                                defaultValue={(r.amountCents / 100).toFixed(2)}
-                                                required
-                                                suppressHydrationWarning
-                                              />
-                                            </div>
-                                            <div>
-                                              <label className="ll_label" htmlFor={`memo-${r.id}`}>
-                                                Memo
-                                              </label>
-                                              <input
-                                                className="ll_input"
-                                                id={`memo-${r.id}`}
-                                                name="memo"
-                                                type="text"
-                                                defaultValue={r.memo ?? ""}
-                                                suppressHydrationWarning
-                                              />
-                                            </div>
-                                            <div>
-                                              <label className="ll_label" htmlFor={`day-${r.id}`}>
-                                                Day of month
-                                              </label>
-                                              <input
-                                                className="ll_input"
-                                                id={`day-${r.id}`}
-                                                name="dayOfMonth"
-                                                type="number"
-                                                min={1}
-                                                max={28}
-                                                defaultValue={r.dayOfMonth}
-                                                required
-                                                suppressHydrationWarning
-                                              />
-                                            </div>
-                                            <div>
-                                              <label className="ll_label" htmlFor={`start-${r.id}`}>
-                                                Start month
-                                              </label>
-                                              <input
-                                                className="ll_input"
-                                                id={`start-${r.id}`}
-                                                name="startMonth"
-                                                type="month"
-                                                defaultValue={r.startMonth}
-                                                required
-                                                suppressHydrationWarning
-                                              />
-                                            </div>
-                                            <div>
-                                              <label className="ll_label" htmlFor={`end-${r.id}`}>
-                                                End month (optional)
-                                              </label>
-                                              <input
-                                                className="ll_input"
-                                                id={`end-${r.id}`}
-                                                name="endMonth"
-                                                type="month"
-                                                defaultValue={r.endMonth ?? ""}
-                                                suppressHydrationWarning
-                                              />
-                                            </div>
-                                          </div>
-                                          <label className="ll_checkbox">
-                                            <input type="checkbox" name="isActive" defaultChecked={r.isActive} /> Active
-                                          </label>
-                                          <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                                            <button className="ll_btn" type="submit" suppressHydrationWarning>
-                                              Save
-                                            </button>
-                                          </div>
-                                        </form>
-                                      </div>
-                                    </div>
-                                  </details>
-                                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
-                                    <form action={toggleRecurringTransaction}>
-                                      <input type="hidden" name="id" value={r.id} />
-                                      <input type="hidden" name="propertyId" value={property.id} />
-                                      <input type="hidden" name="month" value={month} />
-                                      <input type="hidden" name="isActive" value={r.isActive ? "false" : "true"} />
-                                      <button className="ll_btnSecondary" type="submit">
-                                        {r.isActive ? "Disable" : "Enable"}
-                                      </button>
-                                    </form>
-                                  
-                                    <form action={deleteRecurringTransaction}>
-                                      <input type="hidden" name="id" value={r.id} />
-                                      <input type="hidden" name="propertyId" value={property.id} />
-                                      <input type="hidden" name="month" value={month} />
-                                      <button className="ll_btnSecondary" type="submit">
-                                        Delete
-                                      </button>
-                                    </form>
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
 
-                  <div className="ll_panel" style={{ marginTop: 12 }}>
-                    <div className="ll_panelInner">
-                      <h3 style={{ marginTop: 0 }}>Add recurring</h3>
-                      <form className="ll_form" action={createRecurringTransaction}>
-                        <input type="hidden" name="propertyId" value={property.id} />
-                        <input type="hidden" name="currentMonth" value={month} />
-                        <div className="ll_grid2">
-                          <div>
-                            <label className="ll_label" htmlFor="rec-categoryId">
-                              Category
-                            </label>
-                            <select className="ll_input" id="rec-categoryId" name="categoryId" required suppressHydrationWarning>
-                              <option value="">Select…</option>
-                              {categories.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.type.toUpperCase()} • {c.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="ll_label" htmlFor="rec-amount">
-                              Amount
-                            </label>
-                            <input className="ll_input" id="rec-amount" name="amount" type="number" step="0.01" required />
-                            <div className="ll_muted" style={{ marginTop: 6 }}>
-                              Enter a positive number. (Direction is based on category.)
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="ll_label" htmlFor="rec-memo">
-                              Memo
-                            </label>
-                            <input className="ll_input" id="rec-memo" name="memo" type="text" />
-                          </div>
-
-                          <div>
-                            <label className="ll_label" htmlFor="rec-day">
-                              Day of month
-                            </label>
-                              <input
-                                className="ll_input"
-                                id="rec-day"
-                                name="dayOfMonth"
-                                type="number"
-                                min={1}
-                                max={28}
-                                defaultValue={1}
-                                required
-                              />
-                          </div>
-
-                          <div>
-                            <label className="ll_label" htmlFor="rec-start">
-                              Start month
-                            </label>
-                            <input
-                              className="ll_input"
-                              id="rec-start"
-                              name="startMonth"
-                              type="month"
-                              defaultValue={month}
-                              required
-                            />
-                          </div>
-
-                          <div>
-                            <label className="ll_label" htmlFor="rec-end">
-                              End month (optional)
-                            </label>
-                            <input className="ll_input" id="rec-end" name="endMonth" type="month" />
-                          </div>
-                        </div>
-
-                        <label className="ll_checkbox">
-                          <input type="checkbox" name="isActive" defaultChecked /> Active
-                        </label>
-
-                        <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                          <button className="ll_btn" type="submit" suppressHydrationWarning>
-                            Add recurring
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="ll_muted" style={{ marginTop: 12 }}>
-                  Apply the latest Prisma migrations to manage recurring items.
-                </div>
-              )}
-            </div>
-          </div>
 
           <div className="ll_panel" style={{ marginTop: 12 }}>
             <div className="ll_panelInner">
@@ -952,6 +657,8 @@ export default async function PropertyLedgerPage({
                 <button
                   className="ll_btn"
                   type="submit"
+                  suppressHydrationWarning
+                  data-lpignore="true"
                 >
                   Post recurring for {monthLabel(month)}
                 </button>
@@ -980,66 +687,18 @@ export default async function PropertyLedgerPage({
             </div>
           </div>
 
-          <div className="ll_panel" style={{ marginTop: 12 }}>
-            <div className="ll_panelInner">
-              <h2 style={{ marginTop: 0 }}>Add transaction</h2>
-              <form className="ll_form" action={`/api/properties/${property.id}/transactions`} method="post">
-                <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
-                <div className="ll_grid2">
-                  <div>
-                    <label className="ll_label" htmlFor="date">
-                      Date
-                    </label>
-                    <input
-                      className="ll_input"
-                      id="date"
-                      name="date"
-                      type="date"
-                      defaultValue={fmtDate(new Date())}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="ll_label" htmlFor="categoryId">
-                      Category
-                    </label>
-                    <select className="ll_input" id="categoryId" name="categoryId" required suppressHydrationWarning>
-                      <option value="">Select…</option>
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.type.toUpperCase()} • {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="ll_label" htmlFor="amount">
-                      Amount
-                    </label>
-                    <input className="ll_input" id="amount" name="amount" type="number" step="0.01" required />
-                    <div className="ll_muted" style={{ marginTop: 6 }}>
-                      Enter a positive number. (We will handle expense/income direction based on category.)
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="ll_label" htmlFor="memo">
-                      Memo
-                    </label>
-                    <input className="ll_input" id="memo" name="memo" type="text" />
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                  <button className="ll_btn" type="submit" suppressHydrationWarning>
-                    Add
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+          <RecurringPanel
+            propertyId={property.id}
+            month={month}
+            categories={categories}
+            recurringTablesReady={recurringTablesReady}
+            recurringItems={recurringItems}
+            scheduledRecurring={scheduledRecurring}
+            msg={msg}
+            msgDetail={msgDetail}
+            msgReason={msgReason}
+            msgPosted={msgPosted}
+          />
 
           <div className="ll_panel" style={{ marginTop: 12 }}>
             <div className="ll_panelInner">
@@ -1104,28 +763,26 @@ export default async function PropertyLedgerPage({
                                       Edit
                                     </Link>
 
-                                    <form
-                                      action={`/api/properties/${property.id}/transactions/${t.id}/delete`}
-                                      method="post"
-                                      style={{ display: "inline" }}
+                                    <Link
+                                      className="ll_btnSecondary"
+                                      href={`/properties/${property.id}/ledger/${t.id}/delete?returnTo=${encodeURIComponent(
+                                        `/properties/${property.id}/ledger?month=${month}`
+                                      )}`}
                                     >
-                                      <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
-                                      <button className="ll_btnSecondary" type="submit">
-                                        Delete
-                                      </button>
-                                    </form>
+                                      Delete
+                                    </Link>
+
                                   </>
                                 ) : showUndo ? (
-                                    <form
-                                      action={`/api/properties/${property.id}/transactions/${t.id}/undelete`}
-                                      method="post"
-                                      style={{ display: "inline" }}
-                                    >
-                                      <input type="hidden" name="returnTo" value={`/properties/${property.id}/ledger?month=${month}`} />
-                                      <button className="ll_btnSecondary" type="submit">
-                                        Undo
-                                      </button>
-                                    </form>
+                                  <Link
+                                    className="ll_btnSecondary"
+                                    href={`/properties/${property.id}/ledger/${t.id}/undelete?returnTo=${encodeURIComponent(
+                                      `/properties/${property.id}/ledger?month=${month}`
+                                    )}`}
+                                  >
+                                    Undo
+                                  </Link>
+
                                   ) : (
                                     <span className="ll_muted">Deleted</span>
                                 )}
