@@ -203,64 +203,65 @@ export async function deleteRecurringTransaction(formData: FormData) {
   redirectToLedger(propertyId, month, "recurring_deleted");
 }
 
+async function postRecurringForMonthInternal(propertyId: string, month: string) {
+  const scheduled = await getScheduledRecurringForMonth(propertyId, month);
+  const toPost = scheduled.filter((r) => !r.alreadyPosted && r.category);
+
+  if (toPost.length === 0) return 0;
+
+  let postedCount = 0;
+
+  await prisma.$transaction(async (tx) => {
+    for (const rec of toPost) {
+      const existing = await tx.recurringPosting.findFirst({
+        where: { recurringTransactionId: rec.id, month },
+        select: { id: true },
+      });
+      if (existing) continue;
+
+      const txn = await tx.transaction.create({
+        data: {
+          propertyId,
+          date: dueDateForMonth(month, rec.dayOfMonth),
+          categoryId: rec.categoryId,
+          amount: signedAmount(rec.amountCents, rec.category.type),
+          memo: rec.memo ? `Recurring: ${rec.memo}` : `Recurring: ${rec.category.name}`,
+          source: "manual",
+        },
+      });
+
+      await tx.recurringPosting.create({
+        data: {
+          recurringTransactionId: rec.id,
+          month,
+          ledgerTransactionId: txn.id,
+        },
+      });
+
+      postedCount += 1;
+    }
+  });
+
+  return postedCount;
+}
+
 export async function postRecurringForMonth(formData: FormData) {
   await requireUser();
 
   const propertyId = String(formData.get("propertyId") || "");
   const month = String(formData.get("month") || ym(new Date()));
 
-  let scheduled: Awaited<ReturnType<typeof getScheduledRecurringForMonth>> = [];
   try {
-    scheduled = await getScheduledRecurringForMonth(propertyId, month);
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
-      return redirectToLedger(propertyId, month, "recurring_error", { detail: "missing_table" });
+    const postedCount = await postRecurringForMonthInternal(propertyId, month);
+
+    if (postedCount === 0) {
+      return redirectToLedger(propertyId, month, "recurring-none", {
+        detail: "Nothing new to post for this month.",
+      });
     }
-    return redirectToLedger(propertyId, month, "recurring_error", { detail: "prisma_error_load" });
-  }
 
-  const toPost = scheduled.filter((r) => !r.alreadyPosted && r.category);
-
-  if (toPost.length === 0) {
-    const detail =
-      scheduled.length === 0
-        ? "No active recurring items in range for this month."
-        : "Everything for this month is already posted.";
-    return redirectToLedger(propertyId, month, "recurring-none", { detail });
-  }
-
-  let postedCount = 0;
-
-  try {
-    await prisma.$transaction(async (tx) => {
-      for (const rec of toPost) {
-        const existing = await tx.recurringPosting.findFirst({
-          where: { recurringTransactionId: rec.id, month },
-          select: { id: true },
-        });
-        if (existing) continue;
-
-        const txn = await tx.transaction.create({
-          data: {
-            propertyId,
-            date: dueDateForMonth(month, rec.dayOfMonth),
-            categoryId: rec.categoryId,
-            amount: signedAmount(rec.amountCents, rec.category.type),
-            memo: rec.memo ? `Recurring: ${rec.memo}` : `Recurring: ${rec.category.name}`,
-            source: "manual",
-          },
-        });
-
-        await tx.recurringPosting.create({
-          data: {
-            recurringTransactionId: rec.id,
-            month,
-            ledgerTransactionId: txn.id,
-          },
-        });
-
-        postedCount += 1;
-      }
+    return redirectToLedger(propertyId, month, "recurring-posted", {
+      posted: String(postedCount),
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
@@ -268,10 +269,46 @@ export async function postRecurringForMonth(formData: FormData) {
     }
     return redirectToLedger(propertyId, month, "recurring_error", { detail: "prisma_error_post" });
   }
+}
 
-  if (postedCount === 0) {
-    return redirectToLedger(propertyId, month, "recurring-none", { detail: "Nothing new to post for this month." });
+function addMonths(month: string, delta: number) {
+  const [y, m] = month.split("-").map(Number);
+  const d = new Date(Date.UTC(y, (m ?? 1) - 1 + delta, 1, 0, 0, 0));
+  const yy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `${yy}-${mm}`;
+}
+
+export async function postRecurringCatchUp(formData: FormData) {
+  await requireUser();
+
+  const propertyId = String(formData.get("propertyId") || "");
+  const throughMonth = String(formData.get("throughMonth") || ym(new Date()));
+
+  if (!propertyId) throw new Error("Missing propertyId");
+
+  const first = await prisma.recurringTransaction.findFirst({
+    where: { propertyId, isActive: true },
+    orderBy: [{ startMonth: "asc" }],
+    select: { startMonth: true },
+  });
+
+  if (!first?.startMonth) {
+    return redirectToLedger(propertyId, throughMonth, "recurring-none", { detail: "No active recurring items." });
   }
 
-  redirectToLedger(propertyId, month, "recurring-posted", { posted: String(postedCount) });
+  let m = first.startMonth;
+  let totalPosted = 0;
+
+  while (m <= throughMonth) {
+    totalPosted += await postRecurringForMonthInternal(propertyId, m);
+    m = addMonths(m, 1);
+  }
+
+  if (totalPosted === 0) {
+    return redirectToLedger(propertyId, throughMonth, "recurring-none", { detail: "Nothing new to post." });
+  }
+
+  return redirectToLedger(propertyId, throughMonth, "recurring-posted", { posted: String(totalPosted) });
 }
+

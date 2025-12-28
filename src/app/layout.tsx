@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import TopNav from "@/components/TopNav";
 import { getCurrentUser } from "@/lib/auth";
+import TopNavGate from "@/components/TopNavGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,7 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {user ? <TopNav userEmail={user.email} /> : null}
+        {user ? <TopNavGate userEmail={user.email} /> : null}
         {children}
       </body>
     </html>

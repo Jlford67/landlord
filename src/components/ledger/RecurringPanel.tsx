@@ -1,15 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useTransition } from "react";
 import { fmtMoney } from "@/lib/format";
+import { useRouter } from "next/navigation";
 import {
   createRecurringTransaction,
   updateRecurringTransaction,
   toggleRecurringTransaction,
   deleteRecurringTransaction,
   postRecurringForMonth,
-} from "@/app/properties/[id]/ledger/recurringActions";
-
+  postRecurringCatchUp,
+} from "@/app/(shell)/properties/[id]/ledger/recurringActions";
 
 export type RecurringCategoryOption = {
   id: string;
@@ -51,16 +52,61 @@ export type RecurringPanelProps = {
   msgDetail?: string;
   msgReason?: string;
   msgPosted?: string;
+  recurringErrorMsg?: string | null;
 };
 
 export default function RecurringPanel(props: RecurringPanelProps) {
+	
+  const router = useRouter();
+  const [postPending, startPost] = useTransition();
+
+  const postForMonth = () => {
+    startPost(async () => {
+      const fd = new FormData();
+      fd.set("propertyId", props.propertyId);
+      fd.set("throughMonth", props.month);
+  
+      await postRecurringCatchUp(fd);
+      router.refresh();
+    });
+  };
+
+  const postRecurring = () => {
+    startPost(async () => {
+      const fd = new FormData();
+      fd.set("propertyId", props.propertyId);
+      fd.set("throughMonth", props.month); // catch up through the month you’re viewing
+  
+      await postRecurringCatchUp(fd);
+      router.refresh();
+    });
+  };
+
   return (
+
 <div className="ll_panel" style={{ marginTop: 12 }}>
   <div className="ll_panelInner" suppressHydrationWarning>
-    <h2 style={{ marginTop: 0 }}>Recurring</h2>
-    <div className="ll_muted" style={{ marginBottom: 10 }}>
-      Set up monthly items like HOA. Post them into the ledger when ready.
+    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+      <div>
+        <h2 style={{ marginTop: 0, marginBottom: 6 }}>Recurring</h2>
+        <div className="ll_muted" style={{ marginBottom: 10 }}>
+          Set up monthly items like HOA. Post them into the ledger when ready.
+        </div>
+      </div>
+    
+      {props.recurringTablesReady ? (
+        <button
+          type="button"
+          className="ll_btnPrimary"
+          disabled={postPending}
+          onClick={postForMonth}
+          suppressHydrationWarning
+        >
+          {postPending ? "Posting..." : "Post Recurring"}
+        </button>
+      ) : null}
     </div>
+
 
     <div className="ll_notice" style={{ background: "rgba(0,0,0,0.04)", color: "#333" }}>
       Loaded categories: {props.categories.length}
@@ -93,7 +139,7 @@ export default function RecurringPanel(props: RecurringPanelProps) {
     {props.recurringTablesReady ? (
       <>
         <div style={{ overflowX: "auto" }}>
-          <table className="ll_table" style={{ width: "100%", tableLayout: "fixed" }}>
+          <table className="ll_table" style={{ width: "100%", tableLayout: "auto" }}>
             <thead>
               <tr>
                 <th style={{ width: "20%" }}>Name</th>
@@ -394,13 +440,22 @@ export default function RecurringPanel(props: RecurringPanelProps) {
           </div>
         </div>
       </>
-    ) : (
+  ) : (
+    <>
+      {!props.recurringTablesReady && props.recurringErrorMsg ? (
+        <div className="ll_muted" style={{ marginBottom: 8, whiteSpace: "pre-wrap" }}>
+          {props.recurringErrorMsg}
+        </div>
+      ) : null}
+  
       <div className="ll_muted" style={{ marginTop: 12 }}>
         Apply the latest Prisma migrations to manage recurring items.
       </div>
-    )}
+    </>
+  )}
   </div>
-</div>
-
+  </div>
+  
   );
 }
+

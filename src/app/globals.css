@@ -113,6 +113,26 @@ a:hover {
   cursor: pointer;
 }
 
+.ll_btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ll_btnPrimary:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+
 .ll_list {
   margin-top: 12px;
   padding-left: 18px;
