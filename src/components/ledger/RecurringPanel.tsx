@@ -84,8 +84,7 @@ export default function RecurringPanel(props: RecurringPanelProps) {
 
   return (
 
-<div className="ll_panel" style={{ marginTop: 12 }}>
-  <div className="ll_panelInner" suppressHydrationWarning>
+  <div suppressHydrationWarning>
     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
       <div>
         <h2 style={{ marginTop: 0, marginBottom: 6 }}>Recurring</h2>
@@ -138,19 +137,32 @@ export default function RecurringPanel(props: RecurringPanelProps) {
 
     {props.recurringTablesReady ? (
       <>
-        <div style={{ overflowX: "auto" }}>
-          <table className="ll_table" style={{ width: "100%", tableLayout: "auto" }}>
-            <thead>
-              <tr>
-                <th style={{ width: "20%" }}>Name</th>
-                <th style={{ width: "16%" }}>Category</th>
-                <th style={{ width: "12%" }}>Amount</th>
-                <th style={{ width: "10%" }}>Day</th>
-                <th style={{ width: "18%" }}>Range</th>
-                <th style={{ width: "10%" }}>Status</th>
-                <th style={{ width: "14%" }}>Actions</th>
-              </tr>
-            </thead>
+        <div style={{ width: "100%" }}>
+        <table className="ll_table recurringTable">
+          <colgroup>
+            <col style={{ width: "24%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "12%" }} />
+          </colgroup>
+
+        
+          <thead>
+            <tr>
+              <th className="rec_name">Name</th>
+              <th className="rec_cat">Category</th>
+              <th className="rec_amt" style={{ textAlign: "right" }}>Amount</th>
+              <th className="rec_day" style={{ textAlign: "center" }}>Day</th>
+              <th className="rec_range">Range</th>
+              <th className="rec_status">Status</th>
+              <th className="rec_actions" style={{ textAlign: "right" }}>Actions</th>
+            </tr>
+          </thead>
+
+
             <tbody>
               {props.recurringItems.length === 0 ? (
                 <tr>
@@ -165,161 +177,184 @@ export default function RecurringPanel(props: RecurringPanelProps) {
                       {r.memo || r.category?.name || <span className="ll_muted">(none)</span>}
                     </td>
                     <td>{r.category?.name || <span className="ll_muted">(missing)</span>}</td>
-                    <td>{fmtMoney(r.amountCents / 100)}</td>
-                    <td>{r.dayOfMonth}</td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      {fmtMoney(r.amountCents / 100)}
+                    </td>
+
+                    <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                      {r.dayOfMonth}
+                    </td>
+ 
                     <td>
                       {r.startMonth}
                       {" → "}
                       {r.endMonth || <span className="ll_muted">no end</span>}
                     </td>
                     <td>{r.isActive ? "Active" : "Inactive"}</td>
-                    <td>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
-                        <details style={{ display: "inline-block" }}>
-                          <summary className="ll_btnSecondary" style={{ display: "inline-block" }}>
-                            Edit
-                          </summary>
-                          <div className="ll_panel" style={{ marginTop: 6 }}>
-                            <div className="ll_panelInner">
-                              <form className="ll_form" action={updateRecurringTransaction}>
-                                <input type="hidden" name="id" value={r.id} />
-                                <input type="hidden" name="propertyId" value={props.propertyId} />
-                                <input type="hidden" name="currentMonth" value={props.month} />
-
-                                <div className="ll_grid2">
-                                  <div>
-                                    <label className="ll_label" htmlFor={`category-${r.id}`}>
-                                      Category
-                                    </label>
-                                    <select
-                                      className="ll_input"
-                                      id={`category-${r.id}`}
-                                      name="categoryId"
-                                      defaultValue={r.categoryId}
-                                      required
-                                      suppressHydrationWarning
-                                    >
-                                      <option value="">Select…</option>
-                                      {props.categories.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.type.toUpperCase()} • {c.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-
-                                  <div>
-                                    <label className="ll_label" htmlFor={`amount-${r.id}`}>
-                                      Amount
-                                    </label>
-                                    <input
-                                      className="ll_input"
-                                      id={`amount-${r.id}`}
-                                      name="amount"
-                                      type="number"
-                                      step="0.01"
-                                      defaultValue={(r.amountCents / 100).toFixed(2)}
-                                      required
-                                      suppressHydrationWarning
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="ll_label" htmlFor={`memo-${r.id}`}>
-                                      Memo
-                                    </label>
-                                    <input
-                                      className="ll_input"
-                                      id={`memo-${r.id}`}
-                                      name="memo"
-                                      type="text"
-                                      defaultValue={r.memo ?? ""}
-                                      suppressHydrationWarning
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="ll_label" htmlFor={`day-${r.id}`}>
-                                      Day of month
-                                    </label>
-                                    <input
-                                      className="ll_input"
-                                      id={`day-${r.id}`}
-                                      name="dayOfMonth"
-                                      type="number"
-                                      min={1}
-                                      max={28}
-                                      defaultValue={r.dayOfMonth}
-                                      required
-                                      suppressHydrationWarning
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="ll_label" htmlFor={`start-${r.id}`}>
-                                      Start month
-                                    </label>
-                                    <input
-                                      className="ll_input"
-                                      id={`start-${r.id}`}
-                                      name="startMonth"
-                                      type="month"
-                                      defaultValue={r.startMonth}
-                                      required
-                                      suppressHydrationWarning
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="ll_label" htmlFor={`end-${r.id}`}>
-                                      End month (optional)
-                                    </label>
-                                    <input
-                                      className="ll_input"
-                                      id={`end-${r.id}`}
-                                      name="endMonth"
-                                      type="month"
-                                      defaultValue={r.endMonth ?? ""}
-                                      suppressHydrationWarning
-                                    />
-                                  </div>
-                                </div>
-
-                                <label className="ll_checkbox">
-                                  <input type="checkbox" name="isActive" defaultChecked={r.isActive} /> Active
+                    <td
+                    style={{
+                      width: 140,
+                      minWidth: 140,
+                      textAlign: "right",
+                      verticalAlign: "top",
+                      whiteSpace: "normal",
+                    }}
+                  >
+                  <div className="ll_btnGroup">
+                    <details>
+                      <summary className="ll_btnSecondary">Edit</summary>
+                  
+                      <div className="ll_panel" style={{ marginTop: 6 }}>
+                        <div className="ll_panelInner">
+                          <form className="ll_form" action={updateRecurringTransaction}>
+                            <input type="hidden" name="id" value={r.id} />
+                            <input type="hidden" name="propertyId" value={props.propertyId} />
+                            <input type="hidden" name="currentMonth" value={props.month} />
+                  
+                            <div className="ll_grid2">
+                              <div>
+                                <label className="ll_label" htmlFor={`category-${r.id}`}>
+                                  Category
                                 </label>
-
-                                <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                                  <button className="ll_btn" type="submit" suppressHydrationWarning>
-                                    Save
-                                  </button>
-                                </div>
-                              </form>
+                                <select
+                                  className="ll_input"
+                                  id={`category-${r.id}`}
+                                  name="categoryId"
+                                  defaultValue={r.categoryId}
+                                  required
+                                  suppressHydrationWarning
+                                >
+                                  <option value="">Select…</option>
+                                  {props.categories.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                      {c.type.toUpperCase()} • {c.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                  
+                              <div>
+                                <label className="ll_label" htmlFor={`amount-${r.id}`}>
+                                  Amount
+                                </label>
+                                <input
+                                  className="ll_input"
+                                  id={`amount-${r.id}`}
+                                  name="amount"
+                                  type="number"
+                                  step="0.01"
+                                  defaultValue={(r.amountCents / 100).toFixed(2)}
+                                  required
+                                  suppressHydrationWarning
+                                />
+                              </div>
+                  
+                              <div>
+                                <label className="ll_label" htmlFor={`memo-${r.id}`}>
+                                  Memo
+                                </label>
+                                <input
+                                  className="ll_input"
+                                  id={`memo-${r.id}`}
+                                  name="memo"
+                                  type="text"
+                                  defaultValue={r.memo ?? ""}
+                                  suppressHydrationWarning
+                                />
+                              </div>
+                  
+                              <div>
+                                <label className="ll_label" htmlFor={`day-${r.id}`}>
+                                  Day of month
+                                </label>
+                                <input
+                                  className="ll_input"
+                                  id={`day-${r.id}`}
+                                  name="dayOfMonth"
+                                  type="number"
+                                  min={1}
+                                  max={28}
+                                  defaultValue={r.dayOfMonth}
+                                  required
+                                  suppressHydrationWarning
+                                />
+                              </div>
+                  
+                              <div>
+                                <label className="ll_label" htmlFor={`start-${r.id}`}>
+                                  Start month
+                                </label>
+                                <input
+                                  className="ll_input"
+                                  id={`start-${r.id}`}
+                                  name="startMonth"
+                                  type="month"
+                                  defaultValue={r.startMonth}
+                                  required
+                                  suppressHydrationWarning
+                                />
+                              </div>
+                  
+                              <div>
+                                <label className="ll_label" htmlFor={`end-${r.id}`}>
+                                  End month (optional)
+                                </label>
+                                <input
+                                  className="ll_input"
+                                  id={`end-${r.id}`}
+                                  name="endMonth"
+                                  type="month"
+                                  defaultValue={r.endMonth ?? ""}
+                                  suppressHydrationWarning
+                                />
+                              </div>
                             </div>
-                          </div>
-                        </details>
-
-                        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
-                          <form action={toggleRecurringTransaction}>
-                            <input type="hidden" name="id" value={r.id} />
-                            <input type="hidden" name="propertyId" value={props.propertyId} />
-                            <input type="hidden" name="month" value={props.month} />
-                            <input type="hidden" name="isActive" value={r.isActive ? "false" : "true"} />
-                            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning data-lpignore="true">
-                              {r.isActive ? "Disable" : "Enable"}
-                            </button>
-                          </form>
-
-                          <form action={deleteRecurringTransaction} suppressHydrationWarning data-lpignore="true">
-                            <input type="hidden" name="id" value={r.id} />
-                            <input type="hidden" name="propertyId" value={props.propertyId} />
-                            <input type="hidden" name="month" value={props.month} />
-                            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning data-lpignore="true" data-1p-ignore="true">
-                              Delete
-                            </button>
+                  
+                            <label className="ll_checkbox">
+                              <input type="checkbox" name="isActive" defaultChecked={r.isActive} /> Active
+                            </label>
+                  
+                            <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+                              <button className="ll_btn" type="submit" suppressHydrationWarning>
+                                Save
+                              </button>
+                            </div>
                           </form>
                         </div>
                       </div>
+                    </details>
+                  
+                    <form action={toggleRecurringTransaction}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="propertyId" value={props.propertyId} />
+                      <input type="hidden" name="month" value={props.month} />
+                      <input type="hidden" name="isActive" value={r.isActive ? "false" : "true"} />
+                      <button
+                        className="ll_btnSecondary"
+                        type="submit"
+                        suppressHydrationWarning
+                        data-lpignore="true"
+                      >
+                        {r.isActive ? "Disable" : "Enable"}
+                      </button>
+                    </form>
+                  
+                    <form action={deleteRecurringTransaction} suppressHydrationWarning data-lpignore="true">
+                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="propertyId" value={props.propertyId} />
+                      <input type="hidden" name="month" value={props.month} />
+                      <button
+                        className="ll_btnDanger"
+                        type="submit"
+                        suppressHydrationWarning
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                      >
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+
                     </td>
                   </tr>
                 ))
@@ -454,7 +489,7 @@ export default function RecurringPanel(props: RecurringPanelProps) {
     </>
   )}
   </div>
-  </div>
+  
   
   );
 }

@@ -92,10 +92,10 @@ export default async function LedgerPickerPage({
                   style={{
                     textDecoration: "none",
                     color: "inherit",
-                    border: "1px solid rgba(255,255,255,0.10)",
+                    border: "1px solid var(--border)",
                     borderRadius: 12,
                     padding: "10px 12px",
-                    background: "rgba(255,255,255,0.03)",
+                    background: "#ffffff",
                   }}
                 >
                   <div style={{ fontWeight: 800 }}>
