@@ -76,9 +76,9 @@ export default function TenantPicker({
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "8px 10px",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  border: "1px solid var(--border)",
                   borderRadius: 10,
-                  background: "rgba(255,255,255,0.04)",
+                  background: "#ffffff",
                 }}
               >
                 <div style={{ opacity: 0.92 }}>
@@ -125,7 +125,7 @@ export default function TenantPicker({
                     justifyContent: "space-between",
                     alignItems: "center",
                     padding: "8px 10px",
-                    border: "1px solid rgba(255,255,255,0.10)",
+                    border: "1px solid var(--border)",
                     borderRadius: 10,
                     opacity: already ? 0.55 : 0.92,
                   }}

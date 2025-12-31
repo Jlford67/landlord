@@ -129,6 +129,9 @@ export default async function PropertyDetailPage({
             <Link className="ll_btnSecondary" href={`/properties/${property.id}/edit`}>
               Edit
             </Link>
+		    <Link className="ll_btn ll_btnPrimary" href={`/properties/${property.id}/leases/new`}>
+              Add tenant
+            </Link>
             <form action="/api/auth/logout" method="post">
               <button className="ll_btnSecondary" type="submit">
                 Logout

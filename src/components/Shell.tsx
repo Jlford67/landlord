@@ -20,7 +20,7 @@ export default function Shell({ children }: { children: ReactNode }) {
       <aside
         style={{
           width: 240,
-          borderRight: "1px solid rgba(255,255,255,0.08)",
+          borderRight: "1px solid var(--border)",
           padding: 16,
         }}
       >
@@ -31,7 +31,12 @@ export default function Shell({ children }: { children: ReactNode }) {
         <SidebarNav />
       </aside>
 
-      <main style={{ flex: 1, padding: 24 }}>{children}</main>
+      <main style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 24px" }}>
+          {children}
+        </div>
+      </main>
+
     </div>
   );
 }

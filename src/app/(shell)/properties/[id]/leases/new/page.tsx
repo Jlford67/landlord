@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import AddTenantButton from "@/components/AddTenantButton";
 import TenantPicker, { TenantLite } from "@/components/TenantPicker";
+import NewLeaseForm from "@/components/leases/NewLeaseForm";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -88,107 +89,22 @@ export default async function NewLeasePage({
           </div>
         </div>
 
-        <form
-          id="leaseForm"
-          className="ll_form"
-          action={`/api/properties/${property.id}/leases`}
-          method="post"
-          autoComplete="off"
-        >
-          <label>
-            Start date
-            <input
-              className="ll_input"
-              type="date"
-              name="startDate"
-              defaultValue={defaultStartDate}
-              required
-            />
-          </label>
+        <NewLeaseForm
+          propertyId={property.id}
+          backHref={`/properties/${property.id}/leases`}
+          actionHref={`/api/properties/${property.id}/leases`}
+          defaultStartDate={defaultStartDate}
+          defaultEndDate={defaultEndDate}
+          defaultRentAmount={defaultRentAmount}
+          defaultDueDay={Number(defaultDueDay || 1)}
+          defaultDeposit={defaultDeposit}
+          defaultStatus={defaultStatus}
+          defaultManagedByPm={defaultManagedByPm}
+          defaultNotes={defaultNotes}
+          returnToBasePath={returnToBasePath}
+          initialSelectedTenants={initialSelectedTenants}
+        />
 
-          <label>
-            End date (optional)
-            <input className="ll_input" type="date" name="endDate" defaultValue={defaultEndDate} />
-          </label>
-
-          <label>
-            Rent amount
-            <input
-              className="ll_input"
-              type="number"
-              step="0.01"
-              name="rentAmount"
-              defaultValue={defaultRentAmount}
-              required
-            />
-          </label>
-
-          <label>
-            Due day (1-28)
-            <input
-              className="ll_input"
-              type="number"
-              min={1}
-              max={28}
-              name="dueDay"
-              defaultValue={Number(defaultDueDay || 1)}
-              required
-            />
-          </label>
-
-          <label>
-            Deposit (optional)
-            <input
-              className="ll_input"
-              type="number"
-              step="0.01"
-              name="deposit"
-              defaultValue={defaultDeposit}
-            />
-          </label>
-
-          <label>
-            Status
-            <select className="ll_input" name="status" defaultValue={defaultStatus}>
-              <option value="upcoming">upcoming</option>
-              <option value="active">active</option>
-              <option value="ended">ended</option>
-            </select>
-          </label>
-
-          <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input type="checkbox" name="managedByPm" defaultChecked={defaultManagedByPm} />
-            Managed by PM
-          </label>
-
-          <label>
-            Notes (optional)
-            <input className="ll_input" name="notes" defaultValue={defaultNotes} />
-          </label>
-
-          <div style={{ marginTop: 6 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontWeight: 700 }}>Tenants</div>
-
-              <AddTenantButton
-                tenantsNewBaseHref="/tenants/new?returnTo="
-                returnToBasePath={returnToBasePath}
-                formId="leaseForm"
-              />
-            </div>
-
-            <TenantPicker initialSelected={initialSelectedTenants} />
-          </div>
-
-          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <button className="ll_btn" type="submit">
-              Create lease
-            </button>
-            <Link className="ll_btnSecondary" href={`/properties/${property.id}/leases`}>
-              Cancel
-            </Link>
-          </div>
-        </form>
       </div>
     </div>
   );

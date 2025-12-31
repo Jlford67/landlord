@@ -3,6 +3,14 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { LeaseStatus } from "@prisma/client";
 
+const FAR_FUTURE = new Date("9999-12-31");
+
+function overlaps(aStart: Date, aEnd: Date | null, bStart: Date, bEnd: Date | null) {
+  const aE = aEnd ?? FAR_FUTURE;
+  const bE = bEnd ?? FAR_FUTURE;
+  return aStart <= bE && bStart <= aE;
+}
+
 function parseDateOnly(value: string): Date {
   const [y, m, d] = value.split("-").map((x) => parseInt(x, 10));
   if (!y || !m || !d) throw new Error(`Invalid date: ${value}`);
@@ -42,6 +50,7 @@ export async function POST(
     const managedByPm = formData.get("managedByPm") === "on";
     const notesRaw = (formData.get("notes")?.toString() || "").trim();
     const tenantIds = formData.getAll("tenantIds").map((v) => v.toString());
+	const confirmOverlap = (formData.get("confirmOverlap")?.toString() || "").trim() === "true";
 
     if (!startDateRaw || !rentAmountRaw || !dueDayRaw) {
       return NextResponse.json(
@@ -62,6 +71,40 @@ export async function POST(
 
     const startDate = parseDateOnly(startDateRaw);
     const endDate = endDateRaw ? parseDateOnly(endDateRaw) : null;
+	
+    // Overlap warning (allow overlaps, but require confirm)
+    if (!confirmOverlap) {
+      const existing = await prisma.lease.findMany({
+        where: {
+          propertyId,
+          // Ignore ended leases for warning (change if you want)
+          status: { in: ["active", "upcoming"] },
+        },
+        select: { id: true, startDate: true, endDate: true, status: true },
+        orderBy: { startDate: "asc" },
+      });
+    
+      const hasOverlap = existing.some((l) => overlaps(startDate, endDate, l.startDate, l.endDate));
+    
+      if (hasOverlap) {
+        // Send user back to the form with a flag + preserve their inputs via query string
+        const back = new URL(`/properties/${propertyId}/leases/new`, req.url);
+        back.searchParams.set("overlap", "1");
+        back.searchParams.set("startDate", startDateRaw);
+        if (endDateRaw) back.searchParams.set("endDate", endDateRaw);
+        back.searchParams.set("rentAmount", rentAmountRaw);
+        back.searchParams.set("dueDay", dueDayRaw);
+        if (depositRaw) back.searchParams.set("deposit", depositRaw);
+        back.searchParams.set("status", statusRaw);
+        if (managedByPm) back.searchParams.set("managedByPm", "1");
+        if (notesRaw) back.searchParams.set("notes", notesRaw);
+    
+        // Preserve selected tenants too
+        for (const t of tenantIds) back.searchParams.append("tenantIds", t);
+    
+        return NextResponse.redirect(back);
+      }
+    }
 
     const deposit = depositRaw.length === 0 ? null : Number(depositRaw);
     if (deposit !== null && !Number.isFinite(deposit)) {

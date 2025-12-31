@@ -101,7 +101,17 @@ export default async function PropertyLedgerPage({
   }
 
   return (
-    <div>
+    <div
+      className="ll_page"
+      style={{
+        width: "100%",
+        maxWidth: "none",
+        marginLeft: 0,
+        marginRight: 0,
+      }}
+    >
+
+
       {/* Header */}
       <div
         style={{
@@ -138,32 +148,28 @@ export default async function PropertyLedgerPage({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) 520px",
+          gridTemplateColumns: "minmax(0, 1fr)",
           gap: 24,
           marginTop: 16,
           alignItems: "start",
+          width: "100%",
         }}
       >
+
         {/* Left: transactions */}
-        <div className="ll_panel">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>Transactions</div>
-
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link
-                className="ll_btnSecondary"
-                href={`/properties/${propertyId}/ledger?month=${month}`}
-              >
-                Refresh
-              </Link>
+        <div className="ll_card">
+          <div className="ll_cardHeader">
+            <div>
+              <div className="ll_h2">Transactions</div>
+              <div className="ll_muted">{monthLabel(month)}</div>
             </div>
+        
+            <Link className="ll_btn ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${month}`}>
+              Refresh
+            </Link>
           </div>
-
-          <div className="ll_muted" style={{ marginTop: 6 }}>
-            {monthLabel(month)}
-          </div>
-
-          <div style={{ marginTop: 12 }}>
+        
+          <div className="ll_cardPad">
             {txns.length === 0 ? (
               <div className="ll_muted">No transactions for this month.</div>
             ) : (
@@ -174,10 +180,11 @@ export default async function PropertyLedgerPage({
                       <th style={{ width: 120 }}>Date</th>
                       <th style={{ width: "36%" }}>Category</th>
                       <th style={{ width: "34%" }}>Memo</th>
-                      <th style={{ textAlign: "right", width: 130 }}>Amount</th>
-                      <th style={{ textAlign: "right", width: 190 }}>Actions</th>
+                      <th style={{ textAlign: "right", width: 110 }}>Amount</th>
+                      <th style={{ textAlign: "right", width: 140 }}>Actions</th>
                     </tr>
                   </thead>
+        
                   <tbody>
                     {txns.map((t: any) => (
                       <tr key={t.id}>
@@ -189,42 +196,35 @@ export default async function PropertyLedgerPage({
                             timeZone: "UTC",
                           })}
                         </td>
-                  
+        
                         <td>
                           <span className="ll_muted">{t.category.type.toUpperCase()}</span>{" "}
                           {t.category.name}
                         </td>
-                  
+        
                         <td>{t.memo || <span className="ll_muted">(none)</span>}</td>
-                  
+        
                         <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                           {t.amount.toFixed(2)}
                         </td>
-                  
+        
                         <td style={{ textAlign: "right" }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 6,
-                              alignItems: "flex-end",
-                            }}
-                          >
+                          <div style={{ display: "flex", justifyContent: "flex-end" }}>
                             <TransactionRowActions transaction={t} />
                           </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-
                 </table>
               </div>
             )}
           </div>
         </div>
 
+
         {/* Right: recurring */}
-        <div className="ll_panel">
+        <div className="ll_card recurring" style={{ width: "100%" }}>
           {recurringTablesReady ? (
             <RecurringPanel
               propertyId={propertyId}

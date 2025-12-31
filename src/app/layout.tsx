@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import TopNav from "@/components/TopNav";
 import { getCurrentUser } from "@/lib/auth";
-import TopNavGate from "@/components/TopNavGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +24,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getCurrentUser();
+  // If this is only used for TopNavGate, it can be removed entirely.
+  // Keeping it here is harmless, but not needed for layout.
+  await getCurrentUser();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -33,9 +34,9 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {user ? <TopNavGate userEmail={user.email} /> : null}
         {children}
       </body>
     </html>
   );
 }
+

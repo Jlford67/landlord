@@ -33,18 +33,29 @@ export default function SidebarNav() {
           <Link
             key={item.href}
             href={item.href}
-            className="ll_btnSecondary"
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
               textAlign: "left",
-              fontWeight: active ? 700 : 600,
-              opacity: 1,
-              borderLeft: active ? "4px solid rgba(255,255,255,0.45)" : "4px solid transparent",
+              textDecoration: "none",
+          
+              padding: "10px 12px",
               paddingLeft: 12,
-              background: active ? "rgba(255,255,255,0.06)" : "transparent",
+          
+              borderRadius: 10,
+              border: "1px solid transparent",
+              borderLeft: active ? "4px solid var(--primary)" : "4px solid transparent",
+          
+              background: active ? "#ffffff" : "transparent",
+          
+              color: active ? "var(--text)" : "#374151",
+              fontWeight: active ? 800 : 650,
             }}
-          >
-            {item.label}
-          </Link>
+>
+  {item.label}
+</Link>
+
         );
       })}
     </nav>
