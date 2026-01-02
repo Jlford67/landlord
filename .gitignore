@@ -49,3 +49,8 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# local imports / spreadsheets
+*.xlsx
+prisma/annual-import.csv
+

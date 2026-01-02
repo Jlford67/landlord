@@ -6,8 +6,8 @@ import RecurringPanel from "@/components/ledger/RecurringPanel";
 import TransactionRowActions from "@/components/ledger/TransactionRowActions";
 
 function ym(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
 }
 
@@ -16,6 +16,13 @@ function monthLabel(month: string) {
   const mm = Number(m);
   const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return `${names[mm - 1]} ${y}`;
+}
+
+function shiftMonth(month: string, delta: number) {
+  const [y, m] = month.split("-").map(Number);
+  const d = new Date(Date.UTC(y, (m ?? 1) - 1, 1));
+  d.setUTCMonth(d.getUTCMonth() + delta);
+  return ym(d);
 }
 
 type PageProps = {
@@ -51,9 +58,9 @@ export default async function PropertyLedgerPage({
   if (!property) {
     return (
       <div>
-        <h1 style={{ fontSize: 28, marginBottom: 8 }}>Ledger</h1>
+        <h1 className="text-[28px] mb-2">Ledger</h1>
         <div className="ll_muted">Property not found.</div>
-        <div style={{ marginTop: 16 }}>
+        <div className="mt-4">
           <Link className="ll_btnSecondary" href="/properties">
             Back to properties
           </Link>
@@ -73,7 +80,7 @@ export default async function PropertyLedgerPage({
     include: { category: true },
   });
 
-  // Recurring data (same pattern you already use on the other ledger page)
+  // Recurring data
   const categories = await prisma.category.findMany({
     where: { active: true },
     orderBy: [{ type: "asc" }, { name: "asc" }],
@@ -82,7 +89,7 @@ export default async function PropertyLedgerPage({
   let recurringItems: Awaited<ReturnType<typeof prisma.recurringTransaction.findMany>> = [];
   let recurringTablesReady = true;
   let recurringErrorMsg: string | null = null;
-  
+
   try {
     recurringItems = await prisma.recurringTransaction.findMany({
       where: { propertyId },
@@ -92,7 +99,7 @@ export default async function PropertyLedgerPage({
   } catch (error: any) {
     recurringErrorMsg = error?.message ?? String(error);
     console.error("recurringTransaction.findMany failed", error);
-  
+
     if (error?.code === "P2021") {
       recurringTablesReady = false;
     } else {
@@ -101,34 +108,41 @@ export default async function PropertyLedgerPage({
   }
 
   return (
-    <div
-      className="ll_page"
-      style={{
-        width: "100%",
-        maxWidth: "none",
-        marginLeft: 0,
-        marginRight: 0,
-      }}
-    >
-
-
+    <div className="ll_page w-full max-w-none mx-0">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 16,
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: 32, margin: 0, marginBottom: 6 }}>Ledger</h1>
-          <div className="ll_muted">
-            {propertyLabel(property)} · {monthLabel(month)}
-          </div>
+      <div className="flex items-start justify-between gap-4">
+      <div>
+        <h1 className="text-[32px] m-0 mb-1.5">Ledger</h1>
+        <div className="ll_muted">
+          {propertyLabel(property)} · {monthLabel(month)}
         </div>
+      
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, -1)}`}>
+            Prev
+          </Link>
+      
+          <form method="get" className="flex items-center gap-2">
+            <input
+              className="ll_input w-[160px]"
+              name="month"
+              type="month"
+              defaultValue={month}
+              suppressHydrationWarning
+              data-lpignore="true"
+            />
+            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning data-lpignore="true">
+              Go
+            </button>
+          </form>
+      
+          <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, 1)}`}>
+            Next
+          </Link>
+        </div>
+      </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="flex gap-2.5 items-center">
           <Link className="ll_btnSecondary" href="/properties">
             Back
           </Link>
@@ -145,17 +159,7 @@ export default async function PropertyLedgerPage({
       </div>
 
       {/* Content */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr)",
-          gap: 24,
-          marginTop: 16,
-          alignItems: "start",
-          width: "100%",
-        }}
-      >
-
+      <div className="grid grid-cols-1 gap-6 mt-4 items-start w-full">
         {/* Left: transactions */}
         <div className="ll_card">
           <div className="ll_cardHeader">
@@ -163,32 +167,32 @@ export default async function PropertyLedgerPage({
               <div className="ll_h2">Transactions</div>
               <div className="ll_muted">{monthLabel(month)}</div>
             </div>
-        
+
             <Link className="ll_btn ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${month}`}>
               Refresh
             </Link>
           </div>
-        
+
           <div className="ll_cardPad">
             {txns.length === 0 ? (
               <div className="ll_muted">No transactions for this month.</div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table className="ll_table" style={{ width: "100%" }}>
+              <div className="ll_table_wrap">
+                <table className="ll_table ll_table_zebra w-full">
                   <thead>
                     <tr>
-                      <th style={{ width: 120 }}>Date</th>
-                      <th style={{ width: "36%" }}>Category</th>
-                      <th style={{ width: "34%" }}>Memo</th>
-                      <th style={{ textAlign: "right", width: 110 }}>Amount</th>
-                      <th style={{ textAlign: "right", width: 140 }}>Actions</th>
+                      <th className="w-[120px]">Date</th>
+                      <th className="w-[36%]">Category</th>
+                      <th className="w-[34%]">Memo</th>
+                      <th className="w-[110px] text-right">Amount</th>
+                      <th className="w-[140px] text-right">Actions</th>
                     </tr>
                   </thead>
-        
+
                   <tbody>
                     {txns.map((t: any) => (
                       <tr key={t.id}>
-                        <td style={{ whiteSpace: "nowrap" }}>
+                        <td className="whitespace-nowrap">
                           {new Date(t.date).toLocaleDateString(undefined, {
                             weekday: "short",
                             month: "short",
@@ -196,20 +200,20 @@ export default async function PropertyLedgerPage({
                             timeZone: "UTC",
                           })}
                         </td>
-        
+
                         <td>
                           <span className="ll_muted">{t.category.type.toUpperCase()}</span>{" "}
                           {t.category.name}
                         </td>
-        
+
                         <td>{t.memo || <span className="ll_muted">(none)</span>}</td>
-        
-                        <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+
+                        <td className="text-right whitespace-nowrap tabular-nums">
                           {t.amount.toFixed(2)}
                         </td>
-        
-                        <td style={{ textAlign: "right" }}>
-                          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+
+                        <td className="text-right">
+                          <div className="flex justify-end">
                             <TransactionRowActions transaction={t} />
                           </div>
                         </td>
@@ -222,15 +226,14 @@ export default async function PropertyLedgerPage({
           </div>
         </div>
 
-
         {/* Right: recurring */}
-        <div className="ll_card recurring" style={{ width: "100%" }}>
+        <div className="ll_card recurring w-full">
           {recurringTablesReady ? (
             <RecurringPanel
               propertyId={propertyId}
               categories={categories}
               recurringItems={recurringItems}
-			  recurringTablesReady={recurringTablesReady}
+              recurringTablesReady={recurringTablesReady}
               recurringErrorMsg={recurringErrorMsg}
               month={month}
             />

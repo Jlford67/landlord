@@ -63,33 +63,34 @@ model Entity {
 }
 
 model Property {
-  id        String   @id @default(cuid())
-  nickname  String?
-  street    String
-  city      String
-  state     String
-  zip       String
-  doors     Int?
-  beds      Float?
-  baths     Float?
-  sqFt      Int?
-  status    String   @default("active") // active/sold/watchlist
-  notes     String?
+  id                        String    @id @default(cuid())
+  nickname                  String?
+  street                    String
+  city                      String
+  state                     String
+  zip                       String
+  doors                     Int?
+  beds                      Float?
+  baths                     Float?
+  sqFt                      Int?
+  status                    String    @default("active") // active/sold/watchlist
+  notes                     String?
   estimatedValueCents       Int?
   estimatedValueUpdatedAt   DateTime?
   estimatedValueSource      String?
   estimatedValueProviderRef String?
-  createdAt DateTime @default(now())
+  createdAt                 DateTime  @default(now())
 
-  ownerships    PropertyOwnership[]
-  loans         Loan[]
-  taxAccounts   PropertyTaxAccount[]
-  insurance     InsurancePolicy[]
-  pmAssignments PropertyManagerAssignment[]
-  leases        Lease[]
-  transactions  Transaction[]
+  ownerships            PropertyOwnership[]
+  loans                 Loan[]
+  taxAccounts           PropertyTaxAccount[]
+  insurance             InsurancePolicy[]
+  pmAssignments         PropertyManagerAssignment[]
+  leases                Lease[]
+  transactions          Transaction[]
   recurringTransactions RecurringTransaction[]
-  notifications Notification[]
+  notifications         Notification[]
+  annualCategoryAmounts AnnualCategoryAmount[]
 }
 
 model PropertyOwnership {
@@ -100,8 +101,9 @@ model PropertyOwnership {
   startDate    DateTime?
   endDate      DateTime?
 
-  property Property @relation(fields: [propertyId], references: [id])
-  entity   Entity   @relation(fields: [entityId], references: [id])
+  property              Property               @relation(fields: [propertyId], references: [id])
+  entity                Entity                 @relation(fields: [entityId], references: [id])
+  annualCategoryAmounts AnnualCategoryAmount[]
 
   @@index([propertyId])
   @@index([entityId])
@@ -178,6 +180,29 @@ model PropertyManagerAssignment {
 
   @@index([propertyId])
   @@index([pmId])
+}
+
+model AnnualCategoryAmount {
+  id         String @id @default(cuid())
+  propertyId String
+  year       Int
+  categoryId String
+
+  // Match Transaction style: +income, -expense
+  amount Float
+
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property            Property           @relation(fields: [propertyId], references: [id])
+  category            Category           @relation(fields: [categoryId], references: [id])
+  propertyOwnership   PropertyOwnership? @relation(fields: [propertyOwnershipId], references: [id])
+  propertyOwnershipId String?
+
+  @@unique([propertyId, year, categoryId])
+  @@index([propertyId, year])
+  @@index([categoryId])
 }
 
 model Loan {
@@ -264,8 +289,9 @@ model Category {
   parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id])
   children Category[] @relation("CategoryParent")
 
-  transactions Transaction[]
+  transactions          Transaction[]
   recurringTransactions RecurringTransaction[]
+  annualCategoryAmounts AnnualCategoryAmount[]
 
   @@index([type])
   @@index([parentId])
@@ -282,7 +308,6 @@ model Transaction {
   source     TransactionSource @default(manual)
   deletedAt  DateTime?
 
-
   // monthly reconciliation helpers
   statementMonth String? // "2025-11" groups a PM statement month
   isOwnerPayout  Boolean @default(false) // the deposit you received
@@ -294,7 +319,6 @@ model Transaction {
   @@index([statementMonth])
   @@index([categoryId])
   @@index([propertyId, deletedAt])
-
 }
 
 model RecurringTransaction {
@@ -307,10 +331,10 @@ model RecurringTransaction {
 
   amountCents Int
   memo        String?
-  dayOfMonth  Int      @default(1) // 1-28 recommended
-  startMonth  String   // "YYYY-MM"
-  endMonth    String?  // "YYYY-MM" optional
-  isActive    Boolean  @default(true)
+  dayOfMonth  Int     @default(1) // 1-28 recommended
+  startMonth  String // "YYYY-MM"
+  endMonth    String? // "YYYY-MM" optional
+  isActive    Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -327,7 +351,7 @@ model RecurringPosting {
   recurringTransaction   RecurringTransaction @relation(fields: [recurringTransactionId], references: [id], onDelete: Cascade)
 
   month               String // "YYYY-MM"
-  ledgerTransactionId String @unique
+  ledgerTransactionId String   @unique
   createdAt           DateTime @default(now())
 
   @@unique([recurringTransactionId, month])
