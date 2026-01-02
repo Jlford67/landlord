@@ -61,12 +61,17 @@ a:hover{ text-decoration: underline; }
 
 .ll_panel{
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   background: var(--panel);
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+}
+
+.ll_panel_centered{
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 .ll_panelInner{
@@ -218,12 +223,61 @@ a.ll_btnDanger{
   box-shadow: 0 0 0 rgba(17, 24, 39, 0);
 }
 
+/* IMPORTANT: Link-buttons should behave like buttons (including visited state) */
+a.ll_btn,
+a.ll_btnPrimary,
+a.ll_btnSecondary,
+a.ll_btnGhost,
+a.ll_btnDanger{
+  text-decoration: none;
+}
+
+a.ll_btn:hover,
+a.ll_btnPrimary:hover,
+a.ll_btnSecondary:hover,
+a.ll_btnGhost:hover,
+a.ll_btnDanger:hover{
+  text-decoration: none;
+}
+
+/* Do NOT allow visited links to change button colors */
+a.ll_btn:visited{ color: inherit; }
+
+a.ll_btnPrimary,
+a.ll_btnPrimary:visited{
+  color: var(--primary-ink);
+}
+
+a.ll_btnSecondary,
+a.ll_btnSecondary:visited{
+  color: var(--secondary-ink);
+}
+
+a.ll_btnGhost,
+a.ll_btnGhost:visited{
+  color: var(--text);
+}
+
+a.ll_btnDanger,
+a.ll_btnDanger:visited{
+  color: #ffd6d6;
+}
+
+
 /* Yellow primary */
 .ll_btnPrimary,
 .ll_btn.ll_btnPrimary{
   background: var(--primary);
   color: var(--primary-ink);
   border-color: rgba(0, 0, 0, 0.08);
+}
+a.ll_btnPrimary,
+a.ll_btn.ll_btnPrimary{
+  color: var(--primary-ink);
+}
+a.ll_btnPrimary:visited,
+a.ll_btn.ll_btnPrimary:visited{
+  color: var(--primary-ink);
 }
 
 .ll_btnPrimary:hover,
@@ -238,6 +292,14 @@ a.ll_btnDanger{
   color: var(--secondary-ink);
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow: 0 1px 2px rgba(17, 24, 39, 0.10), 0 6px 18px rgba(37, 99, 235, 0.18);
+}
+a.ll_btnSecondary,
+a.ll_btn.ll_btnSecondary{
+  color: var(--secondary-ink);
+}
+a.ll_btnSecondary:visited,
+a.ll_btn.ll_btnSecondary:visited{
+  color: var(--secondary-ink);
 }
 
 .ll_btnSecondary:hover,
@@ -254,6 +316,14 @@ a.ll_btnDanger{
   border-color: var(--border);
   box-shadow: none;
 }
+a.ll_btnGhost,
+a.ll_btn.ll_btnGhost{
+  color: var(--text);
+}
+a.ll_btnGhost:visited,
+a.ll_btn.ll_btnGhost:visited{
+  color: var(--text);
+}
 
 .ll_btnGhost:hover,
 .ll_btn.ll_btnGhost:hover{
@@ -264,11 +334,17 @@ a.ll_btnDanger{
 .ll_btnDanger,
 .ll_btn.ll_btnDanger{
   background: var(--secondary);
-  color: #ffd6d6; /* soft red-tint so it reads as destructive */
+  color: #ffd6d6;
   border-color: rgba(180, 35, 24, 0.65);
-
-  /* remove the blue glow so it doesn't look like a normal primary action */
   box-shadow: 0 1px 2px rgba(17, 24, 39, 0.10);
+}
+a.ll_btnDanger,
+a.ll_btn.ll_btnDanger{
+  color: #ffd6d6;
+}
+a.ll_btnDanger:visited,
+a.ll_btn.ll_btnDanger:visited{
+  color: #ffd6d6;
 }
 
 .ll_btnDanger:hover,
@@ -281,7 +357,6 @@ a.ll_btnDanger{
 .ll_btn.ll_btnDanger:active{
   filter: brightness(0.98);
 }
-
 
 /* If you still use ll_btnDeactivate anywhere, keep it as an alias */
 .ll_btnDeactivate{
@@ -366,11 +441,50 @@ a.ll_btnDanger{
 .ll_pillNeg{ background: var(--pill-neg-bg); color: var(--pill-neg-fg); }
 
 /* =========================
-   Sidebar link hover
+   Sidebar (scoped so it can't affect page content)
    ========================= */
 
+/* keep your older hover helper for any legacy class usage */
 .ll_sideLink:hover{
   background: #f3f4f6;
+}
+
+/* Scope the new nav styles to the actual sidebar region (works with your Shell layout) */
+.ll_side_nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ll_side_link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ll_side_icon {
+  width: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af; /* gray */
+}
+
+.ll_side_label {
+  font-size: 14px;
+}
+
+.ll_side_link.is-active {
+  background: rgba(245, 158, 11, 0.14); /* soft yellow */
+  font-weight: 600;
+}
+
+.ll_side_link.is-active .ll_side_icon {
+  color: #f59e0b; /* yellow */
 }
 
 /* =========================
@@ -440,13 +554,11 @@ a.ll_btnDanger{
    Grid-based lists (categories, insurance, transactions)
    ========================= */
 
-/* Some pages use .ll_list as a real list (keep light defaults) */
 .ll_list{
   margin-top: 12px;
   padding-left: 18px;
 }
 
-/* Some pages use header/row grids */
 .ll_listHeader,
 .ll_listRow{
   display: grid;
@@ -542,7 +654,6 @@ a.ll_btnDanger{
   min-width: 0;
 }
 
-/* Optional: clean recurring table helpers if you use them */
 .ll_recurringTable{
   width: 100%;
   table-layout: auto;
@@ -640,4 +751,302 @@ a.ll_btnDanger{
   height: 28px;
   padding: 0 10px;
   font-size: 12px;
+}
+
+/* =========================
+   Dashboard layout
+   ========================= */
+
+.ll_dash{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 0 24px;
+}
+
+.ll_dash_top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ll_dash_title{
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.ll_dash_cards{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1100px){
+  .ll_dash{ max-width: 980px; }
+}
+
+@media (max-width: 980px){
+  .ll_dash{ max-width: 860px; }
+}
+
+@media (max-width: 900px){
+  .ll_dash_cards{ grid-template-columns: 1fr; }
+  .ll_dash{ padding: 8px 12px 24px; }
+}
+
+.ll_dash_card{
+  padding: 18px;
+}
+
+.ll_dash_cardTop{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ll_dash_cardTitle{
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ll_dash_link{
+  font-size: 13px;
+  color: #2563eb;
+  text-decoration: none;
+}
+.ll_dash_link:hover{ text-decoration: underline; }
+
+.ll_dash_moneyRow{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ll_dash_big{
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.ll_dash_pill{
+  font-size: 13px;
+  background: #ecfdf5;
+  color: #065f46;
+  border-radius: 999px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.ll_dash_subRow{
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #525252;
+}
+
+.ll_dash_muted{
+  color: #737373;
+}
+
+.ll_dash_footerRow{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #737373;
+}
+
+.ll_dash_list{
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ll_dash_empty{
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.ll_dash_listRow{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.ll_dash_listRow:last-child{
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.ll_dash_listLeft{
+  min-width: 0;
+}
+
+.ll_dash_listTitle{
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ll_dash_listSub{
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ll_dash_listAmt{
+  font-size: 13px;
+  font-weight: 800;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.ll_dash_propertyCard{
+  padding: 0;
+  overflow: hidden;
+}
+
+.ll_dash_photo{
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+  display: block;
+}
+
+.ll_dash_propBody{
+  padding: 18px;
+}
+
+.ll_dash_propTitle{
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.ll_dash_propSub{
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.ll_dash_midHeader{
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ll_dash_sectionTitle{
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.ll_dash_tableCard{
+  padding: 0;
+  overflow: hidden;
+}
+
+.ll_dash_tableWrap{
+  padding: 14px 16px 16px;
+}
+
+.ll_dash_topRight{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Property picker */
+.ll_dash_picker{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ll_dash_pickerLabel{
+  font-size: 13px;
+  color: #525252;
+}
+
+.ll_dash_pickerSelect{
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0 10px;
+  background: #fff;
+  font-size: 13px;
+}
+
+/* Income/Expense mini chart */
+.ll_dash_ieChart{
+  margin-top: 14px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 88px;
+}
+
+.ll_dash_ieCol{
+  width: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ll_dash_ieStack{
+  width: 18px;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.ll_dash_ieBar{
+  width: 100%;
+  border-radius: 4px;
+}
+
+.ll_dash_ieBarInc{ background: #bbf7d0; }
+.ll_dash_ieBarExp{ background: #fecaca; }
+
+.ll_dash_ieLbl{
+  font-size: 11px;
+  color: #737373;
+}
+
+.ll_btnDisabled {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #9ca3af;
+  background: transparent;
+  cursor: not-allowed;
+  white-space: nowrap;
 }

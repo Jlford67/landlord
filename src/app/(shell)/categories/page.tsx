@@ -10,19 +10,8 @@ function labelType(t: CatType) {
   return "Transfer";
 }
 
-function actionInfo(counts: { children: number; transactions: number }) {
-  const hasChildren = counts.children > 0;
-  const hasTxns = counts.transactions > 0;
-
-  if (!hasChildren && !hasTxns) {
-    return { canDelete: true, label: "Delete" as const };
-  }
-
-  if (hasTxns) {
-    return { canDelete: false, label: "Deactivate (in use)" as const };
-  }
-
-  return { canDelete: false, label: "Deactivate (has children)" as const };
+function canDelete(counts: { children: number; transactions: number }) {
+  return counts.children === 0 && counts.transactions === 0;
 }
 
 type CategoryRow = {
@@ -56,7 +45,7 @@ export default async function CategoriesPage(props: {
 
   for (const c of categories) byType[c.type as CatType].push(c);
 
-  const activeCount = categories.filter((c) => c.active).length;
+  const enabledCount = categories.filter((c) => c.active).length;
 
   return (
     <div className="ll_page">
@@ -65,13 +54,14 @@ export default async function CategoriesPage(props: {
           <div>
             <h1>Categories</h1>
             <div className="ll_muted">
-              Used for your ledger. Active: <span className="ll_code">{activeCount}</span> • Total:{" "}
+              Used for your ledger. Enabled:{" "}
+              <span className="ll_code">{enabledCount}</span> • Total:{" "}
               <span className="ll_code">{categories.length}</span>
             </div>
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href="/properties">
+            <Link className="ll_btn ll_btnSecondary" href="/properties">
               Back to properties
             </Link>
           </div>
@@ -81,7 +71,7 @@ export default async function CategoriesPage(props: {
         {msg === "exists" && <div className="ll_notice">That category already exists.</div>}
         {msg === "deleted" && <div className="ll_notice">Category deleted.</div>}
         {msg === "deactivated" && (
-          <div className="ll_notice">Category is in use, so it was deactivated instead of deleted.</div>
+          <div className="ll_notice">Category was disabled.</div>
         )}
         {msg === "notfound" && <div className="ll_notice">Category not found.</div>}
 
@@ -139,7 +129,7 @@ export default async function CategoriesPage(props: {
             </div>
 
             <div className="ll_actions">
-              <button className="ll_btn" type="submit" suppressHydrationWarning>
+              <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
                 Add category
               </button>
             </div>
@@ -157,43 +147,35 @@ export default async function CategoriesPage(props: {
 
       <style>{`
         .ll_rowBetween { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-        .ll_panelInner { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; }
+        .ll_panelInner { border-top: 1px solid var(--border); padding-top: 14px; }
 
         .ll_sectionTitle { margin-top: 14px; margin-bottom: 10px; font-size: 16px; opacity: 0.95; }
 
-        .ll_catRow { display:flex; align-items:center; justify-content:space-between; gap:12px; }
         .ll_catLeft { display:flex; align-items:center; gap:10px; min-width:0; }
         .ll_catTitle { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .ll_catMeta { font-size: 12px; opacity: 0.8; margin-top: 2px; }
 
-        .ll_badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.15); opacity: 0.95; }
+        .ll_badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: #fafafa; color: var(--muted); font-weight: 800; }
         .ll_bullet { opacity: 0.55; font-size: 14px; width: 18px; text-align: center; }
 
         .ll_dim { opacity: 0.55; }
 
-        .ll_actionsRight { display:flex; align-items:flex-end; }
+        .ll_actionsCell { display:flex; justify-content:flex-end; }
+        .ll_actionStack { display:inline-flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
 
-        .ll_btnDanger {
-          border: 1px solid rgba(255,255,255,0.18);
+        .ll_btnDisabled {
+          display: inline-flex;
+          align-items: center;
+          height: 30px;
+          padding: 0 10px;
+          border-radius: 10px;
+          font-size: 12.5px;
+          font-weight: 700;
+          color: #9ca3af;
           background: transparent;
-          color: rgba(255,255,255,0.92);
-          padding: 10px 14px;
-          border-radius: 10px;
-          cursor: pointer;
-          font-weight: 650;
+          cursor: not-allowed;
+          white-space: nowrap;
         }
-        .ll_btnDanger:hover { background: rgba(255,255,255,0.06); }
-
-        .ll_btnDeactivate {
-          border: 1px solid rgba(255,255,255,0.12);
-          background: rgba(255,255,255,0.03);
-          color: rgba(255,255,255,0.92);
-          padding: 10px 14px;
-          border-radius: 10px;
-          cursor: pointer;
-          font-weight: 650;
-        }
-        .ll_btnDeactivate:hover { background: rgba(255,255,255,0.07); }
       `}</style>
     </div>
   );
@@ -221,8 +203,8 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
   const rendered: JSX.Element[] = [];
 
   const renderNode = (node: CategoryRow, depth: number) => {
-    const info = actionInfo(node._count);
     const children = byParent.get(node.id) ?? [];
+    const deletable = canDelete(node._count);
 
     rendered.push(
       <div key={node.id} className={`ll_listRow ${node.active ? "" : "ll_dim"}`}>
@@ -231,7 +213,11 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
           className="ll_catLeft"
           style={{ paddingLeft: depth === 0 ? 0 : 64 + (depth - 1) * 26 }}
         >
-          {depth === 0 ? <span className="ll_badge">{title}</span> : <span className="ll_bullet">↳</span>}
+          {depth === 0 ? (
+            <span className="ll_badge">{title}</span>
+          ) : (
+            <span className="ll_bullet">↳</span>
+          )}
 
           <div style={{ minWidth: 0 }}>
             <div className="ll_catTitle">{node.name}</div>
@@ -247,20 +233,37 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
         </div>
 
         {/* Column 2: Status */}
-        <div className="ll_muted">{node.active ? "Active" : "Inactive"}</div>
+        <div className="ll_muted">{node.active ? "Enabled" : "Disabled"}</div>
 
         {/* Column 3: Actions */}
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <form method="post" action={`/api/categories/${node.id}`} style={{ margin: 0 }}>
-            <input type="hidden" name="returnTo" value="/categories" />
-            <button
-              className={info.canDelete ? "ll_btnDanger" : "ll_btnDeactivate"}
-              type="submit"
-              suppressHydrationWarning
-            >
-              {info.label}
-            </button>
-          </form>
+        <div className="ll_actionsCell">
+          <div className="ll_actionStack">
+            {/* Enable/Disable always available */}
+            <form method="post" action={`/api/categories/${node.id}/toggle`} style={{ margin: 0 }}>
+              <input type="hidden" name="returnTo" value="/categories" />
+              <button
+                type="submit"
+                className={`ll_btn ${node.active ? "ll_btnGhost" : "ll_btnSecondary"}`}
+                suppressHydrationWarning
+              >
+                {node.active ? "Disable" : "Enable"}
+              </button>
+            </form>
+
+            {/* Delete only when safe */}
+            {deletable ? (
+              <form method="post" action={`/api/categories/${node.id}`} style={{ margin: 0 }}>
+                <input type="hidden" name="returnTo" value="/categories" />
+                <button type="submit" className="ll_btn ll_btnDanger" suppressHydrationWarning>
+                  Delete
+                </button>
+              </form>
+            ) : (
+              <span className="ll_btnDisabled" title="This category is in use or has children.">
+                Can’t delete
+              </span>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -286,4 +289,3 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
     </div>
   );
 }
-

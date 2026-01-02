@@ -2,22 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Building2,
+  BookOpen,
+  Repeat,
+  Users,
+  Tags,
+  Receipt,
+  Shield,
+  Settings,
+} from "lucide-react";
 
-type NavItem = { href: string; label: string };
-
-const nav: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/properties", label: "Properties" },
-  { href: "/tenants", label: "Tenants" },
-  { href: "/categories", label: "Categories" },
-  { href: "/recurring", label: "Recurring" },
-  { href: "/ledger", label: "Ledger" },
-  { href: "/property-tax", label: "Property Tax" },
-  { href: "/insurance", label: "Insurance" },
+const NAV = [
+  { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/properties", label: "Properties", Icon: Building2 },
+  { href: "/tenants", label: "Tenants", Icon: Users },
+  { href: "/categories", label: "Categories", Icon: Tags },
+  { href: "/recurring", label: "Recurring", Icon: Repeat },
+  { href: "/ledger", label: "Ledger", Icon: BookOpen },
+  { href: "/property-tax", label: "Property Tax", Icon: Receipt },
+  { href: "/insurance", label: "Insurance", Icon: Shield },
+  { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
-function isActive(pathname: string, href: string) {
-  if (href === "/dashboard") return pathname === "/dashboard";
+function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
@@ -25,37 +34,21 @@ export default function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {nav.map((item) => {
-        const active = isActive(pathname, item.href);
+    <nav className="ll_side_nav">
+      {NAV.map(({ href, label, Icon }) => {
+        const active = isActivePath(pathname, href);
 
         return (
           <Link
-            key={item.href}
-            href={item.href}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              textAlign: "left",
-              textDecoration: "none",
-          
-              padding: "10px 12px",
-              paddingLeft: 12,
-          
-              borderRadius: 10,
-              border: "1px solid transparent",
-              borderLeft: active ? "4px solid var(--primary)" : "4px solid transparent",
-          
-              background: active ? "#ffffff" : "transparent",
-          
-              color: active ? "var(--text)" : "#374151",
-              fontWeight: active ? 800 : 650,
-            }}
->
-  {item.label}
-</Link>
-
+            key={href}
+            href={href}
+            className={`ll_side_link ${active ? "is-active" : ""}`}
+          >
+            <span className="ll_side_icon" aria-hidden="true">
+              <Icon size={18} />
+            </span>
+            <span className="ll_side_label">{label}</span>
+          </Link>
         );
       })}
     </nav>
