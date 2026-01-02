@@ -344,6 +344,21 @@ export default async function PropertyDetailPage({
               View all
             </Link>
           </div>
+		  
+		  <div style={{ fontWeight: 700 }}>Recent transactions</div>
+
+          <div className="ll_row ll_gap_sm">
+            <Link className="ll_btnSecondary" href={`/properties/${property.id}/ledger`}>
+              View all
+            </Link>
+          
+            <Link
+              className="ll_btnSecondary"
+              href={`/properties/${property.id}/annual?year=${new Date().getUTCFullYear()}`}
+            >
+              Annual
+            </Link>
+          </div>
 
           <div className="ll_list ll_txnList">
             <div className="ll_listHeader">

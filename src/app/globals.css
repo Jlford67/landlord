@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root{
   /* Background + surfaces */
   --bg: #f6f7f9;
@@ -1049,4 +1051,62 @@ a.ll_btn.ll_btnDanger:visited{
   background: transparent;
   cursor: not-allowed;
   white-space: nowrap;
+}
+
+/* Annual totals: show mobile-only footer row only on small screens */
+.ll_annual_totals_mobile {
+  display: table-row;
+}
+@media (min-width: 900px) {
+  .ll_annual_totals_mobile {
+    display: none;
+  }
+}
+
+@layer components {
+  .ll_stack { @apply flex flex-col gap-4; }
+
+  .ll_card { @apply rounded-2xl bg-white border border-gray-200 shadow-sm p-4; }
+  .ll_card_title { @apply text-base font-semibold; }
+  .ll_muted { @apply text-sm text-gray-500; }
+
+  .ll_row { @apply flex; }
+  .ll_gap_sm { @apply gap-2; }
+  .ll_gap_md { @apply gap-4; }
+  .ll_spacer { @apply flex-1; }
+
+  .ll_label { @apply text-sm font-medium text-gray-600; }
+
+  .ll_input {
+    @apply h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none
+    focus:ring-2 focus:ring-blue-200;
+  }
+
+  .ll_btn {
+    @apply h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium
+    hover:bg-gray-50;
+  }
+  .ll_btn_primary { @apply border-transparent bg-blue-600 text-white hover:bg-blue-700; }
+  .ll_btn_danger { @apply border-transparent bg-red-600 text-white hover:bg-red-700; }
+
+  .ll_table { @apply w-full text-sm; }
+  .ll_table th { @apply text-left font-semibold text-gray-600 border-b border-gray-200 px-3 py-2; }
+  .ll_table td { @apply border-b border-gray-100 px-3 py-2; }
+  .ll_table_zebra tbody tr:nth-child(even) { @apply bg-gray-50; }
+
+  .ll_kpi { @apply text-right; }
+  .ll_kpi_label { @apply text-sm text-gray-600; }
+  .ll_kpi_value { @apply text-sm font-semibold; }
+  .ll_table_wrap {
+    @apply overflow-x-auto rounded-xl border border-gray-200 bg-white;
+  }
+  
+  .ll_table_total {
+    @apply bg-gray-50 font-semibold;
+  }
+  
+  .ll_pos { @apply text-green-600; }
+  .ll_neg { @apply text-red-600; }
+  .ll_link { @apply text-gray-900 hover:underline; }
+
 }
