@@ -75,10 +75,14 @@ model Property {
   sqFt                      Int?
   status                    String    @default("active") // active/sold/watchlist
   notes                     String?
-  estimatedValueCents       Int?
-  estimatedValueUpdatedAt   DateTime?
-  estimatedValueSource      String?
-  estimatedValueProviderRef String?
+  zillowUrl                 String?
+  redfinUrl                 String?
+  zillowEstimatedValue              Int?
+  zillowEstimatedValueUpdatedAt     DateTime?
+
+  redfinEstimatedValue              Int?
+  redfinEstimatedValueUpdatedAt     DateTime?
+
   createdAt                 DateTime  @default(now())
 
   ownerships            PropertyOwnership[]
