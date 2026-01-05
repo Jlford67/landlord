@@ -1084,29 +1084,125 @@ a.ll_btn.ll_btnDanger:visited{
 
   .ll_btn {
     @apply h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium
-    hover:bg-gray-50;
+    text-blue-600 no-underline hover:bg-gray-50 hover:text-blue-700;
   }
+  
+  /* Link-style button (table actions): always blue, never changes on :visited */
+  .ll_btnLink {
+    @apply text-blue-600 no-underline hover:text-blue-700;
+  }
+  .ll_btnLink:link,
+  .ll_btnLink:visited {
+    color: #2563eb !important; /* blue-600 */
+    text-decoration: none !important;
+  }
+
+  .ll_btnPrimary { @apply border-transparent bg-blue-600 text-white hover:bg-blue-700; }
+  .ll_btnDanger { @apply border-transparent bg-red-600 text-white hover:bg-blue-700; }
+
+  /* Back-compat (remove later once all pages are updated) */
   .ll_btn_primary { @apply border-transparent bg-blue-600 text-white hover:bg-blue-700; }
   .ll_btn_danger { @apply border-transparent bg-red-600 text-white hover:bg-red-700; }
 
   .ll_table { @apply w-full text-sm; }
-  .ll_table th { @apply text-left font-semibold text-gray-600 border-b border-gray-200 px-3 py-2; }
+
+  /* Header looks like a header, and stays visible while scrolling inside ll_table_wrap */
+  .ll_table thead th {
+    @apply text-left font-semibold text-gray-600 border-b border-gray-200 px-3 py-2 bg-gray-50;
+  }
+  .ll_table_wrap .ll_table thead th {
+    @apply sticky top-0 z-10;
+  }
+
   .ll_table td { @apply border-b border-gray-100 px-3 py-2; }
   .ll_table_zebra tbody tr:nth-child(even) { @apply bg-gray-50; }
 
   .ll_kpi { @apply text-right; }
   .ll_kpi_label { @apply text-sm text-gray-600; }
   .ll_kpi_value { @apply text-sm font-semibold; }
+
   .ll_table_wrap {
     @apply overflow-x-auto rounded-xl border border-gray-200 bg-white;
   }
-  
+
   .ll_table_total {
     @apply bg-gray-50 font-semibold;
   }
-  
+
   .ll_pos { @apply text-green-600; }
   .ll_neg { @apply text-red-600; }
   .ll_link { @apply text-gray-900 hover:underline; }
 
+  /* ---------- Property header (shared) ---------- */
+
+  .ll_header_link { @apply no-underline; }
+
+  .ll_property_header { @apply flex items-center gap-4; }
+  .ll_property_photo { @apply h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gray-100; }
+  .ll_property_photo_img { @apply h-full w-full object-cover; }
+  .ll_property_photo_fallback { @apply h-full w-full; }
+
+  .ll_property_meta { @apply min-w-0; }
+  .ll_property_title_row { @apply flex items-center gap-2; }
+  .ll_property_title { @apply text-lg font-semibold text-gray-900 truncate; }
+  .ll_property_subtitle { @apply text-sm text-gray-500 truncate; }
+
+  .ll_pill { @apply rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700; }
+
+  .ll_kpi_row { @apply mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3; }
+  .ll_kpi_card { @apply rounded-2xl bg-gray-50 px-3 py-2; }
+  .ll_kpi_card .ll_kpi { @apply text-left; }
+
+  /* ---------- Property picker (recurring landing) ---------- */
+
+  .ll_pickGrid {
+    @apply grid gap-3 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .ll_pickCard {
+    @apply flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3
+           hover:bg-gray-50 hover:border-gray-300 transition;
+  }
+
+  .ll_pickThumb {
+    @apply relative h-12 w-12 overflow-hidden rounded-lg border border-gray-200 bg-gray-100 flex-none;
+  }
+
+  .ll_pickThumbImg {
+    @apply object-cover;
+  }
+
+  .ll_pickThumbFallback {
+    @apply h-full w-full bg-gray-100;
+  }
+
+  .ll_pickMain {
+    @apply min-w-0 flex-1;
+  }
+
+  .ll_pickTitle {
+    @apply font-medium text-gray-900 truncate;
+  }
+
+  .ll_pickSub {
+    @apply text-sm text-gray-500 truncate;
+  }
+
+  .ll_pickChevron {
+    @apply text-2xl leading-none text-gray-300 flex-none;
+  }
+
+  /* ---------- Properties list rows ---------- */
+
+  .ll_list { @apply divide-y divide-gray-100; }
+
+  .ll_list_row {
+    @apply flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-gray-50;
+  }
+
+  .ll_list_main { @apply min-w-0 flex-1; }
+  .ll_list_title { @apply font-medium text-gray-900; }
+  .ll_list_sub { @apply text-sm text-gray-500 truncate; }
+
+  .ll_actions { @apply flex items-center gap-2; }
 }

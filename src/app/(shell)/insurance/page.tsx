@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import PropertyHeader from "@/components/properties/PropertyHeader";
+
+import fs from "node:fs/promises";
+import path from "node:path";
 
 function getStr(sp: Record<string, string | string[] | undefined>, key: string): string {
   const v = sp[key];
@@ -10,19 +14,19 @@ function getStr(sp: Record<string, string | string[] | undefined>, key: string):
 }
 
 function money(n?: number | null) {
-  if (n === null || n === undefined) return "—";
+  if (n === null || n === undefined) return "-";
 
-  const abs = Math.abs(n).toLocaleString(undefined, {
+  const abs = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
+  }).format(Math.abs(n));
 
   return n < 0 ? `(${abs})` : `$${abs}`;
 }
 
 function fmtDate(d?: Date | null) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString();
+  if (!d) return "-";
+  return new Date(d).toLocaleDateString("en-US", { timeZone: "UTC" });
 }
 
 function propertyLabel(p: {
@@ -33,6 +37,23 @@ function propertyLabel(p: {
   zip: string;
 }) {
   return p.nickname?.trim() || `${p.street}, ${p.city}, ${p.state} ${p.zip}`;
+}
+
+async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
+  // Files live in /public/property-photos; URLs are /property-photos/<file>
+  const dir = path.join(process.cwd(), "public", "property-photos");
+  const candidates = [`${propertyId}.webp`, `${propertyId}.jpg`, `${propertyId}.jpeg`, `${propertyId}.png`];
+
+  for (const file of candidates) {
+    try {
+      await fs.access(path.join(dir, file));
+      return `/property-photos/${file}`;
+    } catch {
+      // keep trying
+    }
+  }
+
+  return null;
 }
 
 const insuranceColumns = [
@@ -66,7 +87,7 @@ export default async function InsurancePage({
   const propertyId = getStr(sp, "propertyId").trim();
   const msg = getStr(sp, "msg").trim();
 
-  const [policies, properties] = await Promise.all([
+  const [policies, properties, selectedProperty] = await Promise.all([
     prisma.insurancePolicy.findMany({
       where:
         q || propertyId
@@ -108,76 +129,115 @@ export default async function InsurancePage({
       orderBy: [{ nickname: "asc" }],
       select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
     }),
+    propertyId
+      ? prisma.property.findUnique({
+          where: { id: propertyId },
+          select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const photoSrc = selectedProperty ? await findPropertyPhotoSrc(selectedProperty.id) : null;
+
+  const addHref = propertyId ? `/insurance/new?propertyId=${propertyId}` : "/insurance/new";
 
   return (
     <div className="ll_page">
       <div className="ll_panel">
-        <div className="ll_topbar">
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Insurance</div>
-            <div className="ll_muted">All policies across all properties.</div>
-          </div>
+        {/* Page header */}
+        <div className="ll_card" style={{ marginBottom: 14 }}>
+          <div className="ll_topbar" style={{ marginBottom: 0 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Insurance</div>
+              <div className="ll_muted">
+                {selectedProperty ? "Policies for selected property." : "All policies across all properties."}
+              </div>
+            </div>
 
-          <div className="ll_topbarRight">
-            <Link className="ll_btn" href="/insurance/new">
-              Add insurance policy
-            </Link>
+            <div className="ll_topbarRight">
+              <Link className="ll_btn ll_btnPrimary" href={addHref}>
+                Add insurance policy
+              </Link>
+            </div>
           </div>
         </div>
 
+        {/* Selected property context */}
+        {selectedProperty ? (
+          <div style={{ marginBottom: 14 }}>
+            <PropertyHeader
+              property={{
+                id: selectedProperty.id,
+                nickname: selectedProperty.nickname,
+                street: selectedProperty.street,
+                city: selectedProperty.city,
+                state: selectedProperty.state,
+                zip: selectedProperty.zip,
+                photoUrl: photoSrc ?? null,
+              }}
+              href={`/properties/${selectedProperty.id}`}
+              subtitle="Insurance"
+            />
+          </div>
+        ) : null}
+
+        {/* Notices */}
         {msg === "created" && <div className="ll_notice">Policy created.</div>}
         {msg === "updated" && <div className="ll_notice">Policy updated.</div>}
         {msg === "deleted" && <div className="ll_notice">Policy deleted.</div>}
 
-        <form method="get" className="ll_form" style={{ marginTop: 14 }}>
-          <div className="ll_grid2">
-            <label>
-              Search (property, insurer, policy #, agent)
-              <input
-                className="ll_input"
-                name="q"
-                defaultValue={q}
-                placeholder="Type and press Enter…"
-                autoComplete="off"
-                suppressHydrationWarning
-              />
-            </label>
+        {/* Filters */}
+        <div className="ll_card" style={{ marginTop: 14, marginBottom: 14 }}>
+          <form method="get" className="ll_form" style={{ margin: 0 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label>
+                Search (property, insurer, policy #, agent)
+                <input
+                  className="ll_input"
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Type and press Enter..."
+                  autoComplete="off"
+                  suppressHydrationWarning
+                />
+              </label>
 
-            <label>
-              Property filter (optional)
-              <select
-                name="propertyId"
-                className="ll_input"
-                defaultValue={propertyId}
-                suppressHydrationWarning
-              >
-                <option value="">All properties</option>
-                {properties.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {propertyLabel(p)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+              <label>
+                Property filter (optional)
+                <select
+                  name="propertyId"
+                  className="ll_input"
+                  defaultValue={propertyId}
+                  suppressHydrationWarning
+                >
+                  <option value="">All properties</option>
+                  {properties.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {propertyLabel(p)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-              Search
-            </button>
+            <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end" }}>
+              {(q || propertyId) && (
+                <Link className="ll_btn" href="/insurance">
+                  Clear
+                </Link>
+              )}
 
-            {(q || propertyId) && (
-              <Link className="ll_btnSecondary" href="/insurance">
-                Clear
-              </Link>
-            )}
-          </div>
-        </form>
+              <button className="ll_btn ll_btnPrimary" type="submit" suppressHydrationWarning>
+                Search
+              </button>
+            </div>
+          </form>
+        </div>
 
-        <div style={{ marginTop: 16 }}>
+        {/* Table */}
+        <div className="ll_table_wrap">
           {policies.length ? (
-            <table className="ll_table ll_insuranceTable">
+            <table className="ll_table ll_table_zebra ll_insuranceTable">
               <colgroup>
                 {insuranceColumnPercents.map((width, idx) => (
                   <col key={idx} style={{ width }} />
@@ -205,40 +265,33 @@ export default async function InsurancePage({
                     <td style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
                       {propertyLabel(p.property)}
                     </td>
-                    <td>{p.insurer || "—"}</td>
-                    <td>{p.policyNum || "—"}</td>
-                    <td>{p.agentName || "—"}</td>
-                    <td>{p.phone || "—"}</td>
+                    <td>{p.insurer || "-"}</td>
+                    <td>{p.policyNum || "-"}</td>
+                    <td>{p.agentName || "-"}</td>
+                    <td>{p.phone || "-"}</td>
                     <td style={{ whiteSpace: "nowrap" }}>{money(p.premium)}</td>
                     <td>{fmtDate(p.dueDate)}</td>
                     <td>{fmtDate(p.paidDate)}</td>
-                    <td>
+                    <td style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
                       {p.webPortal ? (
-                        <a href={p.webPortal} style={{ color: "inherit" }}>
+                        <a href={p.webPortal} className="ll_muted" style={{ textDecoration: "underline" }}>
                           {p.webPortal}
                         </a>
                       ) : (
-                        "—"
+                        "-"
                       )}
                     </td>
-                    <td>
-                      <div className="ll_rowActions">
-                        <Link className="ll_btnSecondary" href={`/insurance/${p.id}/edit`}>
-                          Edit
-                        </Link>
-                        <form action={`/api/insurance/${p.id}/delete`} method="post" style={{ margin: 0 }}>
-                          <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-                            Delete
-                          </button>
-                        </form>
-                      </div>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <Link className="ll_btnSecondary" href={`/insurance/${p.id}/edit`}>
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           ) : (
-            <div className="ll_notice">No insurance policies found.</div>
+            <div className="ll_muted">No policies found.</div>
           )}
         </div>
       </div>

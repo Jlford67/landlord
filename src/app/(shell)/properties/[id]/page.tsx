@@ -193,11 +193,8 @@ export default async function PropertyDetailPage({
 
             <div>
               <span className="ll_label">Doors:</span> {property.doors ?? "n/a"}{" "}
-              <span className="ll_muted">|</span>{" "}
               <span className="ll_label">Beds:</span> {property.beds ?? "n/a"}{" "}
-              <span className="ll_muted">|</span>{" "}
               <span className="ll_label">Baths:</span> {property.baths ?? "n/a"}{" "}
-              <span className="ll_muted">|</span>{" "}
               <span className="ll_label">Sq Ft:</span> {property.sqFt ?? "n/a"}
             </div>
 
@@ -275,7 +272,6 @@ export default async function PropertyDetailPage({
 
                 <div>
                   <span className="ll_label">Rent:</span> <Money value={activeLease.rentAmount} />{" "}
-                  <span className="ll_muted">|</span>{" "}
                   <span className="ll_label">Deposit:</span> <Money value={activeLease.deposit} />
                 </div>
 

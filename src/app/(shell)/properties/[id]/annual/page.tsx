@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { saveAnnualLine, deleteAnnualLine } from "./actions";
 import { promises as fs } from "fs";
 import path from "path";
+import PropertyHeader from "@/components/properties/PropertyHeader";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -31,12 +31,6 @@ function currentYearUtc() {
 
 function propertyLabel(p: { nickname: string | null; street: string }) {
   return p.nickname && p.nickname.trim() ? p.nickname.trim() : p.street;
-}
-
-function formatCityStateZip(p: { city: string | null; state: string | null; zip: string | null }) {
-  const cityState = [p.city ?? "", p.state ?? ""].filter(Boolean).join(", ");
-  if (!cityState && !p.zip) return "";
-  return [cityState, p.zip ?? ""].filter(Boolean).join(" ");
 }
 
 async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
@@ -166,53 +160,24 @@ export default async function PropertyAnnualPage(props: PageProps) {
 
           <div className="ll_spacer" />
 
-          {/* Upper-right: property identity + KPIs */}
-          <div className="flex flex-col items-end gap-2.5 self-start -mt-7">
-            {/* Property identity */}
-            <div className="ll_row ll_gap_sm items-center">
-              {photoSrc ? (
-                <Image
-                  src={photoSrc}
-                  alt={propertyLabel(property)}
-                  width={44}
-                  height={44}
-                  className="rounded-xl object-cover bg-gray-100 flex-none"
-                />
-              ) : (
-                <div className="h-[44px] w-[44px] rounded-xl bg-gray-100 border border-gray-200 flex-none" />
-              )}
-
-              <Link
-                href={`/properties/${propertyId}`}
-                className="ll_link text-right max-w-[360px] no-underline"
-              >
-                <div className="font-bold whitespace-nowrap overflow-hidden text-ellipsis">
-                  {property.street}
-                </div>
-                <div className="ll_muted whitespace-nowrap overflow-hidden text-ellipsis">
-                  {formatCityStateZip(property)}
-                </div>
-              </Link>
-            </div>
-
-            {/* KPIs */}
-            <div className="ll_row ll_gap_md items-start">
-              <div className="ll_kpi">
-                <div className="ll_kpi_label">Income</div>
-                <div className="ll_kpi_value tabular-nums">{financeMoney(incomeTotal)}</div>
-              </div>
-
-              <div className="ll_kpi">
-                <div className="ll_kpi_label">Expenses</div>
-                <div className="ll_kpi_value tabular-nums">{financeMoney(-expenseTotalAbs)}</div>
-              </div>
-
-              <div className="ll_kpi">
-                <div className="ll_kpi_label">Net</div>
-                <div className="ll_kpi_value tabular-nums">{financeMoney(net)}</div>
-              </div>
-            </div>
-          </div>
+          <PropertyHeader
+            property={{
+              id: property.id,
+              nickname: property.nickname,
+              street: property.street,
+              city: property.city,
+              state: property.state,
+              zip: property.zip,
+              photoUrl: photoSrc ?? null,
+            }}
+            href={`/properties/${propertyId}`}
+            subtitle="Annual"
+            kpis={[
+              { label: "Income", value: money(incomeTotal) },
+              { label: "Expenses", value: money(expenseTotalAbs), className: "ll_neg" },
+              { label: "Net", value: money(net), className: net >= 0 ? "ll_pos" : "ll_neg" },
+            ]}
+          />
         </div>
       </div>
 
@@ -276,12 +241,28 @@ export default async function PropertyAnnualPage(props: PageProps) {
       </div>
 
       <div className="ll_card">
-        <div className="ll_card_title">Lines for {year}</div>
+        <div className="flex items-center justify-between">
+          <div className="ll_card_title">Lines for {year}</div>
+
+          <div className="flex items-center gap-2">
+            <a className="ll_btn" href={`/api/properties/${propertyId}/annual/export?year=${year}`}>
+              Export CSV
+            </a>
+
+            <a
+              className="ll_btn"
+              href={`/api/properties/${propertyId}/annual/export?mode=all`}
+              title="Exports all annual rows for this property across all years"
+            >
+              Export All
+            </a>
+          </div>
+        </div>
 
         {rows.length === 0 ? (
-          <div className="ll_muted">No annual lines yet for this year.</div>
+          <div className="ll_muted mt-2">No annual lines yet for this year.</div>
         ) : (
-          <div className="ll_table_wrap">
+          <div className="ll_table_wrap mt-3">
             <table className="ll_table ll_table_zebra">
               <thead>
                 <tr>

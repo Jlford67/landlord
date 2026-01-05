@@ -12,23 +12,42 @@ export default function LoginFormClient() {
   if (!mounted) return null;
 
   return (
-    <div style={{ maxWidth: 420, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>Sign in</h1>
+    <div>
+      <h1 className="text-[28px] font-extrabold m-0 mb-2">Sign in</h1>
+      <div className="ll_muted mb-6">Use your email and password.</div>
 
-      <form action="/api/auth/login" method="post" style={{ display: "grid", gap: 12 }}>
-        <label>
-          <div>Email</div>
-          <input name="email" type="email" required style={{ width: "100%", padding: 8 }} />
+      <form action="/api/auth/login" method="post" className="ll_form">
+        <label className="ll_label" htmlFor="email">
+          Email
         </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          className="ll_input"
+          autoComplete="email"
+          suppressHydrationWarning
+        />
 
-        <label>
-          <div>Password</div>
-          <input name="password" type="password" required style={{ width: "100%", padding: 8 }} />
+        <label className="ll_label" htmlFor="password">
+          Password
         </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          className="ll_input"
+          autoComplete="current-password"
+          suppressHydrationWarning
+        />
 
-        <button type="submit" style={{ padding: 10, fontWeight: 600 }}>
-          Sign in
-        </button>
+        <div className="mt-4">
+          <button type="submit" className="ll_btnPrimary w-full" suppressHydrationWarning>
+            Sign in
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -1,7 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+
+import fs from "node:fs/promises";
+import path from "node:path";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -14,6 +18,29 @@ function getStr(sp: SearchParams, key: string): string {
 
 function getMsg(sp: SearchParams): string {
   return getStr(sp, "msg").trim();
+}
+
+function msgText(msg: string) {
+  if (msg === "deleted") return "Property deleted.";
+  if (msg === "deactivated") return "Property has leases or transactions, so it was marked inactive instead of deleted.";
+  if (msg === "reactivated") return "Property reactivated.";
+  if (msg === "notfound") return "Property not found.";
+  return "";
+}
+
+async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
+  const dir = path.join(process.cwd(), "public", "property-photos");
+  const candidates = [`${propertyId}.webp`, `${propertyId}.jpg`, `${propertyId}.jpeg`, `${propertyId}.png`];
+
+  for (const file of candidates) {
+    try {
+      await fs.access(path.join(dir, file));
+      return `/property-photos/${file}`;
+    } catch {
+      // keep trying
+    }
+  }
+  return null;
 }
 
 export default async function PropertiesPage({
@@ -44,117 +71,125 @@ export default async function PropertiesPage({
     take: 200,
   });
 
+  const notice = msgText(msg);
+
+  // Preload photo urls once (server-side)
+  const photoPairs = await Promise.all(
+    properties.map(async (p) => [p.id, await findPropertyPhotoSrc(p.id)] as const)
+  );
+  const photoById = new Map<string, string | null>(photoPairs);
+
   return (
     <div className="ll_page">
-      <div className="ll_panel">
-        <div style={{ fontSize: 18, fontWeight: 700 }}>Properties</div>
-
-        {msg === "deleted" && <div className="ll_notice">Property deleted.</div>}
-        {msg === "deactivated" && (
-          <div className="ll_notice">
-            Property has leases or transactions, so it was marked inactive instead of deleted.
-          </div>
-        )}
-		{msg === "reactivated" && <div className="ll_notice">Property reactivated.</div>}
-        {msg === "notfound" && <div className="ll_notice">Property not found.</div>}
-
-        <div style={{ marginTop: 12 }}>
-          <Link className="ll_btn" href="/properties/new">
+      <div className="ll_card">
+        <div className="flex items-center gap-3">
+          <div className="text-lg font-semibold">Properties</div>
+          <div className="ll_spacer" />
+          <Link className="ll_btn ll_btnPrimary" href="/properties/new">
             Add property
           </Link>
         </div>
 
-        <form method="get" className="ll_form" style={{ marginTop: 14 }}>
-          <label>
-            Search (nickname, street, city, state, zip)
+        {notice ? (
+          <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+            {notice}
+          </div>
+        ) : null}
+
+        <form method="get" className="mt-4">
+          <div className="ll_label mb-1">Search (nickname, street, city, state, zip)</div>
+
+          <div className="flex items-center gap-2">
             <input
               className="ll_input"
               name="q"
               defaultValue={q}
-              placeholder="Type and press Enter…"
+              placeholder="Type and press Enter..."
               autoComplete="off"
               suppressHydrationWarning
             />
-          </label>
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
+            <button className="ll_btn ll_btnPrimary" type="submit" suppressHydrationWarning>
               Search
             </button>
 
             {q ? (
-              <Link className="ll_btnSecondary" href="/properties">
+              <Link className="ll_btn" href="/properties">
                 Clear
               </Link>
             ) : null}
           </div>
         </form>
 
-        <div style={{ marginTop: 14 }}>
+        <div className="mt-4">
           {properties.length ? (
-            <div style={{ display: "grid", gap: 10 }}>
-              {properties.map((p) => (
-                <div
-                  key={p.id}
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    borderRadius: 12,
-                    padding: "10px 12px",
-                    background: "rgba(255,255,255,0.03)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                  }}
-                >
-                  {/* Left side: clickable details */}
-                  <Link
-                    href={`/properties/${p.id}`}
-                    style={{
-                      textDecoration: "none",
-                      color: "inherit",
-                      flex: 1,
-                      minWidth: 0,
-                    }}
-                  >
-                    <div style={{ fontWeight: 800 }}>
-                      {p.nickname?.trim() || "(no nickname)"}
-                      {p.status && p.status !== "active" ? (
-                        <span style={{ opacity: 0.7, fontWeight: 600 }}> • {p.status}</span>
-                      ) : null}
-                    </div>
-                    <div style={{ opacity: 0.8, fontSize: 13, marginTop: 2 }}>
-                      {p.street}, {p.city}, {p.state} {p.zip}
-                    </div>
-                  </Link>
+            <div className="ll_list">
+              {properties.map((p) => {
+                const photoSrc = photoById.get(p.id) ?? null;
 
-                  {/* Right side: actions */}
-                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                    <Link className="ll_btnSecondary" href={`/properties/${p.id}/ledger`}>
-                      Ledger
+                return (
+                  <div key={p.id} className="ll_list_row">
+                    <Link
+                      href={`/properties/${p.id}`}
+                      className="ll_header_link flex items-center gap-3 min-w-0 flex-1"
+                    >
+                      <div className="ll_pickThumb">
+                        {photoSrc ? (
+                          <Image
+                            src={photoSrc}
+                            alt=""
+                            fill
+                            sizes="48px"
+                            className="ll_pickThumbImg"
+                            priority={false}
+                          />
+                        ) : (
+                          <div className="ll_pickThumbFallback" aria-hidden="true" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="ll_list_title truncate">
+                            {p.nickname?.trim() || "(no nickname)"}
+                          </div>
+
+                          {p.status && p.status !== "active" ? (
+                            <span className="ll_pill">{p.status}</span>
+                          ) : null}
+                        </div>
+
+                        <div className="ll_list_sub">
+                          {[p.street, [p.city, p.state, p.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
+                        </div>
+                      </div>
                     </Link>
 
-                   {p.status && p.status !== "active" ? (
-                   <form method="post" action={`/api/properties/${p.id}/reactivate`} style={{ margin: 0 }}>
-                     <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-                       Reactivate
-                     </button>
-                   </form>
+                    <div className="ll_actions">
+                      <Link className="ll_btn ll_btnPrimary" href={`/properties/${p.id}/ledger`}>
+                        Ledger
+                      </Link>
 
-                   ) : (
-                     <form method="post" action={`/api/properties/${p.id}/delete`} style={{ margin: 0 }}>
-                       <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-                         Delete
-                       </button>
-                     </form>
-                   )}
-
+                      {p.status && p.status !== "active" ? (
+                        <form method="post" action={`/api/properties/${p.id}/reactivate`} style={{ margin: 0 }}>
+                          <button className="ll_btn" type="submit" suppressHydrationWarning>
+                            Reactivate
+                          </button>
+                        </form>
+                      ) : (
+                        <form method="post" action={`/api/properties/${p.id}/delete`} style={{ margin: 0 }}>
+                          <button className="ll_btn ll_btnDanger" type="submit" suppressHydrationWarning>
+                            Delete
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
-            <div style={{ opacity: 0.75 }}>No properties found.</div>
+            <div className="ll_muted">No properties found.</div>
           )}
         </div>
       </div>

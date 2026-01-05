@@ -49,18 +49,20 @@ export default async function LedgerPickerPage({
   });
 
   return (
-    <div className="ll_page">
-      <div className="ll_panel">
-        <div style={{ fontSize: 18, fontWeight: 700 }}>Ledger</div>
-        <div className="ll_muted" style={{ marginTop: 6 }}>
+    <div className="mx-auto w-full max-w-6xl px-6 py-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Ledger
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
           Pick a property to view and edit transactions.
-        </div>
+        </p>
 
-        <form method="get" className="ll_form" style={{ marginTop: 14 }}>
-          <label>
+        <form method="get" className="mt-4">
+          <label className="block text-sm font-medium text-slate-700">
             Search (nickname, street, city, state, zip)
             <input
-              className="ll_input"
+              className="mt-2 w-full max-w-xl rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-slate-300"
               name="q"
               defaultValue={q}
               placeholder="Type and press Enter…"
@@ -69,55 +71,77 @@ export default async function LedgerPickerPage({
             />
           </label>
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="submit"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
+              suppressHydrationWarning
+            >
               Search
             </button>
 
             {q ? (
-              <Link className="ll_btnSecondary" href="/ledger">
+              <Link
+                href="/ledger"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
+              >
                 Clear
               </Link>
             ) : null}
+
+            {q ? (
+              <div className="ml-2 text-sm text-slate-500">
+                Showing {properties.length} result{properties.length === 1 ? "" : "s"}
+              </div>
+            ) : null}
           </div>
         </form>
-
-        <div style={{ marginTop: 14 }}>
-          {properties.length ? (
-            <div style={{ display: "grid", gap: 10 }}>
-              {properties.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/properties/${p.id}/ledger`}
-                  style={{
-                    textDecoration: "none",
-                    color: "inherit",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    borderRadius: 12,
-                    padding: "10px 12px",
-                    background: "rgba(255,255,255,0.03)",
-                  }}
-                >
-                  <div style={{ fontWeight: 800 }}>
-                    {p.nickname?.trim() || "(no nickname)"}
-                    {p.status && p.status !== "active" ? (
-                      <span style={{ opacity: 0.7, fontWeight: 600 }}>
-                        {" "}
-                        • {p.status}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div style={{ opacity: 0.8, fontSize: 13, marginTop: 2 }}>
-                    {p.street}, {p.city}, {p.state} {p.zip}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div style={{ opacity: 0.75 }}>No properties found.</div>
-          )}
-        </div>
       </div>
+
+      {properties.length ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {properties.map((p) => (
+            <Link
+              key={p.id}
+              href={`/properties/${p.id}/ledger`}
+              className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md"
+            >
+              {/* Thumbnail */}
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/property-photo/${p.id}`}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
+
+              {/* Content */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="truncate text-sm font-semibold text-slate-900">
+                    {p.nickname?.trim() || "(no nickname)"}
+                  </div>
+
+                  {p.status && p.status !== "active" ? (
+                    <span className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
+                      {p.status}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mt-1 truncate text-xs text-slate-600">
+                  {p.street}, {p.city}, {p.state} {p.zip}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+          No properties found.
+        </div>
+      )}
     </div>
   );
 }

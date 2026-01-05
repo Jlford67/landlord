@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { propertyLabel } from "@/lib/format";
 import RecurringPanel from "@/components/ledger/RecurringPanel";
 import TransactionRowActions from "@/components/ledger/TransactionRowActions";
+import PropertyHeader from "@/components/properties/PropertyHeader";
+import { promises as fs } from "fs";
+import path from "path";
+
+/* ---------------- helpers ---------------- */
 
 function ym(d: Date) {
   const y = d.getUTCFullYear();
@@ -25,10 +29,35 @@ function shiftMonth(month: string, delta: number) {
   return ym(d);
 }
 
-type PageProps = {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ month?: string }>;
-};
+async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
+  // Files live in /public/property-photos; URLs are /property-photos/<file>
+  const dir = path.join(process.cwd(), "public", "property-photos");
+  const candidates = [
+    `${propertyId}.webp`,
+    `${propertyId}.jpg`,
+    `${propertyId}.jpeg`,
+    `${propertyId}.png`,
+  ];
+
+  for (const file of candidates) {
+    try {
+      await fs.access(path.join(dir, file));
+      return `/property-photos/${file}`;
+    } catch {
+      // keep trying
+    }
+  }
+
+  return null;
+}
+
+const kpiMoney = (n: number) =>
+  new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n);
+
+/* ---------------- page ---------------- */
 
 export default async function PropertyLedgerPage({
   params,
@@ -44,15 +73,20 @@ export default async function PropertyLedgerPage({
 
   const month = sp.month ?? ym(new Date());
 
-  const [yy, mm] = month.split("-").map(Number); // "2025-12"
+  const [yy, mm] = month.split("-").map(Number);
   const start = new Date(Date.UTC(yy, mm - 1, 1, 0, 0, 0));
   const end = new Date(Date.UTC(yy, mm, 1, 0, 0, 0)); // first day of next month
 
-  end.setUTCMonth(end.getUTCMonth() + 1);
-
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
-    select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
+    select: {
+      id: true,
+      nickname: true,
+      street: true,
+      city: true,
+      state: true,
+      zip: true,
+    },
   });
 
   if (!property) {
@@ -60,7 +94,7 @@ export default async function PropertyLedgerPage({
       <div>
         <h1 className="text-[28px] mb-2">Ledger</h1>
         <div className="ll_muted">Property not found.</div>
-        <div className="mt-4">
+        <div className="mt-3">
           <Link className="ll_btnSecondary" href="/properties">
             Back to properties
           </Link>
@@ -69,7 +103,10 @@ export default async function PropertyLedgerPage({
     );
   }
 
-  // Transactions for the month (hide deleted)
+  const photoSrc = await findPropertyPhotoSrc(propertyId);
+
+  /* -------- transactions -------- */
+
   const txns = await prisma.transaction.findMany({
     where: {
       propertyId,
@@ -80,7 +117,20 @@ export default async function PropertyLedgerPage({
     include: { category: true },
   });
 
-  // Recurring data
+  /* -------- monthly KPIs -------- */
+
+  const monthIncome = txns
+    .filter((t) => t.category?.type === "income")
+    .reduce((s, t) => s + Math.abs(Number(t.amount ?? 0)), 0);
+
+  const monthExpenses = txns
+    .filter((t) => t.category?.type === "expense")
+    .reduce((s, t) => s + Math.abs(Number(t.amount ?? 0)), 0);
+
+  const monthNet = monthIncome - monthExpenses;
+
+  /* -------- recurring data -------- */
+
   const categories = await prisma.category.findMany({
     where: { active: true },
     orderBy: [{ type: "asc" }, { name: "asc" }],
@@ -107,40 +157,50 @@ export default async function PropertyLedgerPage({
     }
   }
 
+  /* ---------------- render ---------------- */
+
   return (
     <div className="ll_page w-full max-w-none mx-0">
-      {/* Header */}
+      {/* Page header */}
       <div className="flex items-start justify-between gap-4">
-      <div>
-        <h1 className="text-[32px] m-0 mb-1.5">Ledger</h1>
-        <div className="ll_muted">
-          {propertyLabel(property)} · {monthLabel(month)}
+        <div>
+          <h1 className="text-[32px] m-0 mb-1.5">Ledger</h1>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Link
+              className="ll_btnSecondary"
+              href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, -1)}`}
+            >
+              Prev
+            </Link>
+
+            <form method="get" className="flex items-center gap-2">
+              <input
+                className="ll_input w-[160px]"
+                name="month"
+                type="month"
+                defaultValue={month}
+                suppressHydrationWarning
+                data-lpignore="true"
+              />
+              <button
+                className="ll_btnSecondary"
+                type="submit"
+                suppressHydrationWarning
+                data-lpignore="true"
+              >
+                Go
+              </button>
+            </form>
+
+            <Link
+              className="ll_btnSecondary"
+              href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, 1)}`}
+            >
+              Next
+            </Link>
+          </div>
         </div>
-      
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, -1)}`}>
-            Prev
-          </Link>
-      
-          <form method="get" className="flex items-center gap-2">
-            <input
-              className="ll_input w-[160px]"
-              name="month"
-              type="month"
-              defaultValue={month}
-              suppressHydrationWarning
-              data-lpignore="true"
-            />
-            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning data-lpignore="true">
-              Go
-            </button>
-          </form>
-      
-          <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, 1)}`}>
-            Next
-          </Link>
-        </div>
-      </div>
 
         <div className="flex gap-2.5 items-center">
           <Link className="ll_btnSecondary" href="/properties">
@@ -158,9 +218,31 @@ export default async function PropertyLedgerPage({
         </div>
       </div>
 
+      {/* Property header */}
+      <div className="mt-3">
+        <PropertyHeader
+          property={{
+            id: property.id,
+            nickname: property.nickname,
+            street: property.street,
+            city: property.city,
+            state: property.state,
+            zip: property.zip,
+            photoUrl: photoSrc ?? null,
+          }}
+          href={`/properties/${propertyId}`}
+          subtitle="Ledger"
+          kpis={[
+            { label: "Income", value: kpiMoney(monthIncome) },
+            { label: "Expenses", value: kpiMoney(monthExpenses), className: "ll_neg" },
+            { label: "Net", value: kpiMoney(monthNet), className: monthNet >= 0 ? "ll_pos" : "ll_neg" },
+          ]}
+        />
+      </div>
+
       {/* Content */}
       <div className="grid grid-cols-1 gap-6 mt-4 items-start w-full">
-        {/* Left: transactions */}
+        {/* Transactions */}
         <div className="ll_card">
           <div className="ll_cardHeader">
             <div>
@@ -168,7 +250,10 @@ export default async function PropertyLedgerPage({
               <div className="ll_muted">{monthLabel(month)}</div>
             </div>
 
-            <Link className="ll_btn ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${month}`}>
+            <Link
+              className="ll_btn ll_btnSecondary"
+              href={`/properties/${propertyId}/ledger?month=${month}`}
+            >
               Refresh
             </Link>
           </div>
@@ -190,7 +275,7 @@ export default async function PropertyLedgerPage({
                   </thead>
 
                   <tbody>
-                    {txns.map((t: any) => (
+                    {txns.map((t) => (
                       <tr key={t.id}>
                         <td className="whitespace-nowrap">
                           {new Date(t.date).toLocaleDateString(undefined, {
@@ -209,7 +294,7 @@ export default async function PropertyLedgerPage({
                         <td>{t.memo || <span className="ll_muted">(none)</span>}</td>
 
                         <td className="text-right whitespace-nowrap tabular-nums">
-                          {t.amount.toFixed(2)}
+                          {Number(t.amount ?? 0).toFixed(2)}
                         </td>
 
                         <td className="text-right">
@@ -226,7 +311,7 @@ export default async function PropertyLedgerPage({
           </div>
         </div>
 
-        {/* Right: recurring */}
+        {/* Recurring panel */}
         <div className="ll_card recurring w-full">
           {recurringTablesReady ? (
             <RecurringPanel

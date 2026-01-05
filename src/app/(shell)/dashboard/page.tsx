@@ -40,6 +40,21 @@ function formatMonthLabelUTC(d: Date) {
   });
 }
 
+/** Accounting-style: positives like $1,234.56; negatives like ($1,234.56) */
+function moneyAccounting(n: number) {
+  const abs = Math.abs(n).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return n < 0 ? `($${abs})` : `$${abs}`;
+}
+
+function amountClass(n: number) {
+  if (n < 0) return "text-red-600";
+  if (n > 0) return "text-emerald-600";
+  return "text-gray-700";
+}
+
 /* ---------------- misc helpers ---------------- */
 
 function propertyLabel(p: { nickname: string | null; street: string }) {
@@ -65,6 +80,13 @@ type UpcomingItem = {
   categoryName: string;
   amountCents: number;
   dueDate: Date;
+};
+
+type YearRow = {
+  year: number;
+  income: number;
+  expenses: number; // negative
+  net: number;
 };
 
 /* ---------------- recurring logic ---------------- */
@@ -204,7 +226,7 @@ export default async function DashboardPage({
         property: { select: { nickname: true, street: true } },
       },
     }),
-  
+
     prisma.recurringTransaction.findMany({
       where: {
         isActive: true,
@@ -217,6 +239,83 @@ export default async function DashboardPage({
       },
     }),
   ]);
+
+  /* -------- Yearly Summary (merged) -------- */
+
+  // 1) Ledger transactions (source of truth when present)
+  const txnsForYearly = await prisma.transaction.findMany({
+    where: {
+      deletedAt: null,
+      ...whereProperty,
+      category: { type: { not: "transfer" } }, // exclude transfers
+    },
+    select: { date: true, amount: true },
+  });
+
+  const yearlyFromTxns = new Map<number, { income: number; expenses: number; net: number }>();
+
+  for (const t of txnsForYearly) {
+    const y = t.date.getUTCFullYear();
+    const cur = yearlyFromTxns.get(y) ?? { income: 0, expenses: 0, net: 0 };
+
+    if (t.amount >= 0) cur.income += t.amount;
+    else cur.expenses += t.amount; // keep negative
+
+    cur.net += t.amount;
+    yearlyFromTxns.set(y, cur);
+  }
+
+  // 2) Annual imported totals (fallback for years with no ledger txns)
+  const annualRows = selectedPropertyId
+    ? await prisma.annualCategoryAmount.findMany({
+        where: {
+          propertyId: selectedPropertyId,
+          category: { type: { not: "transfer" } }, // exclude transfers
+        },
+        select: {
+          year: true,
+          amount: true, // +income, -expense
+        },
+      })
+    : [];
+
+  const yearlyFromAnnual = new Map<number, { income: number; expenses: number; net: number }>();
+
+  for (const r of annualRows) {
+    const cur = yearlyFromAnnual.get(r.year) ?? { income: 0, expenses: 0, net: 0 };
+
+    if (r.amount >= 0) cur.income += r.amount;
+    else cur.expenses += r.amount; // keep negative
+
+    cur.net += r.amount;
+    yearlyFromAnnual.set(r.year, cur);
+  }
+
+  // 3) Merge: prefer ledger years; fill missing years from annual
+  const allYears = new Set<number>([
+    ...Array.from(yearlyFromTxns.keys()),
+    ...Array.from(yearlyFromAnnual.keys()),
+  ]);
+
+  const yearlyRows: YearRow[] = Array.from(allYears)
+    .map((year) => {
+      const fromTxns = yearlyFromTxns.get(year);
+      const fromAnnual = yearlyFromAnnual.get(year);
+      const v = fromTxns ?? fromAnnual ?? { income: 0, expenses: 0, net: 0 };
+      return { year, ...v };
+    })
+    .filter((r) => r.income !== 0 || r.expenses !== 0 || r.net !== 0)
+    .sort((a, b) => b.year - a.year);
+
+    const yearlyTotals = yearlyRows.reduce(
+      (acc, r) => {
+        acc.income += r.income;
+        acc.expenses += r.expenses;
+        acc.net += r.net;
+        return acc;
+      },
+      { income: 0, expenses: 0, net: 0 }
+    );
 
   /* -------- chart data -------- */
 
@@ -254,14 +353,14 @@ export default async function DashboardPage({
   // Rolling 12-month monthly averages, ignoring months with no activity
   const activeMonths = months.filter((m) => m.income > 0 || m.expenses > 0);
   const activeCount = activeMonths.length;
-  
+
   const incomeTotal = activeMonths.reduce((s, m) => s + m.income, 0);
   const expensesTotal = activeMonths.reduce((s, m) => s + m.expenses, 0);
-  
+
   const income = activeCount ? incomeTotal / activeCount : 0;
   const expenses = activeCount ? expensesTotal / activeCount : 0;
   const net = income - expenses;
-  
+
   const cashflowLabel = activeCount
     ? `Average of ${activeCount} month${activeCount === 1 ? "" : "s"}`
     : "No data yet";
@@ -295,7 +394,14 @@ export default async function DashboardPage({
 
         <div className="ll_dash_topRight">
           <PropertyPicker properties={pickerOptions} selectedId={selectedPropertyId} />
-          <Link href="/transactions/new" className="ll_btn ll_btn_primary">
+
+          <form action="/api/auth/logout" method="post">
+            <button type="submit" className="ll_btn">
+              Logout
+            </button>
+          </form>
+
+          <Link href="/transactions/new" className="ll_btn ll_btnPrimary">
             Add transaction
           </Link>
         </div>
@@ -306,19 +412,26 @@ export default async function DashboardPage({
         <section className="ll_card ll_dash_card">
           <div className="ll_dash_cardTop">
             <div className="ll_dash_cardTitle">Cash Flow</div>
-            <Link href="/ledger" className="ll_dash_link">View ledger</Link>
+            <Link href="/ledger" className="ll_dash_link">
+              View ledger
+            </Link>
           </div>
 
           <div className="ll_dash_moneyRow">
             <div className={`ll_dash_big ${net >= 0 ? "ll_amt_pos" : "ll_amt_neg"}`}>
-              {net >= 0 ? "+" : "-"}{formatUsd(Math.abs(net))}
+              {net >= 0 ? "+" : "-"}
+              {formatUsd(Math.abs(net))}
             </div>
             <div className="ll_dash_pill">{formatUsd(expenses)} expenses</div>
           </div>
 
           <div className="ll_dash_subRow">
-            <div><span className="ll_dash_muted">income</span> {formatUsd(income)}</div>
-            <div><span className="ll_dash_muted">expenses</span> -{formatUsd(expenses)}</div>
+            <div>
+              <span className="ll_dash_muted">income</span> {formatUsd(income)}
+            </div>
+            <div>
+              <span className="ll_dash_muted">expenses</span> -{formatUsd(expenses)}
+            </div>
           </div>
 
           <div className="ll_dash_footerRow">
@@ -332,7 +445,9 @@ export default async function DashboardPage({
         <section className="ll_card ll_dash_card">
           <div className="ll_dash_cardTop">
             <div className="ll_dash_cardTitle">Upcoming Recurring</div>
-            <Link href="/recurring" className="ll_dash_link">View all</Link>
+            <Link href="/recurring" className="ll_dash_link">
+              View all
+            </Link>
           </div>
 
           <div className="ll_dash_list">
@@ -347,9 +462,7 @@ export default async function DashboardPage({
                       {u.propertyName} · {formatDateUTC(u.dueDate)}
                     </div>
                   </div>
-                  <div className="ll_dash_listAmt">
-                    {formatUsdFromCents(u.amountCents)}
-                  </div>
+                  <div className="ll_dash_listAmt">{formatUsdFromCents(u.amountCents)}</div>
                 </div>
               ))
             )}
@@ -384,20 +497,95 @@ export default async function DashboardPage({
         </section>
       </div>
 
+      {/* Yearly Summary */}
+      <div className="ll_dash_midHeader">
+        <div className="ll_dash_sectionTitle">Yearly Summary</div>
+      </div>
+
+      <section className="ll_card ll_dash_tableCard">
+        <div className="ll_dash_tableWrap">
+          <table className="ll_table w-full table-fixed">
+
+            <thead>
+              <tr>
+                <th style={{ width: 120 }} className="text-left !text-left">
+                  Year
+                </th>
+                <th style={{ width: 180 }} className="text-right !text-right">
+                  Income
+                </th>
+                <th style={{ width: 180 }} className="text-right !text-right">
+                  Expenses
+                </th>
+                <th style={{ width: 180 }} className="text-right !text-right">
+                  Net Profit
+                </th>
+              </tr>
+            </thead>
+                      
+
+            <tbody>
+              {yearlyRows.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-3 text-gray-500">
+                    No data yet
+                  </td>
+                </tr>
+              ) : (
+                <>
+                  {yearlyRows.map((r) => (
+                    <tr key={r.year}>
+                      <td className="font-medium">{r.year}</td>
+                      <td className={`text-right ${amountClass(r.income)}`}>
+                        {moneyAccounting(r.income)}
+                      </td>
+                      <td className={`text-right ${amountClass(r.expenses)}`}>
+                        {moneyAccounting(r.expenses)}
+                      </td>
+                      <td className={`text-right font-medium ${amountClass(r.net)}`}>
+                        {moneyAccounting(r.net)}
+                      </td>
+                    </tr>
+                  ))}
+
+                  {/* Totals row */}
+                  <tr className="border-t border-gray-200">
+                    <td className="font-semibold">Total</td>
+                    <td className={`text-right font-semibold ${amountClass(yearlyTotals.income)}`}>
+                      {moneyAccounting(yearlyTotals.income)}
+                    </td>
+                    <td className={`text-right font-semibold ${amountClass(yearlyTotals.expenses)}`}>
+                      {moneyAccounting(yearlyTotals.expenses)}
+                    </td>
+                    <td className={`text-right font-semibold ${amountClass(yearlyTotals.net)}`}>
+                      {moneyAccounting(yearlyTotals.net)}
+                    </td>
+                  </tr>
+                </>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Transactions */}
       <div className="ll_dash_midHeader">
         <div className="ll_dash_sectionTitle">Transactions</div>
       </div>
 
       <section className="ll_card ll_dash_tableCard">
         <div className="ll_dash_tableWrap">
-          <table className="ll_table w-full">
+          <table className="ll_table w-full table-fixed">
+
             <thead>
               <tr>
                 <th style={{ width: 120 }}>Date</th>
                 <th>Property</th>
                 <th>Category</th>
                 <th>Description</th>
-                <th style={{ width: 140 }} className="text-right">Amount</th>
+                <th style={{ width: 140 }} className="text-right">
+                  Amount
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -410,7 +598,8 @@ export default async function DashboardPage({
                     <td>{t.category.name}</td>
                     <td>{t.payee || t.memo || "-"}</td>
                     <td className={`text-right ${isInc ? "ll_amt_pos" : "ll_amt_neg"}`}>
-                      {isInc ? "+" : "-"}{formatUsd(Math.abs(t.amount))}
+                      {isInc ? "+" : "-"}
+                      {formatUsd(Math.abs(t.amount))}
                     </td>
                   </tr>
                 );

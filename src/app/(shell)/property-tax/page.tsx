@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import PropertyHeader from "@/components/properties/PropertyHeader";
+
+import fs from "node:fs/promises";
+import path from "node:path";
 
 function getStr(sp: Record<string, string | string[] | undefined>, key: string): string {
   const v = sp[key];
@@ -10,19 +14,19 @@ function getStr(sp: Record<string, string | string[] | undefined>, key: string):
 }
 
 function money(n?: number | null) {
-  if (n === null || n === undefined) return "—";
+  if (n === null || n === undefined) return "-";
 
-  const abs = Math.abs(n).toLocaleString(undefined, {
+  const abs = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
+  }).format(Math.abs(n));
 
   return n < 0 ? `(${abs})` : `$${abs}`;
 }
 
 function fmtDate(d?: Date | null) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString();
+  if (!d) return "-";
+  return new Date(d).toLocaleDateString("en-US", { timeZone: "UTC" });
 }
 
 function propertyLabel(p: {
@@ -48,7 +52,24 @@ function formatAddress(record: {
   if (line1 && line2) return `${line1} (${line2})`;
   if (line1) return line1;
   if (line2) return line2;
-  return "—";
+  return "-";
+}
+
+async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
+  // Files live in /public/property-photos; URLs are /property-photos/<file>
+  const dir = path.join(process.cwd(), "public", "property-photos");
+  const candidates = [`${propertyId}.webp`, `${propertyId}.jpg`, `${propertyId}.jpeg`, `${propertyId}.png`];
+
+  for (const file of candidates) {
+    try {
+      await fs.access(path.join(dir, file));
+      return `/property-photos/${file}`;
+    } catch {
+      // keep trying
+    }
+  }
+
+  return null;
 }
 
 const taxColumns = [
@@ -83,7 +104,7 @@ export default async function PropertyTaxPage({
   const propertyId = getStr(sp, "propertyId").trim();
   const msg = getStr(sp, "msg").trim();
 
-  const [accounts, properties] = await Promise.all([
+  const [accounts, properties, selectedProperty] = await Promise.all([
     prisma.propertyTaxAccount.findMany({
       where:
         q || propertyId
@@ -127,7 +148,17 @@ export default async function PropertyTaxPage({
       orderBy: [{ nickname: "asc" }],
       select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
     }),
+    propertyId
+      ? prisma.property.findUnique({
+          where: { id: propertyId },
+          select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const photoSrc = selectedProperty ? await findPropertyPhotoSrc(selectedProperty.id) : null;
+
+  const addHref = propertyId ? `/property-tax/new?propertyId=${propertyId}` : "/property-tax/new";
 
   return (
     <div className="ll_page">
@@ -135,15 +166,35 @@ export default async function PropertyTaxPage({
         <div className="ll_topbar">
           <div>
             <div style={{ fontSize: 18, fontWeight: 800 }}>Property tax</div>
-            <div className="ll_muted">All tax accounts across all properties.</div>
+            <div className="ll_muted">
+              {selectedProperty ? "Tax accounts for selected property." : "All tax accounts across all properties."}
+            </div>
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btn" href="/property-tax/new">
+            <Link className="ll_btn" href={addHref}>
               Add tax account
             </Link>
           </div>
         </div>
+
+        {selectedProperty ? (
+          <div className="mt-3">
+            <PropertyHeader
+              property={{
+                id: selectedProperty.id,
+                nickname: selectedProperty.nickname,
+                street: selectedProperty.street,
+                city: selectedProperty.city,
+                state: selectedProperty.state,
+                zip: selectedProperty.zip,
+                photoUrl: photoSrc ?? null,
+              }}
+              href={`/properties/${selectedProperty.id}`}
+              subtitle="Property tax"
+            />
+          </div>
+        ) : null}
 
         {msg === "created" && <div className="ll_notice">Tax account created.</div>}
         {msg === "updated" && <div className="ll_notice">Tax account updated.</div>}
@@ -157,7 +208,7 @@ export default async function PropertyTaxPage({
                 className="ll_input"
                 name="q"
                 defaultValue={q}
-                placeholder="Type and press Enter…"
+                placeholder="Type and press Enter..."
                 autoComplete="off"
                 suppressHydrationWarning
               />
@@ -165,12 +216,7 @@ export default async function PropertyTaxPage({
 
             <label>
               Property filter (optional)
-              <select
-                name="propertyId"
-                className="ll_input"
-                defaultValue={propertyId}
-                suppressHydrationWarning
-              >
+              <select name="propertyId" className="ll_input" defaultValue={propertyId} suppressHydrationWarning>
                 <option value="">All properties</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -225,44 +271,26 @@ export default async function PropertyTaxPage({
                     <td style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
                       {propertyLabel(a.property)}
                     </td>
-                    <td>{a.name || "—"}</td>
-                    <td>{a.phone || "—"}</td>
-                    <td>{a.billNumber || "—"}</td>
+                    <td>{a.name || "-"}</td>
+                    <td>{a.phone || "-"}</td>
+                    <td>{a.billNumber || "-"}</td>
                     <td>{formatAddress(a)}</td>
-                    <td>{a.parcel || "—"}</td>
+                    <td>{a.parcel || "-"}</td>
                     <td style={{ whiteSpace: "nowrap" }}>{money(a.annualAmount)}</td>
                     <td>{fmtDate(a.dueDate)}</td>
                     <td>{fmtDate(a.lastPaid)}</td>
-                    <td>
-                      <div style={{ display: "grid", gap: 4 }}>
-                        <div>{a.email || "—"}</div>
-                        {a.web ? (
-                          <a href={a.web} style={{ color: "inherit" }}>
-                            {a.web}
-                          </a>
-                        ) : (
-                          <span>—</span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="ll_rowActions">
-                        <Link className="ll_btnSecondary" href={`/property-tax/${a.id}/edit`}>
-                          Edit
-                        </Link>
-                        <form action={`/api/property-tax/${a.id}/delete`} method="post" style={{ margin: 0 }}>
-                          <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-                            Delete
-                          </button>
-                        </form>
-                      </div>
+                    <td>{a.email || "-"}</td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <Link className="ll_btnSecondary" href={`/property-tax/${a.id}/edit`}>
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           ) : (
-            <div className="ll_notice">No property tax accounts found.</div>
+            <div className="ll_muted">No tax accounts found.</div>
           )}
         </div>
       </div>

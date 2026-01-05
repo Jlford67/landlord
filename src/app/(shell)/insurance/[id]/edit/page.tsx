@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import PropertyHeader from "@/components/properties/PropertyHeader";
+
+import fs from "node:fs/promises";
+import path from "node:path";
 
 function propertyLabel(p: {
   nickname: string | null;
@@ -17,6 +21,23 @@ function inputDate(d?: Date | null) {
   if (!d) return "";
   const iso = new Date(d).toISOString();
   return iso.slice(0, 10);
+}
+
+async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
+  // Files live in /public/property-photos; URLs are /property-photos/<file>
+  const dir = path.join(process.cwd(), "public", "property-photos");
+  const candidates = [`${propertyId}.webp`, `${propertyId}.jpg`, `${propertyId}.jpeg`, `${propertyId}.png`];
+
+  for (const file of candidates) {
+    try {
+      await fs.access(path.join(dir, file));
+      return `/property-photos/${file}`;
+    } catch {
+      // keep trying
+    }
+  }
+
+  return null;
 }
 
 export default async function EditInsurancePage({
@@ -37,6 +58,15 @@ export default async function EditInsurancePage({
 
   if (!policy) notFound();
 
+  const selectedProperty = await prisma.property.findUnique({
+    where: { id: policy.propertyId },
+    select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
+  });
+
+  const photoSrc = selectedProperty ? await findPropertyPhotoSrc(selectedProperty.id) : null;
+
+  const cancelHref = policy.propertyId ? `/insurance?propertyId=${policy.propertyId}` : "/insurance";
+
   return (
     <div className="ll_page">
       <div className="ll_panel">
@@ -47,11 +77,29 @@ export default async function EditInsurancePage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href="/insurance">
+            <Link className="ll_btnSecondary" href={cancelHref}>
               Cancel
             </Link>
           </div>
         </div>
+
+        {selectedProperty ? (
+          <div className="mt-3">
+            <PropertyHeader
+              property={{
+                id: selectedProperty.id,
+                nickname: selectedProperty.nickname,
+                street: selectedProperty.street,
+                city: selectedProperty.city,
+                state: selectedProperty.state,
+                zip: selectedProperty.zip,
+                photoUrl: photoSrc ?? null,
+              }}
+              href={`/properties/${selectedProperty.id}`}
+              subtitle="Insurance"
+            />
+          </div>
+        ) : null}
 
         <form className="ll_form" method="post" action={`/api/insurance/${policy.id}`} style={{ marginTop: 14 }}>
           <label className="ll_label" htmlFor="propertyId">
@@ -65,7 +113,7 @@ export default async function EditInsurancePage({
             defaultValue={policy.propertyId}
             suppressHydrationWarning
           >
-            <option value="">Select a property…</option>
+            <option value="">Select a property...</option>
             {properties.map((p) => (
               <option key={p.id} value={p.id}>
                 {propertyLabel(p)}
@@ -76,46 +124,22 @@ export default async function EditInsurancePage({
           <label className="ll_label" htmlFor="insurer">
             Insurer
           </label>
-          <input
-            id="insurer"
-            name="insurer"
-            className="ll_input"
-            defaultValue={policy.insurer ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="insurer" name="insurer" className="ll_input" defaultValue={policy.insurer ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="policyNum">
             Policy #
           </label>
-          <input
-            id="policyNum"
-            name="policyNum"
-            className="ll_input"
-            defaultValue={policy.policyNum ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="policyNum" name="policyNum" className="ll_input" defaultValue={policy.policyNum ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="agentName">
             Agent Name
           </label>
-          <input
-            id="agentName"
-            name="agentName"
-            className="ll_input"
-            defaultValue={policy.agentName ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="agentName" name="agentName" className="ll_input" defaultValue={policy.agentName ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="phone">
             Phone
           </label>
-          <input
-            id="phone"
-            name="phone"
-            className="ll_input"
-            defaultValue={policy.phone ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="phone" name="phone" className="ll_input" defaultValue={policy.phone ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="premium">
             Premium
@@ -157,24 +181,12 @@ export default async function EditInsurancePage({
           <label className="ll_label" htmlFor="webPortal">
             Web Portal URL
           </label>
-          <input
-            id="webPortal"
-            name="webPortal"
-            className="ll_input"
-            defaultValue={policy.webPortal ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="webPortal" name="webPortal" className="ll_input" defaultValue={policy.webPortal ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="allPolicies">
             All Policies URL
           </label>
-          <input
-            id="allPolicies"
-            name="allPolicies"
-            className="ll_input"
-            defaultValue={policy.allPolicies ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="allPolicies" name="allPolicies" className="ll_input" defaultValue={policy.allPolicies ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="bank">
             Bank
@@ -184,13 +196,7 @@ export default async function EditInsurancePage({
           <label className="ll_label" htmlFor="bankNumber">
             Bank Number
           </label>
-          <input
-            id="bankNumber"
-            name="bankNumber"
-            className="ll_input"
-            defaultValue={policy.bankNumber ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="bankNumber" name="bankNumber" className="ll_input" defaultValue={policy.bankNumber ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="loanRef">
             Loan Ref
@@ -201,7 +207,7 @@ export default async function EditInsurancePage({
             <button className="ll_btn" type="submit" suppressHydrationWarning>
               Save changes
             </button>
-            <Link className="ll_btnSecondary" href="/insurance">
+            <Link className="ll_btnSecondary" href={cancelHref}>
               Cancel
             </Link>
           </div>
