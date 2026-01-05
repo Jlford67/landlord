@@ -1,0 +1,274 @@
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { formatUsd } from "@/lib/money";
+import { propertyLabel } from "@/lib/format";
+import { requireUser } from "@/lib/auth";
+import { getProfitLossByProperty } from "@/lib/reports/profitLossByProperty";
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function getStr(sp: SearchParams, key: string): string {
+  const v = sp[key];
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) return v[0] ?? "";
+  return "";
+}
+
+function parseDateUTC(value?: string): Date | null {
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [yy, mm, dd] = value.split("-").map(Number);
+  return new Date(Date.UTC(yy, mm - 1, dd));
+}
+
+function formatInputDateUTC(d: Date) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export default async function ProfitLossReportPage({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
+  await requireUser();
+
+  const sp = (await searchParams) ?? {};
+
+  const propertyId = getStr(sp, "propertyId") || null;
+  const includeTransfers = getStr(sp, "includeTransfers") === "true";
+
+  const now = new Date();
+  const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  const defaultEnd = new Date(Date.UTC(now.getUTCFullYear(), 11, 31));
+
+  const parsedStart = parseDateUTC(getStr(sp, "startDate"));
+  const parsedEnd = parseDateUTC(getStr(sp, "endDate"));
+
+  let startDate = parsedStart ?? defaultStart;
+  let endDate = parsedEnd ?? defaultEnd;
+
+  if (startDate > endDate) {
+    [startDate, endDate] = [endDate, startDate];
+  }
+
+  const properties = await prisma.property.findMany({
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      nickname: true,
+      street: true,
+      city: true,
+      state: true,
+      zip: true,
+    },
+  });
+
+  const propertyOptions = properties.map((p) => ({
+    id: p.id,
+    label: propertyLabel(p),
+  }));
+
+  const result = await getProfitLossByProperty({
+    propertyId,
+    startDate,
+    endDate,
+    includeTransfers,
+  });
+
+  const propertyOrder: string[] = [];
+  for (const row of result.rows) {
+    if (!propertyOrder.includes(row.propertyId)) {
+      propertyOrder.push(row.propertyId);
+    }
+  }
+
+  return (
+    <div className="ll_page">
+      <div className="ll_panel">
+        <div className="ll_rowBetween">
+          <div>
+            <div className="ll_breadcrumbs">
+              <Link href="/reports" className="ll_link">
+                Reports
+              </Link>
+              <span className="ll_muted">/</span>
+              <span className="ll_muted">Profit &amp; Loss by Property</span>
+            </div>
+            <h1>Profit &amp; Loss by Property</h1>
+            <div className="ll_muted">
+              Transactions within the selected date range. Transfers are{" "}
+              {includeTransfers ? "included" : "excluded"}.
+            </div>
+          </div>
+        </div>
+
+        <form className="ll_form mt-4" method="get">
+          <div
+            style={{
+              display: "grid",
+              gap: 12,
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            }}
+          >
+            <div>
+              <label className="ll_label" htmlFor="propertyId">
+                Property (optional)
+              </label>
+              <select
+                id="propertyId"
+                name="propertyId"
+                className="ll_input"
+                defaultValue={propertyId ?? ""}
+                suppressHydrationWarning
+              >
+                <option value="">All properties</option>
+                {propertyOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="startDate">
+                Start date
+              </label>
+              <input
+                id="startDate"
+                name="startDate"
+                type="date"
+                className="ll_input"
+                defaultValue={formatInputDateUTC(startDate)}
+                required
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="endDate">
+                End date
+              </label>
+              <input
+                id="endDate"
+                name="endDate"
+                type="date"
+                className="ll_input"
+                defaultValue={formatInputDateUTC(endDate)}
+                required
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="includeTransfers">
+                Include transfers?
+              </label>
+              <select
+                id="includeTransfers"
+                name="includeTransfers"
+                className="ll_input"
+                defaultValue={includeTransfers ? "true" : "false"}
+                suppressHydrationWarning
+              >
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="ll_actions" style={{ marginTop: 14 }}>
+            <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
+              Apply filters
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-6 ll_table_wrap">
+          <table className="ll_table ll_table_zebra w-full">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Txn Count</th>
+                <th className="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.rows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center text-sm text-slate-600">
+                    No transactions found for this range.
+                  </td>
+                </tr>
+              ) : (
+                propertyOrder.map((pid) =>
+                  result.rows
+                    .filter((r) => r.propertyId === pid)
+                    .map((row) => (
+                      <tr key={`${row.propertyId}-${row.categoryId}`}>
+                        <td>{row.propertyName}</td>
+                        <td>
+                          {row.parentCategoryName
+                            ? `${row.parentCategoryName} > ${row.categoryName}`
+                            : row.categoryName}
+                        </td>
+                        <td className="capitalize">{row.type}</td>
+                        <td>{row.count}</td>
+                        <td className="text-right">{formatUsd(row.amount)}</td>
+                      </tr>
+                    ))
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-6 ll_table_wrap">
+          <table className="ll_table ll_table_zebra w-full">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th className="text-right">Income total</th>
+                <th className="text-right">Expense total</th>
+                <th className="text-right">Net total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {propertyOrder.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="text-center text-sm text-slate-600">
+                    No totals to show.
+                  </td>
+                </tr>
+              ) : (
+                propertyOrder.map((pid) => {
+                  const totals = result.subtotalsByProperty[pid];
+                  if (!totals) return null;
+                  return (
+                    <tr key={pid}>
+                      <td>{totals.propertyName}</td>
+                      <td className="text-right">{formatUsd(totals.incomeTotal)}</td>
+                      <td className="text-right">{formatUsd(totals.expenseTotal)}</td>
+                      <td className="text-right">{formatUsd(totals.netTotal)}</td>
+                    </tr>
+                  );
+                })
+              )}
+              <tr className="ll_table_total">
+                <td>Grand totals</td>
+                <td className="text-right">{formatUsd(result.totals.incomeTotal)}</td>
+                <td className="text-right">{formatUsd(result.totals.expenseTotal)}</td>
+                <td className="text-right">{formatUsd(result.totals.netTotal)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

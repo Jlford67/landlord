@@ -12,6 +12,7 @@ import {
   Receipt,
   Shield,
   Settings,
+  BarChart3,
 } from "lucide-react";
 
 const NAV = [
@@ -21,6 +22,7 @@ const NAV = [
   { href: "/categories", label: "Categories", Icon: Tags },
   { href: "/recurring", label: "Recurring", Icon: Repeat },
   { href: "/ledger", label: "Ledger", Icon: BookOpen },
+  { href: "/reports", label: "Reports", Icon: BarChart3 },
   { href: "/property-tax", label: "Property Tax", Icon: Receipt },
   { href: "/insurance", label: "Insurance", Icon: Shield },
   { href: "/settings", label: "Settings", Icon: Settings },
