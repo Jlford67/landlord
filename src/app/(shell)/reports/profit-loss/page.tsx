@@ -39,6 +39,7 @@ export default async function ProfitLossReportPage({
 
   const propertyId = getStr(sp, "propertyId") || null;
   const includeTransfers = getStr(sp, "includeTransfers") === "true";
+  const includeAnnualTotals = getStr(sp, "includeAnnualTotals") !== "false";
 
   const now = new Date();
   const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
@@ -76,6 +77,7 @@ export default async function ProfitLossReportPage({
     startDate,
     endDate,
     includeTransfers,
+    includeAnnualTotals,
   });
 
   const propertyOrder: string[] = [];
@@ -99,8 +101,9 @@ export default async function ProfitLossReportPage({
             </div>
             <h1>Profit &amp; Loss by Property</h1>
             <div className="ll_muted">
-              Transactions within the selected date range. Transfers are{" "}
-              {includeTransfers ? "included" : "excluded"}.
+              Ledger transactions and annual totals within the selected date range
+              (annual amounts are prorated when the range covers only part of a year).
+              Transfers are {includeTransfers ? "included" : "excluded"}.
             </div>
           </div>
         </div>
@@ -176,6 +179,22 @@ export default async function ProfitLossReportPage({
               >
                 <option value="false">No</option>
                 <option value="true">Yes</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="includeAnnualTotals">
+                Include annual totals?
+              </label>
+              <select
+                id="includeAnnualTotals"
+                name="includeAnnualTotals"
+                className="ll_input"
+                defaultValue={includeAnnualTotals ? "true" : "false"}
+                suppressHydrationWarning
+              >
+                <option value="true">Yes</option>
+                <option value="false">No</option>
               </select>
             </div>
           </div>

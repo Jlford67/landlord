@@ -7,6 +7,7 @@ export type ProfitLossFilters = {
   startDate: Date;
   endDate: Date;
   includeTransfers?: boolean;
+  includeAnnualTotals?: boolean;
 };
 
 export type ProfitLossRow = {
@@ -41,10 +42,27 @@ function addDaysUTC(d: Date, days: number) {
   );
 }
 
+function daysInYear(year: number) {
+  const start = Date.UTC(year, 0, 1);
+  const end = Date.UTC(year + 1, 0, 1);
+  return Math.round((end - start) / 86_400_000);
+}
+
+function overlapDaysInYear(rangeStart: Date, rangeEnd: Date, year: number) {
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const yearEnd = new Date(Date.UTC(year, 11, 31));
+  const start = rangeStart > yearStart ? rangeStart : yearStart;
+  const end = rangeEnd < yearEnd ? rangeEnd : yearEnd;
+  if (start > end) return 0;
+
+  return Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
+}
+
 export async function getProfitLossByProperty(
   filters: ProfitLossFilters
 ): Promise<ProfitLossByPropertyResult> {
   const includeTransfers = Boolean(filters.includeTransfers);
+  const includeAnnualTotals = filters.includeAnnualTotals ?? true;
   const startDate = filters.startDate;
   const endDate = filters.endDate;
 
@@ -106,9 +124,16 @@ export async function getProfitLossByProperty(
     _sum: { amount: true },
   });
 
-  const rows: ProfitLossRow[] = grouped.map((g) => {
-    const category = categoryMap.get(g.categoryId);
-    const property = propertyMap.get(g.propertyId);
+  const rowMap = new Map<string, ProfitLossRow>();
+
+  function upsertRow(input: {
+    propertyId: string;
+    categoryId: string;
+    amount: number;
+    count: number;
+  }) {
+    const category = categoryMap.get(input.categoryId);
+    const property = propertyMap.get(input.propertyId);
 
     const propertyName = property
       ? propertyLabel({
@@ -120,17 +145,74 @@ export async function getProfitLossByProperty(
         })
       : "Unknown property";
 
-    return {
-      propertyId: g.propertyId,
+    const key = `${input.propertyId}__${input.categoryId}`;
+    const existing = rowMap.get(key);
+
+    if (existing) {
+      existing.amount += input.amount;
+      existing.count += input.count;
+      return;
+    }
+
+    rowMap.set(key, {
+      propertyId: input.propertyId,
       propertyName,
-      categoryId: g.categoryId,
+      categoryId: input.categoryId,
       categoryName: category?.name ?? "Unknown category",
       parentCategoryName: category?.parent?.name ?? null,
       type: (category?.type as CategoryType) ?? "expense",
-      count: g._count._all,
+      count: input.count,
+      amount: input.amount,
+    });
+  }
+
+  grouped.forEach((g) => {
+    upsertRow({
+      propertyId: g.propertyId,
+      categoryId: g.categoryId,
       amount: Number(g._sum.amount ?? 0),
-    };
+      count: g._count._all,
+    });
   });
+
+  if (includeAnnualTotals) {
+    const startYear = startDate.getUTCFullYear();
+    const endYear = endDate.getUTCFullYear();
+    const years: number[] = [];
+    for (let y = startYear; y <= endYear; y++) years.push(y);
+
+    if (years.length > 0) {
+      const annualRows = await prisma.annualCategoryAmount.findMany({
+        where: {
+          propertyId: filters.propertyId || undefined,
+          categoryId: { in: allowedCategoryIds },
+          year: { in: years },
+        },
+        select: {
+          propertyId: true,
+          categoryId: true,
+          amount: true,
+          year: true,
+        },
+      });
+
+      for (const row of annualRows) {
+        const overlapDays = overlapDaysInYear(startDate, endDate, row.year);
+        if (overlapDays <= 0) continue;
+        const fraction = overlapDays / daysInYear(row.year);
+        const proratedAmount = Number(row.amount ?? 0) * fraction;
+
+        upsertRow({
+          propertyId: row.propertyId,
+          categoryId: row.categoryId,
+          amount: proratedAmount,
+          count: 0,
+        });
+      }
+    }
+  }
+
+  const rows = Array.from(rowMap.values());
 
   rows.sort((a, b) => {
     if (a.propertyName !== b.propertyName) {
