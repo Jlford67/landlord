@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { formatUsd } from "@/lib/money";
 import { propertyLabel } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
 import { getProfitLossByProperty } from "@/lib/reports/profitLossByProperty";
@@ -26,6 +25,20 @@ function formatInputDateUTC(d: Date) {
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   const day = String(d.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function moneyAccounting(n: number) {
+  const abs = Math.abs(n).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return n < 0 ? `($${abs})` : `$${abs}`;
+}
+
+function amountClass(n: number) {
+  if (n < 0) return "text-red-600";
+  if (n > 0) return "text-emerald-600";
+  return "text-gray-700";
 }
 
 export default async function ProfitLossReportPage({
@@ -213,7 +226,7 @@ export default async function ProfitLossReportPage({
                 <th>Property</th>
                 <th>Category</th>
                 <th>Type</th>
-                <th>Txn Count</th>
+                <th className="text-right">Txn Count</th>
                 <th className="text-right">Amount</th>
               </tr>
             </thead>
@@ -237,8 +250,12 @@ export default async function ProfitLossReportPage({
                             : row.categoryName}
                         </td>
                         <td className="capitalize">{row.type}</td>
-                        <td>{row.count}</td>
-                        <td className="text-right">{formatUsd(row.amount)}</td>
+                        <td className="text-right">{row.count}</td>
+                        <td className="text-right">
+                          <span className={amountClass(row.amount)}>
+                            {moneyAccounting(row.amount)}
+                          </span>
+                        </td>
                       </tr>
                     ))
                 )
@@ -271,18 +288,42 @@ export default async function ProfitLossReportPage({
                   return (
                     <tr key={pid}>
                       <td>{totals.propertyName}</td>
-                      <td className="text-right">{formatUsd(totals.incomeTotal)}</td>
-                      <td className="text-right">{formatUsd(totals.expenseTotal)}</td>
-                      <td className="text-right">{formatUsd(totals.netTotal)}</td>
+                      <td className="text-right">
+                        <span className={amountClass(totals.incomeTotal)}>
+                          {moneyAccounting(totals.incomeTotal)}
+                        </span>
+                      </td>
+                      <td className="text-right">
+                        <span className={amountClass(totals.expenseTotal)}>
+                          {moneyAccounting(totals.expenseTotal)}
+                        </span>
+                      </td>
+                      <td className="text-right">
+                        <span className={amountClass(totals.netTotal)}>
+                          {moneyAccounting(totals.netTotal)}
+                        </span>
+                      </td>
                     </tr>
                   );
                 })
               )}
               <tr className="ll_table_total">
                 <td>Grand totals</td>
-                <td className="text-right">{formatUsd(result.totals.incomeTotal)}</td>
-                <td className="text-right">{formatUsd(result.totals.expenseTotal)}</td>
-                <td className="text-right">{formatUsd(result.totals.netTotal)}</td>
+                <td className="text-right">
+                  <span className={amountClass(result.totals.incomeTotal)}>
+                    {moneyAccounting(result.totals.incomeTotal)}
+                  </span>
+                </td>
+                <td className="text-right">
+                  <span className={amountClass(result.totals.expenseTotal)}>
+                    {moneyAccounting(result.totals.expenseTotal)}
+                  </span>
+                </td>
+                <td className="text-right">
+                  <span className={amountClass(result.totals.netTotal)}>
+                    {moneyAccounting(result.totals.netTotal)}
+                  </span>
+                </td>
               </tr>
             </tbody>
           </table>
