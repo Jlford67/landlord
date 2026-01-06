@@ -144,7 +144,9 @@ export async function getExpensesByProperty(params: {
     .filter((row): row is ExpensesByPropertyRow => Boolean(row));
 
   rows.sort((a, b) => {
-    if (a.totalExpense !== b.totalExpense) return a.totalExpense - b.totalExpense;
+    const magA = Math.abs(a.totalExpense);
+    const magB = Math.abs(b.totalExpense);
+    if (magA !== magB) return magB - magA; // highest expenses first
     return a.propertyLabel.localeCompare(b.propertyLabel);
   });
 

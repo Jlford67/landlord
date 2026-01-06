@@ -207,14 +207,12 @@ export default async function ExpensesByPropertyPage({
             <table className="ll_table ll_table_zebra w-full table-fixed">
               <colgroup>
                 <col />
-                <col style={{ width: "160px" }} />
-                <col style={{ width: "160px" }} />
+                <col style={{ width: "200px" }} />
                 <col style={{ width: "160px" }} />
               </colgroup>
               <thead>
                 <tr>
                   <th>Property</th>
-                  <th className="!text-right">Transactional expenses</th>
                   <th className="!text-right">Annual expenses (prorated)</th>
                   <th className="!text-right">Total expenses</th>
                 </tr>
@@ -231,11 +229,6 @@ export default async function ExpensesByPropertyPage({
                     {report.rows.map((row) => (
                       <tr key={row.propertyId}>
                         <td>{row.propertyLabel}</td>
-                        <td className="text-right">
-                          <span className={amountClass(row.transactionalExpense)}>
-                            {moneyPositive(row.transactionalExpense)}
-                          </span>
-                        </td>
                         <td className="text-right">
                           <span className={amountClass(row.annualExpense)}>
                             {moneyPositive(row.annualExpense)}
@@ -255,11 +248,6 @@ export default async function ExpensesByPropertyPage({
                 <tfoot>
                   <tr className="ll_table_total">
                     <td>Total</td>
-                    <td className="text-right">
-                      <span className={amountClass(report.totals.transactionalExpense)}>
-                        {moneyPositive(report.totals.transactionalExpense)}
-                      </span>
-                    </td>
                     <td className="text-right">
                       <span className={amountClass(report.totals.annualExpense)}>
                         {moneyPositive(report.totals.annualExpense)}
