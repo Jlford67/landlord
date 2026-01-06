@@ -68,7 +68,8 @@ const sections: ReportSection[] = [
       },
       {
         title: "Expenses by Property",
-        description: "Expense mix across each property.",
+        description: "Compare total expenses across properties, including prorated annual items",
+        href: "/reports/expenses-by-property",
         badgeText: "Date range",
       },
       {
