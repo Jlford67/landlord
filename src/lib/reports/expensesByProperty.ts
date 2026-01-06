@@ -15,6 +15,7 @@ export async function getExpensesByProperty(params: {
   startDate: Date;
   endDate: Date;
   includeTransfers?: boolean;
+  propertyId?: string | null;
 }): Promise<{
   rows: ExpensesByPropertyRow[];
   totals: {
@@ -38,9 +39,7 @@ export async function getExpensesByProperty(params: {
     : ["expense"];
 
   const properties = await prisma.property.findMany({
-    where: {
-      ownerships: { some: { entityId: params.userId } },
-    },
+    where: params.propertyId ? { id: params.propertyId } : undefined,
     select: {
       id: true,
       nickname: true,
@@ -105,7 +104,7 @@ export async function getExpensesByProperty(params: {
       where: {
         propertyId: { in: propertyIds },
         year: { gte: startYear, lte: endYear },
-        amount: { lt: 0 },
+        category: { type: "expense" },
       },
       select: {
         propertyId: true,
@@ -118,7 +117,9 @@ export async function getExpensesByProperty(params: {
       const overlapDays = overlapDaysInYear(startDate, endDate, row.year);
       if (overlapDays <= 0) continue;
       const fraction = overlapDays / daysInYear(row.year);
-      const prorated = Number(row.amount ?? 0) * fraction;
+      const rawAmount = Number(row.amount ?? 0);
+      const expenseAmount = rawAmount > 0 ? -rawAmount : rawAmount;
+      const prorated = expenseAmount * fraction;
       const current = annualByProperty.get(row.propertyId) ?? 0;
       annualByProperty.set(row.propertyId, current + prorated);
     }

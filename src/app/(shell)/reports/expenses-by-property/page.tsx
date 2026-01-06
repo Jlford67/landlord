@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { fmtMoney } from "@/lib/format";
+import { prisma } from "@/lib/db";
+import { fmtMoney, propertyLabel } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
 import { getExpensesByProperty } from "@/lib/reports/expensesByProperty";
 
@@ -46,6 +47,8 @@ export default async function ExpensesByPropertyPage({
 
   const sp = (await searchParams) ?? {};
 
+  const propertyIdRaw = getStr(sp, "propertyId");
+  const propertyId = propertyIdRaw || null;
   const includeTransfersRaw = getStr(sp, "includeTransfers").toLowerCase();
   const includeTransfers = includeTransfersRaw === "1" || includeTransfersRaw === "true";
 
@@ -63,11 +66,29 @@ export default async function ExpensesByPropertyPage({
     [startDate, endDate] = [endDate, startDate];
   }
 
+  const properties = await prisma.property.findMany({
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      nickname: true,
+      street: true,
+      city: true,
+      state: true,
+      zip: true,
+    },
+  });
+
+  const propertyOptions = properties.map((p) => ({
+    id: p.id,
+    label: propertyLabel(p),
+  }));
+
   const report = await getExpensesByProperty({
     userId: user.id,
     startDate,
     endDate,
     includeTransfers,
+    propertyId,
   });
 
   return (
@@ -98,6 +119,26 @@ export default async function ExpensesByPropertyPage({
               gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
             }}
           >
+            <div>
+              <label className="ll_label" htmlFor="propertyId">
+                Property
+              </label>
+              <select
+                id="propertyId"
+                name="propertyId"
+                className="ll_input"
+                defaultValue={propertyId ?? ""}
+                suppressHydrationWarning
+              >
+                <option value="">All properties</option>
+                {propertyOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="ll_label" htmlFor="start">
                 Start date
