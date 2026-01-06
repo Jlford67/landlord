@@ -38,6 +38,7 @@ const sections: ReportSection[] = [
       {
         title: "Cash vs Accrual P&L",
         description: "Compare cash-based and accrual-based performance.",
+        href: "/reports/cash-vs-accrual-pl",
         badgeText: "Date range",
       },
     ],
