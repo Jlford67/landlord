@@ -100,12 +100,11 @@ export async function getExpensesByProperty(params: {
   const years: number[] = [];
   for (let y = startYear; y <= endYear; y++) years.push(y);
 
-  if (allowedCategoryIds.length > 0 && years.length > 0) {
+  if (years.length > 0) {
     const annualRows = await prisma.annualCategoryAmount.findMany({
       where: {
         propertyId: { in: propertyIds },
-        categoryId: { in: allowedCategoryIds },
-        year: { in: years },
+        year: { gte: startYear, lte: endYear },
         amount: { lt: 0 },
       },
       select: {
@@ -125,17 +124,23 @@ export async function getExpensesByProperty(params: {
     }
   }
 
-  const rows: ExpensesByPropertyRow[] = properties.map((p) => {
-    const transactionalExpense = transactionalByProperty.get(p.id) ?? 0;
-    const annualExpense = annualByProperty.get(p.id) ?? 0;
-    return {
-      propertyId: p.id,
-      propertyLabel: propertyLabelMap.get(p.id) ?? "Property",
-      transactionalExpense,
-      annualExpense,
-      totalExpense: transactionalExpense + annualExpense,
-    };
-  });
+  const rows: ExpensesByPropertyRow[] = properties
+    .map((p) => {
+      const transactionalExpense = transactionalByProperty.get(p.id) ?? 0;
+      const annualExpense = annualByProperty.get(p.id) ?? 0;
+      const totalExpense = transactionalExpense + annualExpense;
+
+      if (transactionalExpense === 0 && annualExpense === 0) return null;
+
+      return {
+        propertyId: p.id,
+        propertyLabel: propertyLabelMap.get(p.id) ?? "Property",
+        transactionalExpense,
+        annualExpense,
+        totalExpense,
+      };
+    })
+    .filter((row): row is ExpensesByPropertyRow => Boolean(row));
 
   rows.sort((a, b) => {
     if (a.totalExpense !== b.totalExpense) return a.totalExpense - b.totalExpense;
