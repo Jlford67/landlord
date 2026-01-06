@@ -214,19 +214,24 @@ export async function getProfitLossByProperty(
 
   const rows = Array.from(rowMap.values());
 
+  const typeRank: Record<string, number> = { income: 0, expense: 1, transfer: 2 };
+
   rows.sort((a, b) => {
     if (a.propertyName !== b.propertyName) {
       return a.propertyName.localeCompare(b.propertyName);
     }
-    const parentA = a.parentCategoryName ?? "";
-    const parentB = b.parentCategoryName ?? "";
-    if (parentA !== parentB) {
-      return parentA.localeCompare(parentB);
-    }
-    if (a.categoryName !== b.categoryName) {
-      return a.categoryName.localeCompare(b.categoryName);
-    }
-    return a.type.localeCompare(b.type);
+
+    const rankA = typeRank[a.type] ?? 99;
+    const rankB = typeRank[b.type] ?? 99;
+    if (rankA !== rankB) return rankA - rankB;
+
+    const parentA = (a.parentCategoryName ?? "").toLowerCase();
+    const parentB = (b.parentCategoryName ?? "").toLowerCase();
+    if (parentA !== parentB) return parentA.localeCompare(parentB);
+
+    const nameA = a.categoryName.toLowerCase();
+    const nameB = b.categoryName.toLowerCase();
+    return nameA.localeCompare(nameB);
   });
 
   const subtotalsByProperty: ProfitLossByPropertyResult["subtotalsByProperty"] =
