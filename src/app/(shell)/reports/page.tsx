@@ -31,7 +31,7 @@ const sections: ReportSection[] = [
       },
       {
         title: "Annual Profit & Loss Summary",
-        description: "Yearly rollup for taxes and annual planning.",
+        description: "Tax-facing year rollup across ledger and annual totals.",
         href: "/reports/annual-profit-and-loss-summary",
         badgeText: "Annual",
       },
