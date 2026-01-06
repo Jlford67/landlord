@@ -221,12 +221,17 @@ export default async function ProfitLossReportPage({
 
         <div className="mt-6 ll_table_wrap">
           <table className="ll_table ll_table_zebra w-full">
+            <colgroup>
+              <col />
+              <col />
+              <col />
+              <col style={{ width: "160px" }} />
+            </colgroup>
             <thead>
               <tr>
                 <th>Property</th>
                 <th>Category</th>
                 <th>Type</th>
-                <th className="text-right">Txn Count</th>
                 <th className="text-right">Amount</th>
               </tr>
             </thead>
@@ -250,7 +255,6 @@ export default async function ProfitLossReportPage({
                             : row.categoryName}
                         </td>
                         <td className="capitalize">{row.type}</td>
-                        <td className="text-right">{row.count}</td>
                         <td className="text-right">
                           <span className={amountClass(row.amount)}>
                             {moneyAccounting(row.amount)}
@@ -266,6 +270,12 @@ export default async function ProfitLossReportPage({
 
         <div className="mt-6 ll_table_wrap">
           <table className="ll_table ll_table_zebra w-full">
+            <colgroup>
+              <col />
+              <col style={{ width: "160px" }} />
+              <col style={{ width: "160px" }} />
+              <col style={{ width: "160px" }} />
+            </colgroup>
             <thead>
               <tr>
                 <th>Property</th>
