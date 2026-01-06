@@ -32,6 +32,7 @@ const sections: ReportSection[] = [
       {
         title: "Annual Profit & Loss Summary",
         description: "Yearly rollup for taxes and annual planning.",
+        href: "/reports/annual-profit-and-loss-summary",
         badgeText: "Annual",
       },
       {
