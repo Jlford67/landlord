@@ -506,7 +506,7 @@ a.ll_btn.ll_btnDanger:visited{
   padding: 10px 12px;
   font-weight: 800;
   font-size: 12.5px;
-  text-align: left;
+  text-align: inherit;
   white-space: nowrap;
 }
 
@@ -514,6 +514,11 @@ a.ll_btn.ll_btnDanger:visited{
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
+}
+
+.ll_table th.text-right,
+.ll_table td.text-right{
+  text-align: right;
 }
 
 .ll_table tbody tr:nth-child(even) td{

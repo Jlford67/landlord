@@ -279,9 +279,9 @@ export default async function ProfitLossReportPage({
             <thead>
               <tr>
                 <th>Property</th>
-                <th className="text-right">Income total</th>
-                <th className="text-right">Expense total</th>
-                <th className="text-right">Net total</th>
+                <th className="!text-right">Income total</th>
+                <th className="!text-right">Expense total</th>
+                <th className="!text-right">Net total</th>
               </tr>
             </thead>
             <tbody>
