@@ -48,6 +48,7 @@ const sections: ReportSection[] = [
       {
         title: "Rental Income by Property",
         description: "Lease and rent collections across properties.",
+        href: "/reports/rental-income-by-property",
         badgeText: "Date range",
       },
       {
