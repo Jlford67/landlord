@@ -54,3 +54,8 @@ next-env.d.ts
 *.xlsx
 prisma/annual-import.csv
 
+# Local docs and one-off scripts (do not commit)
+docs/
+landlord_all_years.csv
+prisma/wipe-annual.ts
+
