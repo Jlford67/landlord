@@ -26,6 +26,22 @@ function addDaysUTC(date: Date, days: number) {
   );
 }
 
+function daysInYear(year: number) {
+  const start = Date.UTC(year, 0, 1);
+  const end = Date.UTC(year + 1, 0, 1);
+  return Math.round((end - start) / 86_400_000);
+}
+
+function overlapDaysInYear(rangeStart: Date, rangeEnd: Date, year: number) {
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const yearEnd = new Date(Date.UTC(year, 11, 31));
+  const start = rangeStart > yearStart ? rangeStart : yearStart;
+  const end = rangeEnd < yearEnd ? rangeEnd : yearEnd;
+  if (start > end) return 0;
+
+  return Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
+}
+
 export async function getExpensesByCategoryReport(
   filters: ExpensesByCategoryFilters
 ): Promise<ExpensesByCategoryResult> {
@@ -74,6 +90,35 @@ export async function getExpensesByCategoryReport(
   grouped.forEach((g) => {
     directAmounts.set(g.categoryId, Number(g._sum.amount ?? 0));
   });
+
+  const startYear = filters.startDate.getUTCFullYear();
+  const endYear = filters.endDate.getUTCFullYear();
+  const years: number[] = [];
+  for (let y = startYear; y <= endYear; y++) years.push(y);
+
+  if (years.length > 0) {
+    const annualRows = await prisma.annualCategoryAmount.findMany({
+      where: {
+        propertyId: filters.propertyId || undefined,
+        categoryId: { in: allowedCategoryIds },
+        year: { in: years },
+      },
+      select: {
+        categoryId: true,
+        amount: true,
+        year: true,
+      },
+    });
+
+    for (const row of annualRows) {
+      const overlapDays = overlapDaysInYear(filters.startDate, filters.endDate, row.year);
+      if (overlapDays <= 0) continue;
+      const fraction = overlapDays / daysInYear(row.year);
+      const proratedAmount = Number(row.amount ?? 0) * fraction;
+      const current = directAmounts.get(row.categoryId) ?? 0;
+      directAmounts.set(row.categoryId, current + proratedAmount);
+    }
+  }
 
   const childrenMap = new Map<string | null, string[]>();
   categories.forEach((cat) => {
@@ -131,7 +176,7 @@ export async function getExpensesByCategoryReport(
   );
   rootIds.forEach((id) => addRows(id, 0));
 
-  const total = grouped.reduce((sum, g) => sum + Number(g._sum.amount ?? 0), 0);
+  const total = Array.from(directAmounts.values()).reduce((sum, amt) => sum + amt, 0);
 
   return { rows, total };
 }
