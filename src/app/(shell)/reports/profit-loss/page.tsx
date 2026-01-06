@@ -269,12 +269,12 @@ export default async function ProfitLossReportPage({
         </div>
 
         <div className="mt-6 ll_table_wrap">
-          <table className="ll_table ll_table_zebra w-full">
+          <table className="ll_table ll_table_zebra w-full table-fixed">
             <colgroup>
-              <col />
-              <col style={{ width: "160px" }} />
-              <col style={{ width: "160px" }} />
-              <col style={{ width: "160px" }} />
+              <col style={{ width: "55%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "15%" }} />
             </colgroup>
             <thead>
               <tr>
