@@ -53,6 +53,7 @@ const sections: ReportSection[] = [
       {
         title: "Income by Category",
         description: "Breakdown of income categories across the portfolio.",
+        href: "/reports/income-by-category",
         badgeText: "Date range",
       },
     ],
