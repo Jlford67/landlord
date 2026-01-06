@@ -63,6 +63,7 @@ const sections: ReportSection[] = [
       {
         title: "Expenses by Category",
         description: "Spending by expense category with totals.",
+        href: "/reports/expenses-by-category",
         badgeText: "Date range",
       },
       {
