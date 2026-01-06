@@ -76,6 +76,7 @@ const sections: ReportSection[] = [
       {
         title: "Recurring Expenses Overview",
         description: "Upcoming and historical recurring spend.",
+        href: "/reports/recurring-expenses-overview",
         badgeText: "Date range",
       },
     ],
