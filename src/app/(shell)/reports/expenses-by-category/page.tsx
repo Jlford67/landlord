@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
@@ -227,23 +228,37 @@ export default async function ExpensesByCategoryPage({
                     </td>
                   </tr>
                 ) : (
-                  report.rows.map((row) => (
-                    <tr key={row.id}>
-                      <td>
-                        <span
-                          className="inline-block"
-                          style={{ paddingLeft: `${row.depth * 16}px` }}
-                        >
-                          {row.name}
-                        </span>
-                      </td>
-                      <td className="text-right">
-                        <span className={amountClass(row.amount)}>
-                          {moneyAccounting(row.amount)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                  report.rows.map((row, idx) => {
+                    const nextRow = report.rows[idx + 1];
+                    const showSpacer = nextRow && nextRow.depth === 0;
+
+                    return (
+                      <React.Fragment key={row.id}>
+                        <tr>
+                          <td>
+                            <span
+                              className="inline-block"
+                              style={{ paddingLeft: `${row.depth * 16}px` }}
+                            >
+                              {row.name}
+                            </span>
+                          </td>
+                          <td className="text-right">
+                            <span className={amountClass(row.amount)}>
+                              {moneyAccounting(row.amount)}
+                            </span>
+                          </td>
+                        </tr>
+                        {showSpacer ? (
+                          <tr aria-hidden="true">
+                            <td colSpan={2} className="p-0 border-0">
+                              <div className="h-3" />
+                            </td>
+                          </tr>
+                        ) : null}
+                      </React.Fragment>
+                    );
+                  })
                 )}
               </tbody>
               <tfoot>
