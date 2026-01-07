@@ -111,7 +111,10 @@ function metricDisplay(
     case "yieldOnCostPct":
       return percentValue(row.yieldOnCostPct);
     case "appreciationDollar":
-      return moneyFromCents(row.appreciationCents);
+      {
+        const formatted = fmtMoneyAccounting(row.appreciationCents);
+        return <span className={formatted.className}>{formatted.text}</span>;
+      }
     case "appreciationPct":
       return percentValue(row.appreciationPct);
     case "totalReturnDollar":
