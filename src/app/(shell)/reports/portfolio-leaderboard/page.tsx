@@ -1,0 +1,418 @@
+import Link from "next/link";
+import { fmtMoney } from "@/lib/format";
+import { requireUser } from "@/lib/auth";
+import {
+  getPortfolioLeaderboardReport,
+  type Metric,
+  type StatusFilter,
+  type ValuationSource,
+} from "@/lib/reports/portfolioLeaderboard";
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function getStr(sp: SearchParams, key: string): string {
+  const v = sp[key];
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) return v[0] ?? "";
+  return "";
+}
+
+function parseYear(value?: string): number | null {
+  if (!value) return null;
+  const num = Number(value);
+  if (!Number.isInteger(num)) return null;
+  return num;
+}
+
+function parseDateUTC(value?: string): Date | null {
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [yy, mm, dd] = value.split("-").map(Number);
+  return new Date(Date.UTC(yy, mm - 1, dd));
+}
+
+function formatInputDateUTC(d: Date) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function moneyFromCents(cents: number | null) {
+  if (cents == null) return "N/A";
+  return `$${fmtMoney(cents / 100)}`;
+}
+
+function percentValue(value: number | null) {
+  if (value == null || Number.isNaN(value)) return "N/A";
+  return `${value.toFixed(2)}%`;
+}
+
+function metricLabel(metric: Metric) {
+  switch (metric) {
+    case "netCashFlow":
+      return "Net cash flow";
+    case "avgMonthlyCashFlow":
+      return "Avg monthly cash flow";
+    case "yieldOnCostPct":
+      return "Yield on cost";
+    case "appreciationDollar":
+      return "Appreciation ($)";
+    case "appreciationPct":
+      return "Appreciation (%)";
+    case "totalReturnDollar":
+      return "Total return ($)";
+    case "totalReturnPct":
+      return "Total return (%)";
+    default:
+      return "Metric";
+  }
+}
+
+function metricDisplay(
+  metric: Metric,
+  row: Awaited<ReturnType<typeof getPortfolioLeaderboardReport>>["rows"][0]
+) {
+  switch (metric) {
+    case "netCashFlow":
+      return moneyFromCents(row.netCashFlowCents);
+    case "avgMonthlyCashFlow":
+      return moneyFromCents(row.avgMonthlyCashFlowCents);
+    case "yieldOnCostPct":
+      return percentValue(row.yieldOnCostPct);
+    case "appreciationDollar":
+      return moneyFromCents(row.appreciationCents);
+    case "appreciationPct":
+      return percentValue(row.appreciationPct);
+    case "totalReturnDollar":
+      return moneyFromCents(row.totalReturnCents);
+    case "totalReturnPct":
+      return percentValue(row.totalReturnPct);
+    default:
+      return "N/A";
+  }
+}
+
+function amountClass(cents: number | null) {
+  if (cents == null) return "text-gray-700";
+  if (cents < 0) return "text-red-600";
+  if (cents > 0) return "text-emerald-600";
+  return "text-gray-700";
+}
+
+export default async function PortfolioLeaderboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
+  await requireUser();
+
+  const sp = (await searchParams) ?? {};
+
+  const metricRaw = getStr(sp, "metric");
+  const metric: Metric =
+    metricRaw === "avgMonthlyCashFlow" ||
+    metricRaw === "yieldOnCostPct" ||
+    metricRaw === "appreciationDollar" ||
+    metricRaw === "appreciationPct" ||
+    metricRaw === "totalReturnDollar" ||
+    metricRaw === "totalReturnPct"
+      ? metricRaw
+      : "netCashFlow";
+
+  const statusRaw = getStr(sp, "status");
+  const status: StatusFilter =
+    statusRaw === "sold" || statusRaw === "watchlist" || statusRaw === "all"
+      ? statusRaw
+      : "active";
+
+  const valuationRaw = getStr(sp, "valuation");
+  const valuation: ValuationSource =
+    valuationRaw === "zillow" || valuationRaw === "redfin" ? valuationRaw : "auto";
+
+  const includeTransfersRaw = getStr(sp, "includeTransfers").toLowerCase();
+  const includeTransfers = includeTransfersRaw === "1" || includeTransfersRaw === "true";
+
+  const now = new Date();
+  const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  const defaultEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+  const yearParam = parseYear(getStr(sp, "year"));
+  const startParam = parseDateUTC(getStr(sp, "start"));
+  const endParam = parseDateUTC(getStr(sp, "end"));
+
+  let startDate = startParam ?? defaultStart;
+  let endDate = endParam ?? defaultEnd;
+
+  if (yearParam) {
+    startDate = new Date(Date.UTC(yearParam, 0, 1));
+    endDate = new Date(Date.UTC(yearParam, 11, 31));
+  }
+
+  if (startDate > endDate) {
+    [startDate, endDate] = [endDate, startDate];
+  }
+
+  const report = await getPortfolioLeaderboardReport({
+    metric,
+    year: yearParam ?? undefined,
+    start: formatInputDateUTC(startDate),
+    end: formatInputDateUTC(endDate),
+    status,
+    includeTransfers,
+    valuation,
+  });
+
+  const showAppreciationNote =
+    metric === "appreciationDollar" ||
+    metric === "appreciationPct" ||
+    metric === "totalReturnDollar" ||
+    metric === "totalReturnPct";
+
+  return (
+    <div className="ll_page">
+      <div className="ll_panel ll_stack" style={{ gap: 24 }}>
+        <div className="ll_rowBetween">
+          <div className="ll_stack" style={{ gap: 4 }}>
+            <div className="ll_breadcrumbs">
+              <Link href="/reports" className="ll_link">
+                Reports
+              </Link>
+              <span className="ll_muted">/</span>
+              <span className="ll_muted">Portfolio Leaderboard</span>
+            </div>
+            <h1>Portfolio Leaderboard</h1>
+            <p className="ll_muted">
+              Ranks properties by {metricLabel(report.input.metric).toLowerCase()} from{" "}
+              {report.input.start} to {report.input.end}. Transfers are{" "}
+              {report.input.includeTransfers ? "included" : "excluded"}.
+            </p>
+          </div>
+        </div>
+
+        <form className="ll_card ll_form" method="get">
+          <div
+            style={{
+              display: "grid",
+              gap: 12,
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            }}
+          >
+            <div>
+              <label className="ll_label" htmlFor="metric">
+                Ranking metric
+              </label>
+              <select
+                id="metric"
+                name="metric"
+                className="ll_input"
+                defaultValue={report.input.metric}
+                suppressHydrationWarning
+              >
+                <option value="netCashFlow">Net cash flow</option>
+                <option value="avgMonthlyCashFlow">Avg monthly cash flow</option>
+                <option value="yieldOnCostPct">Yield on cost (%)</option>
+                <option value="appreciationDollar">Appreciation ($)</option>
+                <option value="appreciationPct">Appreciation (%)</option>
+                <option value="totalReturnDollar">Total return ($)</option>
+                <option value="totalReturnPct">Total return (%)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="year">
+                Year (overrides range)
+              </label>
+              <input
+                id="year"
+                name="year"
+                type="number"
+                className="ll_input"
+                defaultValue={report.input.year ?? ""}
+                min={1900}
+                max={9999}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="start">
+                Start date
+              </label>
+              <input
+                id="start"
+                name="start"
+                type="date"
+                className="ll_input"
+                defaultValue={report.input.start}
+                required
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="end">
+                End date
+              </label>
+              <input
+                id="end"
+                name="end"
+                type="date"
+                className="ll_input"
+                defaultValue={report.input.end}
+                required
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="status">
+                Status
+              </label>
+              <select
+                id="status"
+                name="status"
+                className="ll_input"
+                defaultValue={report.input.status}
+                suppressHydrationWarning
+              >
+                <option value="active">Active</option>
+                <option value="sold">Sold</option>
+                <option value="watchlist">Watchlist</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="ll_label" htmlFor="valuation">
+                Valuation source
+              </label>
+              <select
+                id="valuation"
+                name="valuation"
+                className="ll_input"
+                defaultValue={report.input.valuation}
+                suppressHydrationWarning
+              >
+                <option value="auto">Auto</option>
+                <option value="zillow">Zillow</option>
+                <option value="redfin">Redfin</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 pt-6">
+              <input
+                id="includeTransfers"
+                name="includeTransfers"
+                type="checkbox"
+                value="1"
+                defaultChecked={report.input.includeTransfers}
+                className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                suppressHydrationWarning
+              />
+              <label className="ll_label m-0" htmlFor="includeTransfers">
+                Include transfers
+              </label>
+            </div>
+          </div>
+
+          <div className="ll_actions" style={{ marginTop: 14 }}>
+            <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
+              Apply filters
+            </button>
+          </div>
+        </form>
+
+        {(showAppreciationNote || report.notes.usesCurrentAppreciation) && (
+          <div className="ll_card ll_stack" style={{ gap: 8 }}>
+            <div className="text-sm font-semibold text-slate-900">Appreciation note</div>
+            <p className="ll_muted text-sm">
+              Appreciation uses current value (Zillow/Redfin or sold price) minus purchase price.
+              We don&apos;t track historical valuations by date yet.
+            </p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="ll_card ll_stack" style={{ gap: 8 }}>
+            <div className="text-sm font-semibold text-slate-900">Totals for range</div>
+            <div className="ll_stack" style={{ gap: 6 }}>
+              <div className="flex items-center justify-between text-sm">
+                <span className="ll_muted">Transactional net</span>
+                <span className={amountClass(report.totals.transactionalNetCents)}>
+                  {moneyFromCents(report.totals.transactionalNetCents)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="ll_muted">Annual net</span>
+                <span className={amountClass(report.totals.annualNetCents)}>
+                  {moneyFromCents(report.totals.annualNetCents)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm font-semibold">
+                <span>Total net cash flow</span>
+                <span className={amountClass(report.totals.netCashFlowCents)}>
+                  {moneyFromCents(report.totals.netCashFlowCents)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="ll_card ll_table_wrap">
+          <table className="ll_table ll_table_zebra w-full table-fixed">
+            <thead>
+              <tr>
+                <th className="w-16">Rank</th>
+                <th className="w-56">Property</th>
+                <th className="w-32">Status</th>
+                <th className="w-40">Net cash flow</th>
+                <th className="w-40">Avg monthly</th>
+                <th className="w-40">Purchase price</th>
+                <th className="w-40">Current value</th>
+                <th className="w-40">Appreciation</th>
+                <th className="w-40">Total return</th>
+                <th className="w-32">Yield on cost</th>
+                <th className="w-40">{metricLabel(report.input.metric)}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.rows.map((row, index) => (
+                <tr key={row.propertyId}>
+                  <td>{row.rankValue == null ? "—" : index + 1}</td>
+                  <td>
+                    <div className="font-medium text-slate-900">{row.propertyLabel}</div>
+                  </td>
+                  <td className="capitalize">{row.status}</td>
+                  <td className={amountClass(row.netCashFlowCents)}>
+                    {moneyFromCents(row.netCashFlowCents)}
+                  </td>
+                  <td className={amountClass(row.avgMonthlyCashFlowCents)}>
+                    {moneyFromCents(row.avgMonthlyCashFlowCents)}
+                  </td>
+                  <td>{moneyFromCents(row.purchasePriceCents)}</td>
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <span>{moneyFromCents(row.currentValueCents)}</span>
+                      {row.currentValueSource && (
+                        <span className="ll_badge capitalize">{row.currentValueSource}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className={amountClass(row.appreciationCents)}>
+                    {moneyFromCents(row.appreciationCents)}
+                  </td>
+                  <td className={amountClass(row.totalReturnCents)}>
+                    {moneyFromCents(row.totalReturnCents)}
+                  </td>
+                  <td>{percentValue(row.yieldOnCostPct)}</td>
+                  <td className="font-semibold">{metricDisplay(report.input.metric, row)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

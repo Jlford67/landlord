@@ -74,6 +74,10 @@ model Property {
   baths                     Float?
   sqFt                      Int?
   status                    String    @default("active") // active/sold/watchlist
+  purchasePriceCents        Int?
+  purchaseDate              DateTime?
+  soldPriceCents            Int?
+  soldDate                  DateTime?
   notes                     String?
   zillowUrl                 String?
   redfinUrl                 String?
