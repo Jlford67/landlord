@@ -43,11 +43,34 @@ function moneyFromCents(cents: number | null) {
   return `$${fmtMoney(cents / 100)}`;
 }
 
-function moneyAccounting(cents: number | null) {
-  if (cents == null) return { text: "N/A", className: "text-gray-700" };
-  if (cents > 0) return { text: `$${fmtMoney(cents / 100)}`, className: "text-emerald-600" };
-  if (cents < 0) return { text: `$${fmtMoney(cents / 100)}`, className: "text-red-600" };
-  return { text: `$${fmtMoney(0)}`, className: "text-gray-700" };
+function fmtMoneyAccounting(cents: number | null | undefined) {
+  if (cents === null || cents === undefined) {
+    return { text: "N/A", className: "text-gray-500" };
+  }
+
+  const isNeg = cents < 0;
+  const abs = Math.abs(cents);
+
+  const dollars = (abs / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const text = isNeg ? `($${dollars})` : `$${dollars}`;
+  const className = isNeg ? "text-red-600" : cents === 0 ? "text-gray-700" : "text-green-700";
+
+  return { text, className };
+}
+
+function fmtPctSigned(pct: number | null | undefined) {
+  if (pct === null || pct === undefined) {
+    return { text: "N/A", className: "text-gray-500" };
+  }
+
+  const text = `${pct.toFixed(2)}%`;
+  const className = pct < 0 ? "text-red-600" : pct === 0 ? "text-gray-700" : "text-green-700";
+
+  return { text, className };
 }
 
 function percentValue(value: number | null) {
@@ -441,19 +464,24 @@ export default async function PortfolioLeaderboardPage({
                       )}
                     </div>
                   </td>
-                  <td className="text-gray-700">
+                  <td>
                     {(() => {
-                      const formatted = moneyAccounting(row.appreciationCents);
+                      const formatted = fmtMoneyAccounting(row.appreciationCents);
                       return <span className={formatted.className}>{formatted.text}</span>;
                     })()}
                   </td>
-                  <td className="text-gray-700">
+                  <td>
                     {(() => {
-                      const formatted = moneyAccounting(row.totalReturnCents);
+                      const formatted = fmtMoneyAccounting(row.totalReturnCents);
                       return <span className={formatted.className}>{formatted.text}</span>;
                     })()}
                   </td>
-                  <td>{percentValue(row.yieldOnCostPct)}</td>
+                  <td>
+                    {(() => {
+                      const formatted = fmtPctSigned(row.yieldOnCostPct);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    })()}
+                  </td>
                   <td className="font-semibold">{metricDisplay(report.input.metric, row)}</td>
                 </tr>
               ))}
