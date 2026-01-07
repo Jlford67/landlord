@@ -98,12 +98,6 @@ function rangeFromYear(year: number) {
   };
 }
 
-function monthCountInclusive(start: Date, end: Date): number {
-  const monthStart = start.getUTCFullYear() * 12 + start.getUTCMonth();
-  const monthEnd = end.getUTCFullYear() * 12 + end.getUTCMonth();
-  return Math.max(1, monthEnd - monthStart + 1);
-}
-
 function daysInYear(year: number): number {
   const start = Date.UTC(year, 0, 1);
   const end = Date.UTC(year + 1, 0, 1);
@@ -312,13 +306,11 @@ export async function getPortfolioLeaderboardReport(
   let totalsTransactional = 0;
   let totalsAnnual = 0;
 
-  const monthCount = monthCountInclusive(startDate, endDate);
-
   const rows: Row[] = properties.map((property) => {
     const transactionalNetCents = transactionalNetByProperty.get(property.id) ?? 0;
     const annualNetCents = annualNetByProperty.get(property.id) ?? 0;
     const netCashFlowCents = transactionalNetCents + annualNetCents;
-    const avgMonthlyCashFlowCents = Math.round(netCashFlowCents / monthCount);
+    const avgMonthlyCashFlowCents = Math.round(netCashFlowCents / 12);
 
     totalsTransactional += transactionalNetCents;
     totalsAnnual += annualNetCents;

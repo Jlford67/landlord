@@ -43,6 +43,13 @@ function moneyFromCents(cents: number | null) {
   return `$${fmtMoney(cents / 100)}`;
 }
 
+function moneyAccounting(cents: number | null) {
+  if (cents == null) return { text: "N/A", className: "text-gray-700" };
+  if (cents > 0) return { text: `$${fmtMoney(cents / 100)}`, className: "text-emerald-600" };
+  if (cents < 0) return { text: `$${fmtMoney(cents / 100)}`, className: "text-red-600" };
+  return { text: `$${fmtMoney(0)}`, className: "text-gray-700" };
+}
+
 function percentValue(value: number | null) {
   if (value == null || Number.isNaN(value)) return "N/A";
   return `${value.toFixed(2)}%`;
@@ -360,6 +367,41 @@ export default async function PortfolioLeaderboardPage({
         </div>
 
         <div className="ll_card ll_table_wrap">
+          <div className="px-4 pt-4 text-sm font-semibold text-slate-900">
+            Annualized Cash Flow (Used for Monthly Metrics)
+          </div>
+          <p className="px-4 pb-3 text-xs text-slate-500">
+            Avg monthly cash flow is computed as total annual net divided by 12.
+          </p>
+          <table className="ll_table ll_table_zebra w-full table-fixed">
+            <thead>
+              <tr>
+                <th className="w-56">Property</th>
+                <th className="w-40">Annual transactional net</th>
+                <th className="w-40">Annual prorated net</th>
+                <th className="w-40">Total annual net</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.rows.map((row) => (
+                <tr key={`${row.propertyId}-annual`}>
+                  <td className="font-medium text-slate-900">{row.propertyLabel}</td>
+                  <td className={amountClass(row.transactionalNetCents)}>
+                    {moneyFromCents(row.transactionalNetCents)}
+                  </td>
+                  <td className={amountClass(row.annualNetCents)}>
+                    {moneyFromCents(row.annualNetCents)}
+                  </td>
+                  <td className={amountClass(row.netCashFlowCents)}>
+                    {moneyFromCents(row.netCashFlowCents)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="ll_card ll_table_wrap">
           <table className="ll_table ll_table_zebra w-full table-fixed">
             <thead>
               <tr>
@@ -399,11 +441,17 @@ export default async function PortfolioLeaderboardPage({
                       )}
                     </div>
                   </td>
-                  <td className={amountClass(row.appreciationCents)}>
-                    {moneyFromCents(row.appreciationCents)}
+                  <td className="text-gray-700">
+                    {(() => {
+                      const formatted = moneyAccounting(row.appreciationCents);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    })()}
                   </td>
-                  <td className={amountClass(row.totalReturnCents)}>
-                    {moneyFromCents(row.totalReturnCents)}
+                  <td className="text-gray-700">
+                    {(() => {
+                      const formatted = moneyAccounting(row.totalReturnCents);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    })()}
                   </td>
                   <td>{percentValue(row.yieldOnCostPct)}</td>
                   <td className="font-semibold">{metricDisplay(report.input.metric, row)}</td>
