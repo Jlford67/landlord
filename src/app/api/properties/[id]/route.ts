@@ -21,6 +21,21 @@ function toFloat(value: FormDataEntryValue | null) {
   return Number.isFinite(n) ? n : null;
 }
 
+function toCents(value: FormDataEntryValue | null) {
+  const str = String(value ?? "").replace(/,/g, "").trim();
+  if (!str) return null;
+  const n = parseFloat(str);
+  if (!Number.isFinite(n)) return null;
+  return Math.round(n * 100);
+}
+
+function toDate(value: FormDataEntryValue | null) {
+  const str = String(value ?? "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
+  const [yy, mm, dd] = str.split("-").map(Number);
+  return new Date(Date.UTC(yy, mm - 1, dd));
+}
+
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   await requireUser();
   const { id } = await ctx.params;
@@ -53,6 +68,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         baths: toFloat(form.get("baths")),
         sqFt: toInt(form.get("sqFt")),
         notes: toStr(form.get("notes")),
+        purchasePriceCents: toCents(form.get("purchasePrice")),
+        purchaseDate: toDate(form.get("purchaseDate")),
+        soldPriceCents: toCents(form.get("soldPrice")),
+        soldDate: toDate(form.get("soldDate")),
       },
     });
 
