@@ -89,7 +89,8 @@ const sections: ReportSection[] = [
       {
         title: "Schedule E Summary",
         description: "Export-friendly rollup for year-end filing.",
-        badgeText: "Export",
+        href: "/reports/schedule-e-summary",
+        badgeText: "Tax",
       },
     ],
   },
