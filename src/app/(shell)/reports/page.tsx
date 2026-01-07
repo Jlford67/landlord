@@ -96,7 +96,14 @@ const sections: ReportSection[] = [
   },
   {
     title: "Portfolio",
-    items: [],
+    items: [
+      {
+        title: "Portfolio Leaderboard",
+        description: "Rank properties by cash flow, appreciation, or total return.",
+        href: "/reports/portfolio-leaderboard",
+        badgeText: "Leaderboard",
+      },
+    ],
   },
 ];
 

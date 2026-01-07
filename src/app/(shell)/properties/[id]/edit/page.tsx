@@ -8,6 +8,19 @@ function inputValue<T extends string | number | null | undefined>(value: T) {
   return String(value);
 }
 
+function inputMoneyFromCents(cents: number | null | undefined) {
+  if (cents == null) return "";
+  return (cents / 100).toFixed(2);
+}
+
+function inputDateValue(date: Date | null | undefined) {
+  if (!date) return "";
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export default async function EditPropertyPage({
   params,
 }: {
@@ -180,6 +193,71 @@ export default async function EditPropertyPage({
                 type="number"
                 className="ll_input"
                 defaultValue={inputValue(property.sqFt)}
+                suppressHydrationWarning
+              />
+            </div>
+          </div>
+
+          <div className="ll_divider" />
+          <div className="ll_card_title" style={{ fontSize: 14 }}>
+            Acquisition &amp; Sale
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="purchasePrice">
+                Purchase price ($)
+              </label>
+              <input
+                id="purchasePrice"
+                name="purchasePrice"
+                type="number"
+                step="0.01"
+                className="ll_input"
+                defaultValue={inputMoneyFromCents(property.purchasePriceCents)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="purchaseDate">
+                Purchase date
+              </label>
+              <input
+                id="purchaseDate"
+                name="purchaseDate"
+                type="date"
+                className="ll_input"
+                defaultValue={inputDateValue(property.purchaseDate)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="soldPrice">
+                Sold price ($)
+              </label>
+              <input
+                id="soldPrice"
+                name="soldPrice"
+                type="number"
+                step="0.01"
+                className="ll_input"
+                defaultValue={inputMoneyFromCents(property.soldPriceCents)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="soldDate">
+                Sold date
+              </label>
+              <input
+                id="soldDate"
+                name="soldDate"
+                type="date"
+                className="ll_input"
+                defaultValue={inputDateValue(property.soldDate)}
                 suppressHydrationWarning
               />
             </div>
