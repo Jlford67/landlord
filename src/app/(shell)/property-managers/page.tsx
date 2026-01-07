@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import { Building2 } from "lucide-react";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -129,15 +131,23 @@ export default async function PropertyManagersPage({
     <div className="ll_page">
       <div className="ll_panel">
         <div className="ll_topbar">
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Property manager</div>
-            <div className="ll_muted">
-              {selectedProperty ? "Companies for selected property." : "All property manager companies."}
+          <div className="flex items-center gap-3">
+            <PageTitleIcon className="bg-amber-100 text-amber-700">
+              <Building2 size={18} />
+            </PageTitleIcon>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Property manager</div>
+              <div className="ll_muted">
+                {selectedProperty ? "Companies for selected property." : "All property manager companies."}
+              </div>
             </div>
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btn" href="/property-managers/new">
+            <Link className="ll_btn" href="/dashboard">
+              Back
+            </Link>
+            <Link className="ll_btn ll_btnPrimary" href="/property-managers/new">
               New property manager
             </Link>
           </div>

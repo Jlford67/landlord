@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import { Shield } from "lucide-react";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -147,14 +149,22 @@ export default async function InsurancePage({
         {/* Page header */}
         <div className="ll_card" style={{ marginBottom: 14 }}>
           <div className="ll_topbar" style={{ marginBottom: 0 }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>Insurance</div>
-              <div className="ll_muted">
-                {selectedProperty ? "Policies for selected property." : "All policies across all properties."}
+            <div className="flex items-center gap-3">
+              <PageTitleIcon className="bg-amber-100 text-amber-700">
+                <Shield size={18} />
+              </PageTitleIcon>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800 }}>Insurance</div>
+                <div className="ll_muted">
+                  {selectedProperty ? "Policies for selected property." : "All policies across all properties."}
+                </div>
               </div>
             </div>
 
             <div className="ll_topbarRight">
+              <Link className="ll_btn" href="/dashboard">
+                Back
+              </Link>
               <Link className="ll_btn ll_btnPrimary" href={addHref}>
                 Add insurance policy
               </Link>
