@@ -26,8 +26,8 @@ function formatIsoDate(value?: Date | null) {
 function formatUtcDate(value?: Date | null) {
   if (!value) return null;
   const y = value.getUTCFullYear();
-  const m = String(value.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(value.getUTCDate()).padStart(2, "0");
+  const m = value.getUTCMonth() + 1;
+  const day = value.getUTCDate();
   return `${m}/${day}/${y}`;
 }
 
