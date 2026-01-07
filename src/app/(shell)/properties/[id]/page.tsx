@@ -23,6 +23,14 @@ function formatIsoDate(value?: Date | null) {
   return value.toISOString().slice(0, 10);
 }
 
+function formatUtcDate(value?: Date | null) {
+  if (!value) return null;
+  const y = value.getUTCFullYear();
+  const m = String(value.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(value.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function formatWholeNumber(value: number) {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
@@ -265,13 +273,18 @@ export default async function PropertyDetailPage({
                 {formatPurchasePrice(property.purchasePriceCents)}
               </span>
             </div>
-            {!property.purchaseDate ? (
+            {property.purchaseDate ? (
+              <div className="mt-2 flex items-center justify-between">
+                <span className="ll_label">Purchase date</span>
+                <span className="font-semibold text-gray-900">{formatUtcDate(property.purchaseDate)}</span>
+              </div>
+            ) : (
               <div className="mt-2">
                 <Link className="ll_btn ll_btnLink" href={`/properties/${property.id}/edit#purchase-date`}>
                   Add Purchase Date
                 </Link>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
 
