@@ -25,6 +25,7 @@ const NAV = [
   { href: "/reports", label: "Reports", Icon: BarChart3 },
   { href: "/property-tax", label: "Property Tax", Icon: Receipt },
   { href: "/insurance", label: "Insurance", Icon: Shield },
+  { href: "/property-managers", label: "Property managers", Icon: Users },
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
 

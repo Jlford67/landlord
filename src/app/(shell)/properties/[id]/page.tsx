@@ -378,6 +378,15 @@ export default async function PropertyDetailPage({
         <div className="ll_card">
           <div className="flex items-center gap-3">
             <div className="ll_card_title">Property manager</div>
+            <div className="ll_spacer" />
+            <div className="flex flex-wrap gap-2">
+              <Link className="ll_btn ll_btnLink" href={`/property-managers?propertyId=${property.id}`}>
+                View all
+              </Link>
+              <Link className="ll_btn ll_btnLink" href={`/property-managers/new?propertyId=${property.id}`}>
+                Add
+              </Link>
+            </div>
           </div>
 
           <div className="mt-3 text-sm text-gray-700">
@@ -386,8 +395,13 @@ export default async function PropertyDetailPage({
                 {property.pmAssignments.map((a) => (
                   <div key={a.id}>
                     <div className="font-medium">
-                      {a.pm.companyName}
+                      <Link className="ll_btn ll_btnLink" href={`/property-managers/${a.pm.id}/edit`}>
+                        {a.pm.companyName}
+                      </Link>
                       {a.pm.contactName ? <span className="ll_muted"> ({a.pm.contactName})</span> : null}
+                    </div>
+                    <div className="ll_muted">
+                      {[a.pm.phone, a.pm.email].filter(Boolean).join(" • ") || "Contact info n/a"}
                     </div>
                     <div className="ll_muted">
                       {a.startDate ? fmtDate(a.startDate) : "n/a"} to {a.endDate ? fmtDate(a.endDate) : "present"} •{" "}
