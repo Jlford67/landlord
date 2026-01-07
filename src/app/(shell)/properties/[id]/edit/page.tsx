@@ -263,6 +263,73 @@ export default async function EditPropertyPage({
             </div>
           </div>
 
+          <div className="ll_divider" />
+          <div className="ll_card_title" style={{ fontSize: 14 }}>
+            Valuations
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="zillowEstimatedValue">
+                Zillow estimate ($)
+              </label>
+              <input
+                id="zillowEstimatedValue"
+                name="zillowEstimatedValue"
+                className="ll_input"
+                inputMode="numeric"
+                placeholder="e.g. 350000"
+                defaultValue={inputValue(property.zillowEstimatedValue)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="zillowUrl">
+                Zillow URL
+              </label>
+              <input
+                id="zillowUrl"
+                name="zillowUrl"
+                type="url"
+                className="ll_input"
+                placeholder="https://www.zillow.com/..."
+                defaultValue={inputValue(property.zillowUrl)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="redfinEstimatedValue">
+                Redfin estimate ($)
+              </label>
+              <input
+                id="redfinEstimatedValue"
+                name="redfinEstimatedValue"
+                className="ll_input"
+                inputMode="numeric"
+                placeholder="e.g. 350000"
+                defaultValue={inputValue(property.redfinEstimatedValue)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="redfinUrl">
+                Redfin URL
+              </label>
+              <input
+                id="redfinUrl"
+                name="redfinUrl"
+                type="url"
+                className="ll_input"
+                placeholder="https://www.redfin.com/..."
+                defaultValue={inputValue(property.redfinUrl)}
+                suppressHydrationWarning
+              />
+            </div>
+          </div>
+
           <label className="ll_label" htmlFor="notes">
             Notes
           </label>
@@ -276,9 +343,6 @@ export default async function EditPropertyPage({
           />
 
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
-            <Link className="ll_btnSecondary" href={`/properties/${property.id}`}>
-              Cancel
-            </Link>
             <button className="ll_btn" type="submit" style={{ fontWeight: 800 }}>
               Save changes
             </button>

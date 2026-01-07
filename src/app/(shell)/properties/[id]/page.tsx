@@ -3,7 +3,6 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import EstimatedValueEditor from "./EstimatedValueEditor";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -13,16 +12,25 @@ const moneyFmt = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-const moneyFmt0 = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
-
 const dateFmtUtc = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
 
 function fmtDate(d?: Date | null) {
   if (!d) return "n/a";
   return dateFmtUtc.format(d);
+}
+
+function formatIsoDate(value?: Date | null) {
+  if (!value) return null;
+  return value.toISOString().slice(0, 10);
+}
+
+function formatWholeNumber(value: number) {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function formatEstimate(value?: number | null) {
+  if (value === null || value === undefined) return "Not set";
+  return formatWholeNumber(value);
 }
 
 function moneyText(n?: number | null) {
@@ -40,12 +48,6 @@ function moneyClass(n?: number | null) {
 
 function Money({ value }: { value?: number | null }) {
   return <span className={moneyClass(value)}>{moneyText(value)}</span>;
-}
-
-function formatCentsToDollars(cents?: number | null) {
-  if (cents === null || cents === undefined) return "n/a";
-  const dollars = cents / 100;
-  return `$${moneyFmt0.format(dollars)}`;
 }
 
 function buildAddressQuery(property: { street: string; city: string; state: string; zip: string }) {
@@ -210,17 +212,103 @@ export default async function PropertyDetailPage({
             <div className="ll_card_title">Estimated value</div>
             <div className="ll_spacer" />
           </div>
-        
-          <div className="mt-3">
-            <EstimatedValueEditor
-              propertyId={property.id}
-              initialZillowUrl={property.zillowUrl ?? ""}
-              initialRedfinUrl={property.redfinUrl ?? ""}
-              initialZillowValueDollars={property.zillowEstimatedValue ? String(property.zillowEstimatedValue) : ""}
-              initialRedfinValueDollars={property.redfinEstimatedValue ? String(property.redfinEstimatedValue) : ""}
-              initialZillowUpdatedAtIso={property.zillowEstimatedValueUpdatedAt?.toISOString() ?? null}
-              initialRedfinUpdatedAtIso={property.redfinEstimatedValueUpdatedAt?.toISOString() ?? null}
-            />
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                {property.zillowUrl ? (
+                  <a
+                    href={property.zillowUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 font-semibold text-[#006aff] hover:underline"
+                  >
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#006aff]/10">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                        <path d="M12 3.2 3 10v10.2h6.4v-6h5.2v6H21V10L12 3.2z" />
+                      </svg>
+                    </span>
+                    Zillow
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 font-semibold text-[#006aff]">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#006aff]/10">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                        <path d="M12 3.2 3 10v10.2h6.4v-6h5.2v6H21V10L12 3.2z" />
+                      </svg>
+                    </span>
+                    Zillow
+                  </div>
+                )}
+                <div className="ll_spacer" />
+                {property.zillowUrl ? (
+                  <a
+                    href={property.zillowUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-gray-500 hover:underline"
+                  >
+                    View
+                  </a>
+                ) : null}
+              </div>
+              <div className="mt-2 text-lg font-semibold text-gray-900">
+                {formatEstimate(property.zillowEstimatedValue)}
+              </div>
+              {property.zillowEstimatedValueUpdatedAt ? (
+                <div className="mt-1 text-xs text-gray-500">
+                  Updated: {formatIsoDate(property.zillowEstimatedValueUpdatedAt)}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                {property.redfinUrl ? (
+                  <a
+                    href={property.redfinUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 font-semibold text-[#a61c30] hover:underline"
+                  >
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#a61c30]/10">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                        <path d="M4 11.5 12 4l8 7.5v8.5h-5.5v-5.5H9.5V20H4v-8.5z" />
+                      </svg>
+                    </span>
+                    Redfin
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 font-semibold text-[#a61c30]">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#a61c30]/10">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                        <path d="M4 11.5 12 4l8 7.5v8.5h-5.5v-5.5H9.5V20H4v-8.5z" />
+                      </svg>
+                    </span>
+                    Redfin
+                  </div>
+                )}
+                <div className="ll_spacer" />
+                {property.redfinUrl ? (
+                  <a
+                    href={property.redfinUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-gray-500 hover:underline"
+                  >
+                    View
+                  </a>
+                ) : null}
+              </div>
+              <div className="mt-2 text-lg font-semibold text-gray-900">
+                {formatEstimate(property.redfinEstimatedValue)}
+              </div>
+              {property.redfinEstimatedValueUpdatedAt ? (
+                <div className="mt-1 text-xs text-gray-500">
+                  Updated: {formatIsoDate(property.redfinEstimatedValueUpdatedAt)}
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 
