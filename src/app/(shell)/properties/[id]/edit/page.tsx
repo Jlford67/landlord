@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import PropertyThumb from "@/components/properties/PropertyThumb";
 
 function inputValue<T extends string | number | null | undefined>(value: T) {
   if (value === null || value === undefined) return "";
@@ -36,20 +37,27 @@ export default async function EditPropertyPage({
     <div className="ll_page">
       <div className="ll_panel">
         <div className="ll_topbar">
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Edit property</div>
-            <div className="ll_muted">Update property details.</div>
+          <div className="flex items-center gap-3">
+            <PropertyThumb propertyId={property.id} />
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Edit property</div>
+              <div className="ll_muted">Update property details.</div>
+            </div>
           </div>
 
           <div className="ll_topbarRight">
             <Link className="ll_btnSecondary" href={`/properties/${property.id}`}>
               Cancel
             </Link>
+            <button className="ll_btn ll_btnPrimary" type="submit" form="edit-property-form">
+              Save changes
+            </button>
           </div>
         </div>
 
         <form
           className="ll_form"
+          id="edit-property-form"
           method="post"
           action={`/api/properties/${property.id}`}
           style={{ marginTop: 14 }}
@@ -220,11 +228,11 @@ export default async function EditPropertyPage({
             </div>
 
             <div style={{ display: "grid" }}>
-              <label className="ll_label" htmlFor="purchaseDate">
+              <label className="ll_label" htmlFor="purchase-date">
                 Purchase date
               </label>
               <input
-                id="purchaseDate"
+                id="purchase-date"
                 name="purchaseDate"
                 type="date"
                 className="ll_input"
@@ -263,6 +271,73 @@ export default async function EditPropertyPage({
             </div>
           </div>
 
+          <div className="ll_divider" />
+          <div className="ll_card_title" style={{ fontSize: 14 }}>
+            Valuations
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="zillowEstimatedValue">
+                Zillow estimate ($)
+              </label>
+              <input
+                id="zillowEstimatedValue"
+                name="zillowEstimatedValue"
+                className="ll_input"
+                inputMode="numeric"
+                placeholder="e.g. 350000"
+                defaultValue={inputValue(property.zillowEstimatedValue)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="zillowUrl">
+                Zillow URL
+              </label>
+              <input
+                id="zillowUrl"
+                name="zillowUrl"
+                type="url"
+                className="ll_input"
+                placeholder="https://www.zillow.com/..."
+                defaultValue={inputValue(property.zillowUrl)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="redfinEstimatedValue">
+                Redfin estimate ($)
+              </label>
+              <input
+                id="redfinEstimatedValue"
+                name="redfinEstimatedValue"
+                className="ll_input"
+                inputMode="numeric"
+                placeholder="e.g. 350000"
+                defaultValue={inputValue(property.redfinEstimatedValue)}
+                suppressHydrationWarning
+              />
+            </div>
+
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="redfinUrl">
+                Redfin URL
+              </label>
+              <input
+                id="redfinUrl"
+                name="redfinUrl"
+                type="url"
+                className="ll_input"
+                placeholder="https://www.redfin.com/..."
+                defaultValue={inputValue(property.redfinUrl)}
+                suppressHydrationWarning
+              />
+            </div>
+          </div>
+
           <label className="ll_label" htmlFor="notes">
             Notes
           </label>
@@ -275,14 +350,6 @@ export default async function EditPropertyPage({
             suppressHydrationWarning
           />
 
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
-            <Link className="ll_btnSecondary" href={`/properties/${property.id}`}>
-              Cancel
-            </Link>
-            <button className="ll_btn" type="submit" style={{ fontWeight: 800 }}>
-              Save changes
-            </button>
-          </div>
         </form>
       </div>
     </div>
