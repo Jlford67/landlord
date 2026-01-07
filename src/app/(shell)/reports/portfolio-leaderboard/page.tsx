@@ -542,7 +542,12 @@ export default async function PortfolioLeaderboardPage({
                 </tr>
               ))}
               <tr className="border-t border-slate-200 font-semibold">
-                <td>—</td>
+                <td>
+                  {(() => {
+                    const formatted = fmtMoneyAccounting(totals.netCashFlowCents);
+                    return <span className={formatted.className}>{formatted.text}</span>;
+                  })()}
+                </td>
                 <td>Grand total</td>
                 <td>—</td>
                 <td>—</td>
