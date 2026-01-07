@@ -53,8 +53,8 @@ export default async function PropertyManagersPage({
   const propertyId = getStr(sp, "propertyId").trim();
   const msg = getStr(sp, "msg").trim();
 
-  const [managers, properties, selectedProperty] = await Promise.all([
-    prisma.propertyManager.findMany({
+  const [companies, properties, selectedProperty] = await Promise.all([
+    prisma.propertyManagerCompany.findMany({
       where:
         q || propertyId
           ? {
@@ -62,11 +62,21 @@ export default async function PropertyManagersPage({
                 q
                   ? {
                       OR: [
-                        { companyName: { contains: q } },
-                        { contactName: { contains: q } },
-                        { email: { contains: q } },
+                        { name: { contains: q } },
                         { phone: { contains: q } },
+                        { email: { contains: q } },
                         { website: { contains: q } },
+                        {
+                          contacts: {
+                            some: {
+                              OR: [
+                                { name: { contains: q } },
+                                { email: { contains: q } },
+                                { phone: { contains: q } },
+                              ],
+                            },
+                          },
+                        },
                         {
                           assignments: {
                             some: {
@@ -96,18 +106,9 @@ export default async function PropertyManagersPage({
             }
           : undefined,
       include: {
-        assignments: {
-          orderBy: [{ startDate: "desc" }],
-          take: 3,
-          include: {
-            property: {
-              select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
-            },
-          },
-        },
-        _count: { select: { assignments: true } },
+        _count: { select: { contacts: true, assignments: true } },
       },
-      orderBy: [{ companyName: "asc" }],
+      orderBy: [{ name: "asc" }],
       take: 500,
     }),
     prisma.property.findMany({
@@ -124,21 +125,19 @@ export default async function PropertyManagersPage({
 
   const photoSrc = selectedProperty ? await findPropertyPhotoSrc(selectedProperty.id) : null;
 
-  const addHref = propertyId ? `/property-managers/new?propertyId=${propertyId}` : "/property-managers/new";
-
   return (
     <div className="ll_page">
       <div className="ll_panel">
         <div className="ll_topbar">
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Property managers</div>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>Property manager</div>
             <div className="ll_muted">
-              {selectedProperty ? "Managers for selected property." : "All property managers across all properties."}
+              {selectedProperty ? "Companies for selected property." : "All property manager companies."}
             </div>
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btn" href={addHref}>
+            <Link className="ll_btn" href="/property-managers/new">
               New property manager
             </Link>
           </div>
@@ -157,20 +156,20 @@ export default async function PropertyManagersPage({
                 photoUrl: photoSrc ?? null,
               }}
               href={`/properties/${selectedProperty.id}`}
-              subtitle="Property managers"
+              subtitle="Property manager"
             />
           </div>
         ) : null}
 
-        {msg === "created" && <div className="ll_notice">Property manager created.</div>}
-        {msg === "updated" && <div className="ll_notice">Property manager updated.</div>}
-        {msg === "deleted" && <div className="ll_notice">Property manager deleted.</div>}
+        {msg === "created" && <div className="ll_notice">Company created.</div>}
+        {msg === "updated" && <div className="ll_notice">Company updated.</div>}
+        {msg === "deleted" && <div className="ll_notice">Company deleted.</div>}
 
         <div className="ll_card" style={{ marginTop: 14, marginBottom: 14 }}>
           <form method="get" className="ll_form" style={{ margin: 0 }}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label>
-                Search (manager, contact, property)
+                Search (company, contact, property)
                 <input
                   className="ll_input"
                   name="q"
@@ -214,48 +213,38 @@ export default async function PropertyManagersPage({
         </div>
 
         <div className="ll_table_wrap">
-          {managers.length ? (
+          {companies.length ? (
             <table className="ll_table ll_table_zebra">
               <thead>
                 <tr>
-                  <th scope="col">Manager</th>
-                  <th scope="col">Contact</th>
+                  <th scope="col">Company</th>
+                  <th scope="col">Contacts</th>
+                  <th scope="col">Properties</th>
                   <th scope="col">Phone</th>
                   <th scope="col">Email</th>
-                  <th scope="col">Property</th>
                   <th scope="col">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {managers.map((pm) => {
-                  const assignmentCount = pm._count.assignments;
-                  const firstAssignment = pm.assignments[0];
-                  const propertyText = firstAssignment?.property
-                    ? assignmentCount > 1
-                      ? `${propertyLabel(firstAssignment.property)} (+${assignmentCount - 1})`
-                      : propertyLabel(firstAssignment.property)
-                    : "Unassigned";
-
-                  return (
-                    <tr key={pm.id}>
-                      <td>{pm.companyName}</td>
-                      <td>{pm.contactName || "-"}</td>
-                      <td>{pm.phone || "-"}</td>
-                      <td>{pm.email || "-"}</td>
-                      <td>{propertyText}</td>
-                      <td style={{ whiteSpace: "nowrap" }}>
-                        <Link className="ll_btnSecondary" href={`/property-managers/${pm.id}/edit`}>
-                          Edit
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {companies.map((company) => (
+                  <tr key={company.id}>
+                    <td>{company.name}</td>
+                    <td>{company._count.contacts}</td>
+                    <td>{company._count.assignments}</td>
+                    <td>{company.phone || "-"}</td>
+                    <td>{company.email || "-"}</td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <Link className="ll_btnSecondary" href={`/property-managers/${company.id}/edit`}>
+                        Edit
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           ) : (
-            <div className="ll_muted">No property managers found.</div>
+            <div className="ll_muted">No property manager companies found.</div>
           )}
         </div>
       </div>

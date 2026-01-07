@@ -87,9 +87,8 @@ export default async function PropertyDetailPage({
         include: { category: true },
       },
       pmAssignments: {
-        orderBy: [{ startDate: "desc" }],
-        take: 3,
-        include: { pm: true },
+        take: 1,
+        include: { company: true, contact: true },
       },
       loans: { orderBy: [{ origDate: "desc" }], take: 3 },
       taxAccounts: { orderBy: [{ dueDate: "desc" }], take: 3 },
@@ -383,8 +382,8 @@ export default async function PropertyDetailPage({
               <Link className="ll_btn ll_btnLink" href={`/property-managers?propertyId=${property.id}`}>
                 View all
               </Link>
-              <Link className="ll_btn ll_btnLink" href={`/property-managers/new?propertyId=${property.id}`}>
-                Add
+              <Link className="ll_btn ll_btnLink" href={`/properties/${property.id}/edit#property-manager`}>
+                Change
               </Link>
             </div>
           </div>
@@ -392,23 +391,26 @@ export default async function PropertyDetailPage({
           <div className="mt-3 text-sm text-gray-700">
             {property.pmAssignments.length ? (
               <div className="space-y-2">
-                {property.pmAssignments.map((a) => (
-                  <div key={a.id}>
-                    <div className="font-medium">
-                      <Link className="ll_btn ll_btnLink" href={`/property-managers/${a.pm.id}/edit`}>
-                        {a.pm.companyName}
-                      </Link>
-                      {a.pm.contactName ? <span className="ll_muted"> ({a.pm.contactName})</span> : null}
+                {property.pmAssignments.map((a) => {
+                  const contactName = a.contact?.name ? ` (${a.contact.name})` : "";
+                  const contactPhone = a.contact?.phone ?? null;
+                  const contactEmail = a.contact?.email ?? null;
+                  const fallbackPhone = a.company.phone ?? null;
+                  const fallbackEmail = a.company.email ?? null;
+                  const contactLine = [contactPhone ?? fallbackPhone, contactEmail ?? fallbackEmail].filter(Boolean).join(" • ");
+
+                  return (
+                    <div key={a.id}>
+                      <div className="font-medium">
+                        <Link className="ll_btn ll_btnLink" href={`/property-managers/${a.company.id}/edit`}>
+                          {a.company.name}
+                        </Link>
+                        {contactName ? <span className="ll_muted">{contactName}</span> : null}
+                      </div>
+                      <div className="ll_muted">{contactLine || "Contact info n/a"}</div>
                     </div>
-                    <div className="ll_muted">
-                      {[a.pm.phone, a.pm.email].filter(Boolean).join(" • ") || "Contact info n/a"}
-                    </div>
-                    <div className="ll_muted">
-                      {a.startDate ? fmtDate(a.startDate) : "n/a"} to {a.endDate ? fmtDate(a.endDate) : "present"} •{" "}
-                      {a.feeType ? `${a.feeType} ${a.feeValue ?? ""}` : "fee n/a"}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="ll_muted">No property manager assignment yet.</div>

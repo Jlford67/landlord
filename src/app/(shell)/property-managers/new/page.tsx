@@ -1,71 +1,9 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import PropertyHeader from "@/components/properties/PropertyHeader";
+import { createPropertyManagerCompany } from "../actions";
 
-import fs from "node:fs/promises";
-import path from "node:path";
-
-function getStr(sp: Record<string, string | string[] | undefined>, key: string): string {
-  const v = sp[key];
-  if (typeof v === "string") return v;
-  if (Array.isArray(v)) return v[0] ?? "";
-  return "";
-}
-
-function propertyLabel(p: {
-  nickname: string | null;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-}) {
-  return p.nickname?.trim() || `${p.street}, ${p.city}, ${p.state} ${p.zip}`;
-}
-
-async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
-  // Files live in /public/property-photos; URLs are /property-photos/<file>
-  const dir = path.join(process.cwd(), "public", "property-photos");
-  const candidates = [`${propertyId}.webp`, `${propertyId}.jpg`, `${propertyId}.jpeg`, `${propertyId}.png`];
-
-  for (const file of candidates) {
-    try {
-      await fs.access(path.join(dir, file));
-      return `/property-photos/${file}`;
-    } catch {
-      // keep trying
-    }
-  }
-
-  return null;
-}
-
-type SearchParams = Record<string, string | string[] | undefined>;
-
-export default async function NewPropertyManagerPage({
-  searchParams,
-}: {
-  searchParams?: Promise<SearchParams>;
-}) {
+export default async function NewPropertyManagerPage() {
   await requireUser();
-  const sp = searchParams ? await searchParams : {};
-  const propertyId = getStr(sp, "propertyId").trim();
-
-  const properties = await prisma.property.findMany({
-    orderBy: [{ nickname: "asc" }],
-    select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
-  });
-
-  const selectedProperty = propertyId
-    ? await prisma.property.findUnique({
-        where: { id: propertyId },
-        select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
-      })
-    : null;
-
-  const photoSrc = selectedProperty ? await findPropertyPhotoSrc(selectedProperty.id) : null;
-
-  const cancelHref = propertyId ? `/property-managers?propertyId=${propertyId}` : "/property-managers";
 
   return (
     <div className="ll_page">
@@ -73,61 +11,31 @@ export default async function NewPropertyManagerPage({
         <div className="ll_topbar">
           <div>
             <div style={{ fontSize: 18, fontWeight: 800 }}>New property manager</div>
-            <div className="ll_muted">Create a manager record and link it to a property.</div>
+            <div className="ll_muted">Create a property manager company.</div>
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btnSecondary" href="/property-managers">
               Cancel
             </Link>
           </div>
         </div>
 
-        {selectedProperty ? (
-          <div className="mt-3">
-            <PropertyHeader
-              property={{
-                id: selectedProperty.id,
-                nickname: selectedProperty.nickname,
-                street: selectedProperty.street,
-                city: selectedProperty.city,
-                state: selectedProperty.state,
-                zip: selectedProperty.zip,
-                photoUrl: photoSrc ?? null,
-              }}
-              href={`/properties/${selectedProperty.id}`}
-              subtitle="Property managers"
-            />
-          </div>
-        ) : null}
-
-        <form className="ll_form" method="post" action="/api/property-managers" style={{ marginTop: 14 }}>
-          <label className="ll_label" htmlFor="companyName">
+        <form className="ll_form" action={createPropertyManagerCompany} style={{ marginTop: 14 }}>
+          <label className="ll_label" htmlFor="name">
             Company Name
           </label>
-          <input
-            id="companyName"
-            name="companyName"
-            className="ll_input"
-            placeholder="Company"
-            required
-            suppressHydrationWarning
-          />
-
-          <label className="ll_label" htmlFor="contactName">
-            Contact Name
-          </label>
-          <input id="contactName" name="contactName" className="ll_input" placeholder="Person" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="email">
-            Email
-          </label>
-          <input id="email" name="email" className="ll_input" placeholder="name@email.com" suppressHydrationWarning />
+          <input id="name" name="name" className="ll_input" placeholder="Company" required suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="phone">
             Phone
           </label>
           <input id="phone" name="phone" className="ll_input" placeholder="555-123-4567" suppressHydrationWarning />
+
+          <label className="ll_label" htmlFor="email">
+            Email
+          </label>
+          <input id="email" name="email" className="ll_input" placeholder="name@email.com" suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="website">
             Website
@@ -139,81 +47,39 @@ export default async function NewPropertyManagerPage({
           </label>
           <input id="address1" name="address1" className="ll_input" placeholder="Street" suppressHydrationWarning />
 
-          <label className="ll_label" htmlFor="city">
-            City
-          </label>
-          <input id="city" name="city" className="ll_input" placeholder="City" suppressHydrationWarning />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 120px 120px", gap: 10 }}>
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="city">
+                City
+              </label>
+              <input id="city" name="city" className="ll_input" placeholder="City" suppressHydrationWarning />
+            </div>
 
-          <label className="ll_label" htmlFor="state">
-            State
-          </label>
-          <input id="state" name="state" className="ll_input" placeholder="State" suppressHydrationWarning />
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="state">
+                State
+              </label>
+              <input id="state" name="state" className="ll_input" placeholder="State" suppressHydrationWarning />
+            </div>
 
-          <label className="ll_label" htmlFor="zip">
-            Zip
-          </label>
-          <input id="zip" name="zip" className="ll_input" placeholder="Zip" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="propertyId">
-            Property (optional)
-          </label>
-          <select
-            id="propertyId"
-            name="propertyId"
-            className="ll_input"
-            defaultValue={propertyId || ""}
-            suppressHydrationWarning
-          >
-            <option value="">No property assignment</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {propertyLabel(p)}
-              </option>
-            ))}
-          </select>
-
-          <label className="ll_label" htmlFor="startDate">
-            Start Date
-          </label>
-          <input id="startDate" name="startDate" type="date" className="ll_input" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="endDate">
-            End Date
-          </label>
-          <input id="endDate" name="endDate" type="date" className="ll_input" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="feeType">
-            Fee Type
-          </label>
-          <select id="feeType" name="feeType" className="ll_input" suppressHydrationWarning>
-            <option value="">Select fee type...</option>
-            <option value="percent">Percent</option>
-            <option value="flat">Flat</option>
-          </select>
-
-          <label className="ll_label" htmlFor="feeValue">
-            Fee Value
-          </label>
-          <input
-            id="feeValue"
-            name="feeValue"
-            type="number"
-            step="0.01"
-            className="ll_input"
-            placeholder="0.00"
-            suppressHydrationWarning
-          />
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="zip">
+                Zip
+              </label>
+              <input id="zip" name="zip" className="ll_input" placeholder="Zip" suppressHydrationWarning />
+            </div>
+          </div>
 
           <label className="ll_label" htmlFor="notes">
-            Assignment Notes
+            Notes
           </label>
           <textarea id="notes" name="notes" className="ll_input" rows={3} suppressHydrationWarning />
 
           <div className="ll_actions">
             <button className="ll_btn" type="submit" suppressHydrationWarning>
-              Save manager
+              Save company
             </button>
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btnSecondary" href="/property-managers">
               Cancel
             </Link>
           </div>

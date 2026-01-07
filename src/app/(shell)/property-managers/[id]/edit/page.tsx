@@ -2,6 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import {
+  createPropertyManagerContact,
+  deletePropertyManagerContact,
+  updatePropertyManagerCompany,
+  updatePropertyManagerContact,
+} from "../../actions";
 
 function propertyLabel(p: {
   nickname: string | null;
@@ -13,45 +19,35 @@ function propertyLabel(p: {
   return p.nickname?.trim() || `${p.street}, ${p.city}, ${p.state} ${p.zip}`;
 }
 
-function inputDate(d?: Date | null) {
-  if (!d) return "";
-  const iso = new Date(d).toISOString();
-  return iso.slice(0, 10);
-}
+type SearchParams = Record<string, string | string[] | undefined>;
 
 export default async function EditPropertyManagerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<SearchParams>;
 }) {
   await requireUser();
   const { id } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const msg = typeof sp.msg === "string" ? sp.msg : "";
 
-  const [manager, properties] = await Promise.all([
-    prisma.propertyManager.findUnique({
-      where: { id },
-      include: {
-        assignments: {
-          orderBy: [{ startDate: "desc" }],
-          take: 1,
-          include: {
-            property: {
-              select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
-            },
-          },
+  const company = await prisma.propertyManagerCompany.findUnique({
+    where: { id },
+    include: {
+      contacts: { orderBy: [{ name: "asc" }] },
+      assignments: {
+        orderBy: [{ property: { nickname: "asc" } }],
+        include: {
+          property: { select: { id: true, nickname: true, street: true, city: true, state: true, zip: true } },
+          contact: { select: { id: true, name: true } },
         },
       },
-    }),
-    prisma.property.findMany({
-      orderBy: [{ nickname: "asc" }],
-      select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
-    }),
-  ]);
+    },
+  });
 
-  if (!manager) notFound();
-
-  const assignment = manager.assignments[0] ?? null;
-  const cancelHref = assignment?.propertyId ? `/property-managers?propertyId=${assignment.propertyId}` : "/property-managers";
+  if (!company) notFound();
 
   return (
     <div className="ll_page">
@@ -59,192 +55,230 @@ export default async function EditPropertyManagerPage({
         <div className="ll_topbar">
           <div>
             <div style={{ fontSize: 18, fontWeight: 800 }}>Edit property manager</div>
-            <div className="ll_muted">Update manager details.</div>
+            <div className="ll_muted">Update company details and contacts.</div>
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btnSecondary" href="/property-managers">
               Cancel
             </Link>
           </div>
         </div>
 
-        <form className="ll_form" method="post" action={`/api/property-managers/${manager.id}`} style={{ marginTop: 14 }}>
-          <input type="hidden" name="assignmentId" value={assignment?.id ?? ""} />
+        {msg === "updated" && <div className="ll_notice">Company updated.</div>}
+        {msg === "contact-added" && <div className="ll_notice">Contact added.</div>}
+        {msg === "contact-updated" && <div className="ll_notice">Contact updated.</div>}
+        {msg === "contact-deleted" && <div className="ll_notice">Contact removed.</div>}
 
-          <label className="ll_label" htmlFor="companyName">
+        <form className="ll_form" action={updatePropertyManagerCompany.bind(null, company.id)} style={{ marginTop: 14 }}>
+          <label className="ll_label" htmlFor="name">
             Company Name
           </label>
           <input
-            id="companyName"
-            name="companyName"
+            id="name"
+            name="name"
             className="ll_input"
-            defaultValue={manager.companyName}
+            defaultValue={company.name}
             required
-            suppressHydrationWarning
-          />
-
-          <label className="ll_label" htmlFor="contactName">
-            Contact Name
-          </label>
-          <input
-            id="contactName"
-            name="contactName"
-            className="ll_input"
-            defaultValue={manager.contactName ?? ""}
-            suppressHydrationWarning
-          />
-
-          <label className="ll_label" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            className="ll_input"
-            defaultValue={manager.email ?? ""}
             suppressHydrationWarning
           />
 
           <label className="ll_label" htmlFor="phone">
             Phone
           </label>
-          <input
-            id="phone"
-            name="phone"
-            className="ll_input"
-            defaultValue={manager.phone ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="phone" name="phone" className="ll_input" defaultValue={company.phone ?? ""} suppressHydrationWarning />
+
+          <label className="ll_label" htmlFor="email">
+            Email
+          </label>
+          <input id="email" name="email" className="ll_input" defaultValue={company.email ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="website">
             Website
           </label>
-          <input
-            id="website"
-            name="website"
-            className="ll_input"
-            defaultValue={manager.website ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="website" name="website" className="ll_input" defaultValue={company.website ?? ""} suppressHydrationWarning />
 
           <label className="ll_label" htmlFor="address1">
             Address
           </label>
-          <input
-            id="address1"
-            name="address1"
-            className="ll_input"
-            defaultValue={manager.address1 ?? ""}
-            suppressHydrationWarning
-          />
+          <input id="address1" name="address1" className="ll_input" defaultValue={company.address1 ?? ""} suppressHydrationWarning />
 
-          <label className="ll_label" htmlFor="city">
-            City
-          </label>
-          <input id="city" name="city" className="ll_input" defaultValue={manager.city ?? ""} suppressHydrationWarning />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 120px 120px", gap: 10 }}>
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="city">
+                City
+              </label>
+              <input id="city" name="city" className="ll_input" defaultValue={company.city ?? ""} suppressHydrationWarning />
+            </div>
 
-          <label className="ll_label" htmlFor="state">
-            State
-          </label>
-          <input id="state" name="state" className="ll_input" defaultValue={manager.state ?? ""} suppressHydrationWarning />
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="state">
+                State
+              </label>
+              <input id="state" name="state" className="ll_input" defaultValue={company.state ?? ""} suppressHydrationWarning />
+            </div>
 
-          <label className="ll_label" htmlFor="zip">
-            Zip
-          </label>
-          <input id="zip" name="zip" className="ll_input" defaultValue={manager.zip ?? ""} suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="propertyId">
-            Property (optional)
-          </label>
-          <select
-            id="propertyId"
-            name="propertyId"
-            className="ll_input"
-            defaultValue={assignment?.propertyId ?? ""}
-            suppressHydrationWarning
-          >
-            <option value="">No property assignment</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {propertyLabel(p)}
-              </option>
-            ))}
-          </select>
-
-          <label className="ll_label" htmlFor="startDate">
-            Start Date
-          </label>
-          <input
-            id="startDate"
-            name="startDate"
-            type="date"
-            className="ll_input"
-            defaultValue={inputDate(assignment?.startDate)}
-            suppressHydrationWarning
-          />
-
-          <label className="ll_label" htmlFor="endDate">
-            End Date
-          </label>
-          <input
-            id="endDate"
-            name="endDate"
-            type="date"
-            className="ll_input"
-            defaultValue={inputDate(assignment?.endDate)}
-            suppressHydrationWarning
-          />
-
-          <label className="ll_label" htmlFor="feeType">
-            Fee Type
-          </label>
-          <select
-            id="feeType"
-            name="feeType"
-            className="ll_input"
-            defaultValue={assignment?.feeType ?? ""}
-            suppressHydrationWarning
-          >
-            <option value="">Select fee type...</option>
-            <option value="percent">Percent</option>
-            <option value="flat">Flat</option>
-          </select>
-
-          <label className="ll_label" htmlFor="feeValue">
-            Fee Value
-          </label>
-          <input
-            id="feeValue"
-            name="feeValue"
-            type="number"
-            step="0.01"
-            className="ll_input"
-            defaultValue={assignment?.feeValue ?? ""}
-            suppressHydrationWarning
-          />
+            <div style={{ display: "grid" }}>
+              <label className="ll_label" htmlFor="zip">
+                Zip
+              </label>
+              <input id="zip" name="zip" className="ll_input" defaultValue={company.zip ?? ""} suppressHydrationWarning />
+            </div>
+          </div>
 
           <label className="ll_label" htmlFor="notes">
-            Assignment Notes
+            Notes
           </label>
           <textarea
             id="notes"
             name="notes"
             className="ll_input"
             rows={3}
-            defaultValue={assignment?.notes ?? ""}
+            defaultValue={company.notes ?? ""}
             suppressHydrationWarning
           />
 
           <div className="ll_actions">
             <button className="ll_btn" type="submit" suppressHydrationWarning>
-              Save changes
+              Save company
             </button>
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btnSecondary" href="/property-managers">
               Cancel
             </Link>
           </div>
         </form>
+
+        <div className="ll_divider" />
+        <div className="ll_card_title" style={{ fontSize: 14 }}>
+          Contacts
+        </div>
+
+        <div className="ll_card" style={{ marginTop: 10 }}>
+          <form className="ll_form" action={createPropertyManagerContact.bind(null, company.id)}>
+            <label className="ll_label" htmlFor="contactName">
+              New Contact Name
+            </label>
+            <input id="contactName" name="contactName" className="ll_input" placeholder="Contact name" required suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="contactPhone">
+              Phone
+            </label>
+            <input id="contactPhone" name="contactPhone" className="ll_input" placeholder="555-123-4567" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="contactEmail">
+              Email
+            </label>
+            <input id="contactEmail" name="contactEmail" className="ll_input" placeholder="name@email.com" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="contactNotes">
+              Notes
+            </label>
+            <textarea id="contactNotes" name="contactNotes" className="ll_input" rows={2} suppressHydrationWarning />
+
+            <div className="ll_actions">
+              <button className="ll_btn" type="submit" suppressHydrationWarning>
+                Add contact
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div className="mt-3 space-y-3">
+          {company.contacts.length ? (
+            company.contacts.map((contact) => (
+              <div key={contact.id} className="ll_card">
+                <form
+                  className="ll_form"
+                  action={updatePropertyManagerContact.bind(null, contact.id, company.id)}
+                  style={{ margin: 0 }}
+                >
+                  <label className="ll_label" htmlFor={`contactName-${contact.id}`}>
+                    Contact Name
+                  </label>
+                  <input
+                    id={`contactName-${contact.id}`}
+                    name="contactName"
+                    className="ll_input"
+                    defaultValue={contact.name}
+                    required
+                    suppressHydrationWarning
+                  />
+
+                  <label className="ll_label" htmlFor={`contactPhone-${contact.id}`}>
+                    Phone
+                  </label>
+                  <input
+                    id={`contactPhone-${contact.id}`}
+                    name="contactPhone"
+                    className="ll_input"
+                    defaultValue={contact.phone ?? ""}
+                    suppressHydrationWarning
+                  />
+
+                  <label className="ll_label" htmlFor={`contactEmail-${contact.id}`}>
+                    Email
+                  </label>
+                  <input
+                    id={`contactEmail-${contact.id}`}
+                    name="contactEmail"
+                    className="ll_input"
+                    defaultValue={contact.email ?? ""}
+                    suppressHydrationWarning
+                  />
+
+                  <label className="ll_label" htmlFor={`contactNotes-${contact.id}`}>
+                    Notes
+                  </label>
+                  <textarea
+                    id={`contactNotes-${contact.id}`}
+                    name="contactNotes"
+                    className="ll_input"
+                    rows={2}
+                    defaultValue={contact.notes ?? ""}
+                    suppressHydrationWarning
+                  />
+
+                  <div className="ll_actions">
+                    <button className="ll_btn" type="submit" suppressHydrationWarning>
+                      Save contact
+                    </button>
+                  </div>
+                </form>
+                <form action={deletePropertyManagerContact.bind(null, contact.id, company.id)} style={{ marginTop: 10 }}>
+                  <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
+                    Remove contact
+                  </button>
+                </form>
+              </div>
+            ))
+          ) : (
+            <div className="ll_muted">No contacts yet.</div>
+          )}
+        </div>
+
+        <div className="ll_divider" />
+        <div className="ll_card_title" style={{ fontSize: 14 }}>
+          Assigned properties
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {company.assignments.length ? (
+            company.assignments.map((assignment) => (
+              <div key={assignment.id} className="ll_card">
+                <div className="text-sm">
+                  <Link className="ll_btn ll_btnLink" href={`/properties/${assignment.property.id}`}>
+                    {propertyLabel(assignment.property)}
+                  </Link>
+                </div>
+                <div className="ll_muted text-sm">
+                  {assignment.contact ? `Contact: ${assignment.contact.name}` : "No contact selected"}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="ll_muted">No properties assigned yet.</div>
+          )}
+        </div>
       </div>
     </div>
   );
