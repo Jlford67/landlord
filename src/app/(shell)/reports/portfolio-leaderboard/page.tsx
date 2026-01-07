@@ -118,7 +118,10 @@ function metricDisplay(
     case "appreciationPct":
       return percentValue(row.appreciationPct);
     case "totalReturnDollar":
-      return moneyFromCents(row.totalReturnCents);
+      {
+        const formatted = fmtMoneyAccounting(row.totalReturnCents);
+        return <span className={formatted.className}>{formatted.text}</span>;
+      }
     case "totalReturnPct":
       return percentValue(row.totalReturnPct);
     default:
@@ -201,6 +204,41 @@ export default async function PortfolioLeaderboardPage({
     metric === "appreciationPct" ||
     metric === "totalReturnDollar" ||
     metric === "totalReturnPct";
+
+  const totals = report.rows.reduce(
+    (acc, row) => {
+      acc.avgMonthlyCashFlowCents += row.avgMonthlyCashFlowCents;
+      acc.netCashFlowCents += row.netCashFlowCents;
+
+      if (row.purchasePriceCents != null) {
+        acc.purchasePriceCents = (acc.purchasePriceCents ?? 0) + row.purchasePriceCents;
+      }
+      if (row.currentValueCents != null) {
+        acc.currentValueCents = (acc.currentValueCents ?? 0) + row.currentValueCents;
+      }
+      if (row.appreciationCents != null) {
+        acc.appreciationCents = (acc.appreciationCents ?? 0) + row.appreciationCents;
+      }
+      if (row.totalReturnCents != null) {
+        acc.totalReturnCents = (acc.totalReturnCents ?? 0) + row.totalReturnCents;
+      }
+
+      return acc;
+    },
+    {
+      avgMonthlyCashFlowCents: 0,
+      netCashFlowCents: 0,
+      purchasePriceCents: null as number | null,
+      currentValueCents: null as number | null,
+      appreciationCents: null as number | null,
+      totalReturnCents: null as number | null,
+    }
+  );
+
+  const portfolioYieldPct =
+    totals.purchasePriceCents && totals.purchasePriceCents > 0
+      ? (totals.netCashFlowCents / totals.purchasePriceCents) * 100
+      : null;
 
   return (
     <div className="ll_page">
@@ -488,6 +526,49 @@ export default async function PortfolioLeaderboardPage({
                   <td className="font-semibold">{metricDisplay(report.input.metric, row)}</td>
                 </tr>
               ))}
+              <tr className="border-t border-slate-200 font-semibold">
+                <td>—</td>
+                <td>Grand total</td>
+                <td>—</td>
+                <td>—</td>
+                <td>
+                  {(() => {
+                    const formatted = fmtMoneyAccounting(totals.avgMonthlyCashFlowCents);
+                    return <span className={formatted.className}>{formatted.text}</span>;
+                  })()}
+                </td>
+                <td>
+                  {(() => {
+                    const formatted = fmtMoneyAccounting(totals.purchasePriceCents);
+                    return <span className={formatted.className}>{formatted.text}</span>;
+                  })()}
+                </td>
+                <td>
+                  {(() => {
+                    const formatted = fmtMoneyAccounting(totals.currentValueCents);
+                    return <span className={formatted.className}>{formatted.text}</span>;
+                  })()}
+                </td>
+                <td>
+                  {(() => {
+                    const formatted = fmtMoneyAccounting(totals.appreciationCents);
+                    return <span className={formatted.className}>{formatted.text}</span>;
+                  })()}
+                </td>
+                <td>
+                  {(() => {
+                    const formatted = fmtMoneyAccounting(totals.totalReturnCents);
+                    return <span className={formatted.className}>{formatted.text}</span>;
+                  })()}
+                </td>
+                <td>
+                  {(() => {
+                    const formatted = fmtPctSigned(portfolioYieldPct);
+                    return <span className={formatted.className}>{formatted.text}</span>;
+                  })()}
+                </td>
+                <td>—</td>
+              </tr>
             </tbody>
           </table>
         </div>
