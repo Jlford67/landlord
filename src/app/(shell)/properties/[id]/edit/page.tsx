@@ -47,7 +47,7 @@ export default async function EditPropertyPage({
 
   return (
     <div className="ll_page">
-      <div className="ll_panel">
+      <div className="ll_panel" suppressHydrationWarning>
         <div className="ll_topbar">
           <div className="flex items-center gap-3">
             <PropertyThumb propertyId={property.id} />
