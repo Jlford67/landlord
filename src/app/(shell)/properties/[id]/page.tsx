@@ -1,11 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-
-import fs from "node:fs/promises";
-import path from "node:path";
+import ZillowLogo from "@/components/logos/ZillowLogo";
+import RedfinLogo from "@/components/logos/RedfinLogo";
+import PropertyThumb from "@/components/properties/PropertyThumb";
 
 const moneyFmt = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
@@ -33,6 +32,13 @@ function formatEstimate(value?: number | null) {
   return formatWholeNumber(value);
 }
 
+function formatPurchasePrice(cents?: number | null) {
+  if (cents === null || cents === undefined) return "Not set";
+  const dollars = cents / 100;
+  const abs = moneyFmt.format(Math.abs(dollars));
+  return dollars < 0 ? `(${abs})` : `$${abs}`;
+}
+
 function moneyText(n?: number | null) {
   if (n === null || n === undefined) return "n/a";
   const abs = moneyFmt.format(Math.abs(n));
@@ -48,33 +54,6 @@ function moneyClass(n?: number | null) {
 
 function Money({ value }: { value?: number | null }) {
   return <span className={moneyClass(value)}>{moneyText(value)}</span>;
-}
-
-function buildAddressQuery(property: { street: string; city: string; state: string; zip: string }) {
-  if (!property.street || !property.city || !property.state) return "";
-  const address = `${property.street}, ${property.city}, ${property.state} ${property.zip ?? ""}`.trim();
-  return encodeURIComponent(address);
-}
-
-async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
-  const dir = path.join(process.cwd(), "public", "property-photos");
-
-  let files: string[] = [];
-  try {
-    files = await fs.readdir(dir);
-  } catch {
-    return null;
-  }
-
-  const byLower = new Map(files.map((f) => [f.toLowerCase(), f] as const));
-
-  for (const ext of ["webp", "jpg", "jpeg", "png"]) {
-    const wantLower = `${propertyId}.${ext}`.toLowerCase();
-    const actual = byLower.get(wantLower);
-    if (actual) return `/property-photos/${actual}`;
-  }
-
-  return null;
 }
 
 export default async function PropertyDetailPage({
@@ -118,8 +97,6 @@ export default async function PropertyDetailPage({
     `${property.street}, ${property.city}, ${property.state} ${property.zip}`;
 
   const activeLease = property.leases.find((l) => l.status === "active");
-  const addressQuery = buildAddressQuery(property);
-  const photoSrc = await findPropertyPhotoSrc(property.id);
   const annualYear = new Date().getUTCFullYear();
 
   return (
@@ -127,13 +104,7 @@ export default async function PropertyDetailPage({
       {/* HERO */}
       <div className="ll_card">
         <div className="flex items-start gap-4">
-          <div className="ll_pickThumb">
-            {photoSrc ? (
-              <Image src={photoSrc} alt="" fill sizes="48px" className="ll_pickThumbImg" priority={false} />
-            ) : (
-              <div className="ll_pickThumbFallback" aria-hidden="true" />
-            )}
-          </div>
+          <PropertyThumb propertyId={property.id} />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
@@ -223,22 +194,10 @@ export default async function PropertyDetailPage({
                     rel="noreferrer"
                     className="flex items-center gap-2 font-semibold text-[#006aff] hover:underline"
                   >
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#006aff]/10">
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-                        <path d="M12 3.2 3 10v10.2h6.4v-6h5.2v6H21V10L12 3.2z" />
-                      </svg>
-                    </span>
-                    Zillow
+                    <ZillowLogo className="h-6 w-auto" />
                   </a>
                 ) : (
-                  <div className="flex items-center gap-2 font-semibold text-[#006aff]">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#006aff]/10">
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-                        <path d="M12 3.2 3 10v10.2h6.4v-6h5.2v6H21V10L12 3.2z" />
-                      </svg>
-                    </span>
-                    Zillow
-                  </div>
+                  <ZillowLogo className="h-6 w-auto" />
                 )}
                 <div className="ll_spacer" />
                 {property.zillowUrl ? (
@@ -271,22 +230,10 @@ export default async function PropertyDetailPage({
                     rel="noreferrer"
                     className="flex items-center gap-2 font-semibold text-[#a61c30] hover:underline"
                   >
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#a61c30]/10">
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-                        <path d="M4 11.5 12 4l8 7.5v8.5h-5.5v-5.5H9.5V20H4v-8.5z" />
-                      </svg>
-                    </span>
-                    Redfin
+                    <RedfinLogo className="h-6 w-auto" />
                   </a>
                 ) : (
-                  <div className="flex items-center gap-2 font-semibold text-[#a61c30]">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#a61c30]/10">
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-                        <path d="M4 11.5 12 4l8 7.5v8.5h-5.5v-5.5H9.5V20H4v-8.5z" />
-                      </svg>
-                    </span>
-                    Redfin
-                  </div>
+                  <RedfinLogo className="h-6 w-auto" />
                 )}
                 <div className="ll_spacer" />
                 {property.redfinUrl ? (
@@ -308,6 +255,15 @@ export default async function PropertyDetailPage({
                   Updated: {formatIsoDate(property.redfinEstimatedValueUpdatedAt)}
                 </div>
               ) : null}
+            </div>
+          </div>
+
+          <div className="mt-3 border-t border-gray-200 pt-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="ll_label">Purchase price</span>
+              <span className={property.purchasePriceCents ? "font-semibold text-gray-900" : "ll_muted"}>
+                {formatPurchasePrice(property.purchasePriceCents)}
+              </span>
             </div>
           </div>
         </div>

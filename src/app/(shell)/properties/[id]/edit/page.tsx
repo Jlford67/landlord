@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import PropertyThumb from "@/components/properties/PropertyThumb";
 
 function inputValue<T extends string | number | null | undefined>(value: T) {
   if (value === null || value === undefined) return "";
@@ -36,20 +37,27 @@ export default async function EditPropertyPage({
     <div className="ll_page">
       <div className="ll_panel">
         <div className="ll_topbar">
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Edit property</div>
-            <div className="ll_muted">Update property details.</div>
+          <div className="flex items-center gap-3">
+            <PropertyThumb propertyId={property.id} />
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Edit property</div>
+              <div className="ll_muted">Update property details.</div>
+            </div>
           </div>
 
           <div className="ll_topbarRight">
             <Link className="ll_btnSecondary" href={`/properties/${property.id}`}>
               Cancel
             </Link>
+            <button className="ll_btn ll_btnPrimary" type="submit" form="edit-property-form">
+              Save changes
+            </button>
           </div>
         </div>
 
         <form
           className="ll_form"
+          id="edit-property-form"
           method="post"
           action={`/api/properties/${property.id}`}
           style={{ marginTop: 14 }}
@@ -342,11 +350,6 @@ export default async function EditPropertyPage({
             suppressHydrationWarning
           />
 
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
-            <button className="ll_btn" type="submit" style={{ fontWeight: 800 }}>
-              Save changes
-            </button>
-          </div>
         </form>
       </div>
     </div>
