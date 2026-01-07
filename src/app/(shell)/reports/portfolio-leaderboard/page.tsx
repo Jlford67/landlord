@@ -567,7 +567,12 @@ export default async function PortfolioLeaderboardPage({
                     return <span className={formatted.className}>{formatted.text}</span>;
                   })()}
                 </td>
-                <td>—</td>
+                <td>
+                  {(() => {
+                    const formatted = fmtMoneyAccounting(totals.totalReturnCents);
+                    return <span className={formatted.className}>{formatted.text}</span>;
+                  })()}
+                </td>
               </tr>
             </tbody>
           </table>
