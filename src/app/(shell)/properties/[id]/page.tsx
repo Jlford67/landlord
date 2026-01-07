@@ -28,7 +28,7 @@ function formatUtcDate(value?: Date | null) {
   const y = value.getUTCFullYear();
   const m = String(value.getUTCMonth() + 1).padStart(2, "0");
   const day = String(value.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return `${m}/${day}/${y}`;
 }
 
 function formatWholeNumber(value: number) {
