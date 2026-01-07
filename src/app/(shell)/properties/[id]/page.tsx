@@ -265,6 +265,13 @@ export default async function PropertyDetailPage({
                 {formatPurchasePrice(property.purchasePriceCents)}
               </span>
             </div>
+            {!property.purchaseDate ? (
+              <div className="mt-2">
+                <Link className="ll_btn ll_btnLink" href={`/properties/${property.id}/edit#purchase-date`}>
+                  Add Purchase Date
+                </Link>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -470,7 +477,15 @@ export default async function PropertyDetailPage({
                 {property.insurance.length ? (
                   property.insurance.map((i) => (
                     <tr key={i.id}>
-                      <td>{i.insurer ?? "n/a"}</td>
+                      <td>
+                        {i.insurer ? (
+                          <Link className="ll_btn ll_btnLink" href={`/insurance/${i.id}/edit`}>
+                            {i.insurer}
+                          </Link>
+                        ) : (
+                          "n/a"
+                        )}
+                      </td>
                       <td>{i.policyNum ?? "n/a"}</td>
                       <td>
                         <Money value={i.premium} />
@@ -520,7 +535,15 @@ export default async function PropertyDetailPage({
                 {property.taxAccounts.length ? (
                   property.taxAccounts.map((t) => (
                     <tr key={t.id}>
-                      <td>{t.name ?? "n/a"}</td>
+                      <td>
+                        {t.name ? (
+                          <Link className="ll_btn ll_btnLink" href={`/property-tax/${t.id}/edit`}>
+                            {t.name}
+                          </Link>
+                        ) : (
+                          "n/a"
+                        )}
+                      </td>
                       <td>{t.billNumber ?? "n/a"}</td>
                       <td>{t.parcel ?? "n/a"}</td>
                       <td>

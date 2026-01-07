@@ -228,11 +228,11 @@ export default async function EditPropertyPage({
             </div>
 
             <div style={{ display: "grid" }}>
-              <label className="ll_label" htmlFor="purchaseDate">
+              <label className="ll_label" htmlFor="purchase-date">
                 Purchase date
               </label>
               <input
-                id="purchaseDate"
+                id="purchase-date"
                 name="purchaseDate"
                 type="date"
                 className="ll_input"
