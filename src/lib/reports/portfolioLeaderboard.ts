@@ -28,6 +28,9 @@ export type Row = {
   annualNetCents: number;
   netCashFlowCents: number;
   avgMonthlyCashFlowCents: number;
+  annualTransactionalNetCents: number;
+  annualProratedNetCents: number;
+  totalAnnualNetCents: number;
   yieldOnCostPct: number | null;
   appreciationCents: number | null;
   appreciationPct: number | null;
@@ -311,6 +314,7 @@ export async function getPortfolioLeaderboardReport(
     const annualNetCents = annualNetByProperty.get(property.id) ?? 0;
     const netCashFlowCents = transactionalNetCents + annualNetCents;
     const avgMonthlyCashFlowCents = Math.round(netCashFlowCents / 12);
+    const totalAnnualNetCents = transactionalNetCents + annualNetCents;
 
     totalsTransactional += transactionalNetCents;
     totalsAnnual += annualNetCents;
@@ -329,7 +333,7 @@ export async function getPortfolioLeaderboardReport(
 
     const yieldOnCostPct =
       purchasePriceCents && purchasePriceCents > 0
-        ? (netCashFlowCents / purchasePriceCents) * 100
+        ? (totalAnnualNetCents / purchasePriceCents) * 100
         : null;
 
     const appreciationCents =
@@ -361,6 +365,9 @@ export async function getPortfolioLeaderboardReport(
       annualNetCents,
       netCashFlowCents,
       avgMonthlyCashFlowCents,
+      annualTransactionalNetCents: transactionalNetCents,
+      annualProratedNetCents: annualNetCents,
+      totalAnnualNetCents,
       yieldOnCostPct,
       appreciationCents,
       appreciationPct,

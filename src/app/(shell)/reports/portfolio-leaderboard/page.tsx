@@ -105,25 +105,40 @@ function metricDisplay(
 ) {
   switch (metric) {
     case "netCashFlow":
-      return moneyFromCents(row.netCashFlowCents);
+      {
+        const formatted = fmtMoneyAccounting(row.netCashFlowCents);
+        return <span className={formatted.className}>{formatted.text}</span>;
+      }
     case "avgMonthlyCashFlow":
-      return moneyFromCents(row.avgMonthlyCashFlowCents);
+      {
+        const formatted = fmtMoneyAccounting(row.avgMonthlyCashFlowCents);
+        return <span className={formatted.className}>{formatted.text}</span>;
+      }
     case "yieldOnCostPct":
-      return percentValue(row.yieldOnCostPct);
+      {
+        const formatted = fmtPctSigned(row.yieldOnCostPct);
+        return <span className={formatted.className}>{formatted.text}</span>;
+      }
     case "appreciationDollar":
       {
         const formatted = fmtMoneyAccounting(row.appreciationCents);
         return <span className={formatted.className}>{formatted.text}</span>;
       }
     case "appreciationPct":
-      return percentValue(row.appreciationPct);
+      {
+        const formatted = fmtPctSigned(row.appreciationPct);
+        return <span className={formatted.className}>{formatted.text}</span>;
+      }
     case "totalReturnDollar":
       {
         const formatted = fmtMoneyAccounting(row.totalReturnCents);
         return <span className={formatted.className}>{formatted.text}</span>;
       }
     case "totalReturnPct":
-      return percentValue(row.totalReturnPct);
+      {
+        const formatted = fmtPctSigned(row.totalReturnPct);
+        return <span className={formatted.className}>{formatted.text}</span>;
+      }
     default:
       return "N/A";
   }
@@ -208,7 +223,7 @@ export default async function PortfolioLeaderboardPage({
   const totals = report.rows.reduce(
     (acc, row) => {
       acc.avgMonthlyCashFlowCents += row.avgMonthlyCashFlowCents;
-      acc.netCashFlowCents += row.netCashFlowCents;
+      acc.netCashFlowCents += row.totalAnnualNetCents;
 
       if (row.purchasePriceCents != null) {
         acc.purchasePriceCents = (acc.purchasePriceCents ?? 0) + row.purchasePriceCents;
