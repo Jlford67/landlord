@@ -3,7 +3,8 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
-import { Users } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
+import { Search, Users } from "lucide-react";
 import { deleteTenant } from "./actions";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -89,9 +90,13 @@ export default async function TenantsPage({
                 </Link>
               )}
 
-              <button className="ll_btn ll_btnPrimary" type="submit" suppressHydrationWarning>
-                Search
-              </button>
+              <IconButton
+                className="ll_btn ll_btnPrimary"
+                type="submit"
+                ariaLabel="Search"
+                title="Search"
+                icon={<Search size={18} />}
+              />
             </div>
           </form>
         </div>

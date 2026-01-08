@@ -4,7 +4,8 @@ import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
-import { Shield } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
+import { Search, Shield } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import fs from "node:fs/promises";
@@ -246,9 +247,13 @@ export default async function InsurancePage({
                 </Link>
               )}
 
-              <button className="ll_btn ll_btnPrimary" type="submit" suppressHydrationWarning>
-                Search
-              </button>
+              <IconButton
+                className="ll_btn ll_btnPrimary"
+                type="submit"
+                ariaLabel="Search"
+                title="Search"
+                icon={<Search size={18} />}
+              />
             </div>
           </form>
         </div>

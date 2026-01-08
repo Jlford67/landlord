@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
-import { Building2 } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
+import { BookOpen, Building2, Search, Trash2 } from "lucide-react";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -114,9 +115,13 @@ export default async function PropertiesPage({
               suppressHydrationWarning
             />
 
-            <button className="ll_btn ll_btnPrimary" type="submit" suppressHydrationWarning>
-              Search
-            </button>
+            <IconButton
+              className="ll_btn ll_btnPrimary"
+              type="submit"
+              ariaLabel="Search"
+              title="Search"
+              icon={<Search size={18} />}
+            />
 
             {q ? (
               <Link className="ll_btn" href="/properties">
@@ -131,6 +136,7 @@ export default async function PropertiesPage({
             <div className="ll_list">
               {properties.map((p) => {
                 const photoSrc = photoById.get(p.id) ?? null;
+                const propertyName = p.nickname?.trim() || p.street;
 
                 return (
                   <div key={p.id} className="ll_list_row">
@@ -171,8 +177,14 @@ export default async function PropertiesPage({
                     </Link>
 
                     <div className="ll_actions">
-                      <Link className="ll_btn ll_btnPrimary" href={`/properties/${p.id}/ledger`}>
-                        Ledger
+                      <Link
+                        className="ll_btn ll_btnLink"
+                        href={`/properties/${p.id}/ledger`}
+                        aria-label={`Open ledger for ${propertyName}`}
+                        title="Open ledger"
+                        style={{ padding: "4px 6px" }}
+                      >
+                        <BookOpen size={18} className="text-blue-600" />
                       </Link>
 
                       {p.status && p.status !== "active" ? (
@@ -183,8 +195,15 @@ export default async function PropertiesPage({
                         </form>
                       ) : (
                         <form method="post" action={`/api/properties/${p.id}/delete`} style={{ margin: 0 }}>
-                          <button className="ll_btn ll_btnDanger" type="submit" suppressHydrationWarning>
-                            Delete
+                          <button
+                            className="ll_btn ll_btnLink"
+                            type="submit"
+                            suppressHydrationWarning
+                            aria-label={`Delete ${propertyName}`}
+                            title="Delete"
+                            style={{ padding: "4px 6px" }}
+                          >
+                            <Trash2 size={18} className="text-blue-600" />
                           </button>
                         </form>
                       )}

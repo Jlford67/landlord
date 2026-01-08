@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
-import { BookOpen } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
+import { BookOpen, Search } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -81,13 +82,13 @@ export default async function LedgerPickerPage({
           </label>
 
           <div className="mt-3 flex items-center gap-2">
-            <button
+            <IconButton
               type="submit"
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
-              suppressHydrationWarning
-            >
-              Search
-            </button>
+              ariaLabel="Search"
+              title="Search"
+              icon={<Search size={18} />}
+            />
 
             {q ? (
               <Link

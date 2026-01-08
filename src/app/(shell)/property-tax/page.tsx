@@ -4,7 +4,8 @@ import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
-import { Receipt } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
+import { Receipt, Search } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import fs from "node:fs/promises";
@@ -247,9 +248,13 @@ export default async function PropertyTaxPage({
           </div>
 
           <div style={{ display: "flex", gap: 10 }}>
-            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-              Search
-            </button>
+            <IconButton
+              className="ll_btnSecondary"
+              type="submit"
+              ariaLabel="Search"
+              title="Search"
+              icon={<Search size={18} />}
+            />
 
             {(q || propertyId) && (
               <Link className="ll_btnSecondary" href="/property-tax">

@@ -4,8 +4,9 @@ import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
-import { Building2 } from "lucide-react";
+import { Building2, Search } from "lucide-react";
 import { deletePropertyManagerCompany } from "./actions";
+import IconButton from "@/components/ui/IconButton";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -217,9 +218,13 @@ export default async function PropertyManagersPage({
                 </Link>
               )}
 
-              <button className="ll_btn ll_btnPrimary" type="submit" suppressHydrationWarning>
-                Search
-              </button>
+              <IconButton
+                className="ll_btn ll_btnPrimary"
+                type="submit"
+                ariaLabel="Search"
+                title="Search"
+                icon={<Search size={18} />}
+              />
             </div>
           </form>
         </div>
