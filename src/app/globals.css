@@ -95,7 +95,7 @@ a:hover{ text-decoration: underline; }
   width: 240px;
   border-right: 1px solid var(--border);
   padding: 16px;
-  background: var(--panel);
+  background: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 45%, #e5e7eb 100%);
 }
 
 .ll_shell_main{
