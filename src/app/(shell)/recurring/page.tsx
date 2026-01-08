@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { propertyLabel } from "@/lib/format";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import { Repeat } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -48,12 +50,19 @@ export default async function RecurringPage({
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Recurring
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Pick a property to manage recurring transactions.
-        </p>
+        <div className="flex items-center gap-3">
+          <PageTitleIcon className="bg-amber-100 text-amber-700">
+            <Repeat size={18} />
+          </PageTitleIcon>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+              Recurring
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Pick a property to manage recurring transactions.
+            </p>
+          </div>
+        </div>
 
         <form method="get" className="mt-4">
           <label className="block text-sm font-medium text-slate-700">

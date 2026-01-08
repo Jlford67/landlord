@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import { Tags, Trash2 } from "lucide-react";
 
 type CatType = "income" | "expense" | "transfer";
 
@@ -51,12 +53,17 @@ export default async function CategoriesPage(props: {
     <div className="ll_page">
       <div className="ll_panel">
         <div className="ll_rowBetween">
-          <div>
-            <h1>Categories</h1>
-            <div className="ll_muted">
-              Used for your ledger. Enabled:{" "}
-              <span className="ll_code">{enabledCount}</span> • Total:{" "}
-              <span className="ll_code">{categories.length}</span>
+          <div className="flex items-center gap-3">
+            <PageTitleIcon className="bg-amber-100 text-amber-700">
+              <Tags size={18} />
+            </PageTitleIcon>
+            <div>
+              <h1>Categories</h1>
+              <div className="ll_muted">
+                Used for your ledger. Enabled:{" "}
+                <span className="ll_code">{enabledCount}</span> • Total:{" "}
+                <span className="ll_code">{categories.length}</span>
+              </div>
             </div>
           </div>
 
@@ -254,8 +261,14 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
             {deletable ? (
               <form method="post" action={`/api/categories/${node.id}`} style={{ margin: 0 }}>
                 <input type="hidden" name="returnTo" value="/categories" />
-                <button type="submit" className="ll_btn ll_btnDanger" suppressHydrationWarning>
-                  Delete
+                <button
+                  type="submit"
+                  className="ll_btn ll_btnLink"
+                  aria-label={`Delete ${node.name}`}
+                  suppressHydrationWarning
+                  style={{ padding: "4px 6px" }}
+                >
+                  <Trash2 size={18} className="text-blue-600" />
                 </button>
               </form>
             ) : (

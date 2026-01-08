@@ -3,6 +3,8 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import { Building2 } from "lucide-react";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -83,6 +85,9 @@ export default async function PropertiesPage({
     <div className="ll_page">
       <div className="ll_card">
         <div className="flex items-center gap-3">
+          <PageTitleIcon className="bg-amber-100 text-amber-700">
+            <Building2 size={18} />
+          </PageTitleIcon>
           <div className="text-lg font-semibold">Properties</div>
           <div className="ll_spacer" />
           <Link className="ll_btn ll_btnPrimary" href="/properties/new">
