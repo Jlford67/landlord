@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import RowActions from "@/components/ui/RowActions";
+import { Users } from "lucide-react";
+import { deleteTenant } from "./actions";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -19,6 +23,7 @@ export default async function TenantsPage({
   await requireUser();
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
+  const msg = getStr(sp, "msg").trim();
 
   const tenants = await prisma.tenant.findMany({
     where: q
@@ -32,80 +37,99 @@ export default async function TenantsPage({
         }
       : undefined,
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    select: { id: true, firstName: true, lastName: true, email: true, phone: true },
     take: 200,
   });
 
   return (
     <div className="ll_page">
       <div className="ll_panel">
-        <div style={{ fontSize: 18, fontWeight: 700 }}>Tenants</div>
+        <div className="ll_topbar">
+          <div className="flex items-center gap-3">
+            <PageTitleIcon className="bg-amber-100 text-amber-700">
+              <Users size={18} />
+            </PageTitleIcon>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Tenants</div>
+              <div className="ll_muted">All tenants across all properties.</div>
+            </div>
+          </div>
 
-        {/* Match Properties: primary action row */}
-        <div style={{ marginTop: 12 }}>
-          <Link className="ll_btn" href="/tenants/new">
-            Add tenant
-          </Link>
+          <div className="ll_topbarRight">
+            <Link className="ll_btn" href="/dashboard">
+              Back
+            </Link>
+            <Link className="ll_btn ll_btnPrimary" href="/tenants/new">
+              Add tenant
+            </Link>
+          </div>
         </div>
 
-        {/* Search */}
-        <form method="get" className="ll_form" style={{ marginTop: 14 }}>
-          <label>
-            Search (name, email, phone)
-            <input
-              className="ll_input"
-              name="q"
-              defaultValue={q}
-              placeholder="Type and press Enter…"
-              autoComplete="off"
-              suppressHydrationWarning
-            />
-          </label>
+        {msg === "deleted" && <div className="ll_notice">Tenant deleted.</div>}
+        {msg === "blocked" && <div className="ll_notice">Tenant is linked to leases and cannot be deleted.</div>}
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              className="ll_btnSecondary"
-              type="submit"
-              suppressHydrationWarning
-            >
-              Search
-            </button>
+        <div className="ll_card" style={{ marginTop: 14, marginBottom: 14 }}>
+          <form method="get" className="ll_form" style={{ margin: 0 }}>
+            <label>
+              Search (name, email, phone)
+              <input
+                className="ll_input"
+                name="q"
+                defaultValue={q}
+                placeholder="Type and press Enter..."
+                autoComplete="off"
+                suppressHydrationWarning
+              />
+            </label>
 
-            {q ? (
-              <Link className="ll_btnSecondary" href="/tenants">
-                Clear
-              </Link>
-            ) : null}
-          </div>
-        </form>
-
-        {/* List */}
-        <div style={{ marginTop: 14 }}>
-          {tenants.length ? (
-            <div style={{ display: "grid", gap: 10 }}>
-              {tenants.map((t) => (
-                <Link
-                  key={t.id}
-                  href={`/tenants/${t.id}`}
-                  style={{
-                    textDecoration: "none",
-                    color: "inherit",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    borderRadius: 12,
-                    padding: "10px 12px",
-                    background: "rgba(255,255,255,0.03)",
-                  }}
-                >
-                  <div style={{ fontWeight: 800 }}>
-                    {t.lastName}, {t.firstName}
-                  </div>
-                  <div style={{ opacity: 0.8, fontSize: 13, marginTop: 2 }}>
-                    {t.email || "—"} {t.phone ? ` · ${t.phone}` : ""}
-                  </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end" }}>
+              {q && (
+                <Link className="ll_btn" href="/tenants">
+                  Clear
                 </Link>
-              ))}
+              )}
+
+              <button className="ll_btn ll_btnPrimary" type="submit" suppressHydrationWarning>
+                Search
+              </button>
             </div>
+          </form>
+        </div>
+
+        <div className="ll_table_wrap" style={{ marginTop: 14 }}>
+          {tenants.length ? (
+            <table className="ll_table ll_table_zebra">
+              <thead>
+                <tr>
+                  <th scope="col">Tenant</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Phone</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tenants.map((t) => (
+                  <tr key={t.id}>
+                    <td>
+                      {t.lastName}, {t.firstName}
+                    </td>
+                    <td>{t.email || "-"}</td>
+                    <td>{t.phone || "-"}</td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <RowActions
+                        editHref={`/tenants/${t.id}`}
+                        deleteAction={deleteTenant.bind(null, t.id)}
+                        deleteConfirmText={`Delete tenant "${t.lastName}, ${t.firstName}"? This cannot be undone.`}
+                        ariaLabelEdit={`Edit tenant ${t.lastName}, ${t.firstName}`}
+                        ariaLabelDelete={`Delete tenant ${t.lastName}, ${t.firstName}`}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
-            <div style={{ opacity: 0.75 }}>No tenants found.</div>
+            <div className="ll_muted">No tenants found.</div>
           )}
         </div>
       </div>

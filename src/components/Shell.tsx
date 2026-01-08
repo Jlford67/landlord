@@ -16,14 +16,8 @@ const nav: NavItem[] = [
 
 export default function Shell({ children }: { children: ReactNode }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <aside
-        style={{
-          width: 240,
-          borderRight: "1px solid var(--border)",
-          padding: 16,
-        }}
-      >
+    <div className="ll_shell">
+      <aside className="ll_shell_sidebar">
         <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
           Landlord
         </div>
@@ -31,12 +25,9 @@ export default function Shell({ children }: { children: ReactNode }) {
         <SidebarNav />
       </aside>
 
-      <main style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 24px" }}>
-          {children}
-        </div>
+      <main className="ll_shell_main">
+        <div className="ll_shell_mainInner">{children}</div>
       </main>
-
     </div>
   );
 }
