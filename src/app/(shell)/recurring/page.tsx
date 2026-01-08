@@ -67,7 +67,7 @@ export default async function RecurringPage({
 
         <form method="get" className="mt-4">
           <div className="ll_label mb-1">Search (nickname, street, city, state, zip)</div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <input
               className="ll_input"
               name="q"
