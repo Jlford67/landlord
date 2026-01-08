@@ -2,6 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import RowActions from "@/components/ui/RowActions";
+import IconButton from "@/components/ui/IconButton";
+import { Search, Shield } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -27,6 +32,13 @@ function money(n?: number | null) {
 function fmtDate(d?: Date | null) {
   if (!d) return "-";
   return new Date(d).toLocaleDateString("en-US", { timeZone: "UTC" });
+}
+
+async function deleteInsurancePolicy(id: string) {
+  "use server";
+  await requireUser();
+  await prisma.insurancePolicy.delete({ where: { id } });
+  redirect("/insurance?msg=deleted");
 }
 
 function propertyLabel(p: {
@@ -147,14 +159,22 @@ export default async function InsurancePage({
         {/* Page header */}
         <div className="ll_card" style={{ marginBottom: 14 }}>
           <div className="ll_topbar" style={{ marginBottom: 0 }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>Insurance</div>
-              <div className="ll_muted">
-                {selectedProperty ? "Policies for selected property." : "All policies across all properties."}
+            <div className="flex items-center gap-3">
+              <PageTitleIcon className="bg-amber-100 text-amber-700">
+                <Shield size={18} />
+              </PageTitleIcon>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800 }}>Insurance</div>
+                <div className="ll_muted">
+                  {selectedProperty ? "Policies for selected property." : "All policies across all properties."}
+                </div>
               </div>
             </div>
 
             <div className="ll_topbarRight">
+              <Link className="ll_btn" href="/dashboard">
+                Back
+              </Link>
               <Link className="ll_btn ll_btnPrimary" href={addHref}>
                 Add insurance policy
               </Link>
@@ -189,8 +209,8 @@ export default async function InsurancePage({
         {/* Filters */}
         <div className="ll_card" style={{ marginTop: 14, marginBottom: 14 }}>
           <form method="get" className="ll_form" style={{ margin: 0 }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label>
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="flex-1 min-w-[220px]">
                 Search (property, insurer, policy #, agent)
                 <input
                   className="ll_input"
@@ -202,7 +222,7 @@ export default async function InsurancePage({
                 />
               </label>
 
-              <label>
+              <label className="flex-1 min-w-[220px]">
                 Property filter (optional)
                 <select
                   name="propertyId"
@@ -218,18 +238,20 @@ export default async function InsurancePage({
                   ))}
                 </select>
               </label>
-            </div>
 
-            <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end" }}>
+              <IconButton
+                className="ll_btn ll_btnPrimary"
+                type="submit"
+                ariaLabel="Search"
+                title="Search"
+                icon={<Search size={18} />}
+              />
+
               {(q || propertyId) && (
                 <Link className="ll_btn" href="/insurance">
                   Clear
                 </Link>
               )}
-
-              <button className="ll_btn ll_btnPrimary" type="submit" suppressHydrationWarning>
-                Search
-              </button>
             </div>
           </form>
         </div>
@@ -282,9 +304,13 @@ export default async function InsurancePage({
                       )}
                     </td>
                     <td style={{ whiteSpace: "nowrap" }}>
-                      <Link className="ll_btnSecondary" href={`/insurance/${p.id}/edit`}>
-                        Edit
-                      </Link>
+                      <RowActions
+                        editHref={`/insurance/${p.id}/edit`}
+                        deleteAction={deleteInsurancePolicy.bind(null, p.id)}
+                        deleteConfirmText={`Delete insurance policy "${p.insurer || p.policyNum || "this policy"}"? This cannot be undone.`}
+                        ariaLabelEdit={`Edit insurance policy ${p.insurer || p.policyNum || p.id}`}
+                        ariaLabelDelete={`Delete insurance policy ${p.insurer || p.policyNum || p.id}`}
+                      />
                     </td>
                   </tr>
                 ))}

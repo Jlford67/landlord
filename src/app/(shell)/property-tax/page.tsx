@@ -2,6 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import RowActions from "@/components/ui/RowActions";
+import IconButton from "@/components/ui/IconButton";
+import { Receipt, Search } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -70,6 +75,13 @@ async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> 
   }
 
   return null;
+}
+
+async function deleteTaxAccount(id: string) {
+  "use server";
+  await requireUser();
+  await prisma.propertyTaxAccount.delete({ where: { id } });
+  redirect("/property-tax?msg=deleted");
 }
 
 const taxColumns = [
@@ -164,15 +176,23 @@ export default async function PropertyTaxPage({
     <div className="ll_page">
       <div className="ll_panel">
         <div className="ll_topbar">
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Property tax</div>
-            <div className="ll_muted">
-              {selectedProperty ? "Tax accounts for selected property." : "All tax accounts across all properties."}
+          <div className="flex items-center gap-3">
+            <PageTitleIcon className="bg-amber-100 text-amber-700">
+              <Receipt size={18} />
+            </PageTitleIcon>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Property tax</div>
+              <div className="ll_muted">
+                {selectedProperty ? "Tax accounts for selected property." : "All tax accounts across all properties."}
+              </div>
             </div>
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btn" href={addHref}>
+            <Link className="ll_btn" href="/dashboard">
+              Back
+            </Link>
+            <Link className="ll_btn ll_btnPrimary" href={addHref}>
               Add tax account
             </Link>
           </div>
@@ -201,8 +221,8 @@ export default async function PropertyTaxPage({
         {msg === "deleted" && <div className="ll_notice">Tax account deleted.</div>}
 
         <form method="get" className="ll_form" style={{ marginTop: 14 }}>
-          <div className="ll_grid2">
-            <label>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="flex-1 min-w-[220px]">
               Search (property, authority, parcel, bill #)
               <input
                 className="ll_input"
@@ -214,7 +234,7 @@ export default async function PropertyTaxPage({
               />
             </label>
 
-            <label>
+            <label className="flex-1 min-w-[220px]">
               Property filter (optional)
               <select name="propertyId" className="ll_input" defaultValue={propertyId} suppressHydrationWarning>
                 <option value="">All properties</option>
@@ -225,15 +245,17 @@ export default async function PropertyTaxPage({
                 ))}
               </select>
             </label>
-          </div>
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-              Search
-            </button>
+            <IconButton
+              className="ll_btn ll_btnPrimary"
+              type="submit"
+              ariaLabel="Search"
+              title="Search"
+              icon={<Search size={18} />}
+            />
 
             {(q || propertyId) && (
-              <Link className="ll_btnSecondary" href="/property-tax">
+              <Link className="ll_btn" href="/property-tax">
                 Clear
               </Link>
             )}
@@ -281,9 +303,13 @@ export default async function PropertyTaxPage({
                     <td>{fmtDate(a.lastPaid)}</td>
                     <td>{a.email || "-"}</td>
                     <td style={{ whiteSpace: "nowrap" }}>
-                      <Link className="ll_btnSecondary" href={`/property-tax/${a.id}/edit`}>
-                        Edit
-                      </Link>
+                      <RowActions
+                        editHref={`/property-tax/${a.id}/edit`}
+                        deleteAction={deleteTaxAccount.bind(null, a.id)}
+                        deleteConfirmText={`Delete property tax account "${a.name || a.billNumber || "this account"}"? This cannot be undone.`}
+                        ariaLabelEdit={`Edit property tax account ${a.name || a.billNumber || a.id}`}
+                        ariaLabelDelete={`Delete property tax account ${a.name || a.billNumber || a.id}`}
+                      />
                     </td>
                   </tr>
                 ))}

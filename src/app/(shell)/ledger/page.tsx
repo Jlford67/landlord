@@ -2,6 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import IconButton from "@/components/ui/IconButton";
+import { BookOpen, Search } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -51,39 +54,44 @@ export default async function LedgerPickerPage({
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Ledger
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Pick a property to view and edit transactions.
-        </p>
+        <div className="flex items-center gap-3">
+          <PageTitleIcon className="bg-amber-100 text-amber-700">
+            <BookOpen size={18} />
+          </PageTitleIcon>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+              Ledger
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Pick a property to view and edit transactions.
+            </p>
+          </div>
+        </div>
 
         <form method="get" className="mt-4">
-          <label className="block text-sm font-medium text-slate-700">
-            Search (nickname, street, city, state, zip)
+          <div className="ll_label mb-1">Search (nickname, street, city, state, zip)</div>
+          <div className="flex items-center gap-2">
             <input
-              className="mt-2 w-full max-w-xl rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-slate-300"
+              className="ll_input"
               name="q"
               defaultValue={q}
               placeholder="Type and press Enter…"
               autoComplete="off"
               suppressHydrationWarning
             />
-          </label>
 
-          <div className="mt-3 flex items-center gap-2">
-            <button
+            <IconButton
               type="submit"
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
-              suppressHydrationWarning
-            >
-              Search
-            </button>
+              className="ll_btn ll_btnPrimary"
+              ariaLabel="Search"
+              title="Search"
+              icon={<Search size={18} />}
+            />
 
             {q ? (
               <Link
                 href="/ledger"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
+                className="ll_btn"
               >
                 Clear
               </Link>

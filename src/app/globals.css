@@ -81,6 +81,35 @@ a:hover{ text-decoration: underline; }
   overflow-x: hidden;
 }
 
+.ll_shell_bg{
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.ll_shell{
+  display: flex;
+  min-height: 100vh;
+}
+
+.ll_shell_sidebar{
+  width: 240px;
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  background: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 45%, #e5e7eb 100%);
+}
+
+.ll_shell_main{
+  flex: 1;
+  min-width: 0;
+  background: #f1f3f6;
+}
+
+.ll_shell_mainInner{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 28px;
+}
+
 /* =========================
    Typography
    ========================= */

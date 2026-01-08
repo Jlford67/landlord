@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import { BarChart3 } from "lucide-react";
 
 type ReportItem = {
   title: string;
@@ -148,9 +150,14 @@ export default async function ReportsIndexPage() {
     <div className="ll_page">
       <div className="ll_panel ll_stack" style={{ gap: 24 }}>
         <div className="ll_rowBetween items-start gap-3">
-          <div className="ll_stack" style={{ gap: 4 }}>
-            <h1>Reports</h1>
-            <p className="ll_muted">Portfolio reporting and exports.</p>
+          <div className="flex items-center gap-3">
+            <PageTitleIcon className="bg-amber-100 text-amber-700">
+              <BarChart3 size={18} />
+            </PageTitleIcon>
+            <div className="ll_stack" style={{ gap: 4 }}>
+              <h1>Reports</h1>
+              <p className="ll_muted">Portfolio reporting and exports.</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" className="ll_btn ll_btnSecondary" disabled>

@@ -94,6 +94,19 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     }
 
     const now = new Date();
+    const propertyManagerCompanyId = String(form.get("propertyManagerCompanyId") ?? "").trim();
+    const propertyManagerContactId = String(form.get("propertyManagerContactId") ?? "").trim();
+
+    let resolvedContactId: string | null = propertyManagerContactId || null;
+    if (propertyManagerCompanyId && resolvedContactId) {
+      const contact = await prisma.propertyManagerContact.findUnique({
+        where: { id: resolvedContactId },
+        select: { companyId: true },
+      });
+      if (!contact || contact.companyId !== propertyManagerCompanyId) {
+        resolvedContactId = null;
+      }
+    }
 
     await prisma.property.update({
       where: { id },
@@ -121,6 +134,23 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         redfinUrl,
       },
     });
+
+    if (propertyManagerCompanyId) {
+      await prisma.propertyManagerAssignment.upsert({
+        where: { propertyId: id },
+        create: {
+          propertyId: id,
+          companyId: propertyManagerCompanyId,
+          contactId: resolvedContactId,
+        },
+        update: {
+          companyId: propertyManagerCompanyId,
+          contactId: resolvedContactId,
+        },
+      });
+    } else {
+      await prisma.propertyManagerAssignment.deleteMany({ where: { propertyId: id } });
+    }
 
     return NextResponse.redirect(new URL(`/properties/${id}`, req.url));
   } catch (err) {

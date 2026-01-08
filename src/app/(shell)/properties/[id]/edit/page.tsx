@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyThumb from "@/components/properties/PropertyThumb";
+import PropertyManagerAssignmentFields from "@/components/properties/PropertyManagerAssignmentFields";
 
 function inputValue<T extends string | number | null | undefined>(value: T) {
   if (value === null || value === undefined) return "";
@@ -30,12 +31,23 @@ export default async function EditPropertyPage({
   await requireUser();
   const { id } = await params;
 
-  const property = await prisma.property.findUnique({ where: { id } });
+  const [property, companies, contacts, assignment] = await Promise.all([
+    prisma.property.findUnique({ where: { id } }),
+    prisma.propertyManagerCompany.findMany({ orderBy: [{ name: "asc" }], select: { id: true, name: true } }),
+    prisma.propertyManagerContact.findMany({
+      orderBy: [{ name: "asc" }],
+      select: { id: true, companyId: true, name: true, email: true, phone: true },
+    }),
+    prisma.propertyManagerAssignment.findUnique({
+      where: { propertyId: id },
+      select: { companyId: true, contactId: true },
+    }),
+  ]);
   if (!property) notFound();
 
   return (
     <div className="ll_page">
-      <div className="ll_panel">
+      <div className="ll_panel" suppressHydrationWarning>
         <div className="ll_topbar">
           <div className="flex items-center gap-3">
             <PropertyThumb propertyId={property.id} />
@@ -205,6 +217,17 @@ export default async function EditPropertyPage({
               />
             </div>
           </div>
+
+          <div className="ll_divider" />
+          <div className="ll_card_title" id="property-manager" style={{ fontSize: 14 }}>
+            Property manager
+          </div>
+          <PropertyManagerAssignmentFields
+            companies={companies}
+            contacts={contacts}
+            initialCompanyId={assignment?.companyId ?? null}
+            initialContactId={assignment?.contactId ?? null}
+          />
 
           <div className="ll_divider" />
           <div className="ll_card_title" style={{ fontSize: 14 }}>

@@ -5,6 +5,8 @@ import { saveAnnualLine, deleteAnnualLine } from "./actions";
 import { promises as fs } from "fs";
 import path from "path";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import IconButton from "@/components/ui/IconButton";
+import { Save, Trash2 } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -224,14 +226,13 @@ export default async function PropertyAnnualPage(props: PageProps) {
             data-lpignore="true"
           />
 
-          <button
+          <IconButton
             className="ll_btn ll_btn_primary"
             type="submit"
-            suppressHydrationWarning
-            data-lpignore="true"
-          >
-            Save
-          </button>
+            ariaLabel="Save"
+            title="Save"
+            icon={<Save size={18} />}
+          />
         </form>
 
         <div className="ll_muted mt-2">
@@ -288,14 +289,13 @@ export default async function PropertyAnnualPage(props: PageProps) {
                           <input type="hidden" name="propertyId" value={propertyId} />
                           <input type="hidden" name="year" value={year} />
                           <input type="hidden" name="id" value={r.id} />
-                          <button
-                            className="ll_btn ll_btn_danger"
+                          <IconButton
+                            className="ll_btn ll_btnLink"
                             type="submit"
-                            suppressHydrationWarning
-                            data-lpignore="true"
-                          >
-                            Delete
-                          </button>
+                            ariaLabel={`Delete ${r.category.name} (${year})`}
+                            title="Delete"
+                            icon={<Trash2 size={18} className="text-red-600" />}
+                          />
                         </form>
                       </td>
                     </tr>

@@ -158,36 +158,51 @@ model LeaseTenant {
   @@unique([leaseId, tenantId])
 }
 
-model PropertyManager {
-  id          String  @id @default(cuid())
-  companyName String
-  contactName String?
-  email       String?
-  phone       String?
-  website     String?
-  address1    String?
-  city        String?
-  state       String?
-  zip         String?
+model PropertyManagerCompany {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  phone    String?
+  email    String?
+  website  String?
+  address1 String?
+  city     String?
+  state    String?
+  zip      String?
+  notes    String?
 
+  contacts    PropertyManagerContact[]
   assignments PropertyManagerAssignment[]
+}
+
+model PropertyManagerContact {
+  id        String  @id @default(cuid())
+  companyId String
+  name      String
+  phone     String?
+  email     String?
+  notes     String?
+
+  company     PropertyManagerCompany      @relation(fields: [companyId], references: [id])
+  assignments PropertyManagerAssignment[]
+
+  @@index([companyId])
 }
 
 model PropertyManagerAssignment {
   id         String    @id @default(cuid())
-  propertyId String
-  pmId       String
+  propertyId String    @unique
+  companyId  String
+  contactId  String?
   startDate  DateTime?
   endDate    DateTime?
-  feeType    String? // "percent" or "flat"
-  feeValue   Float?
   notes      String?
 
-  property Property        @relation(fields: [propertyId], references: [id])
-  pm       PropertyManager @relation(fields: [pmId], references: [id])
+  property Property               @relation(fields: [propertyId], references: [id])
+  company  PropertyManagerCompany @relation(fields: [companyId], references: [id])
+  contact  PropertyManagerContact? @relation(fields: [contactId], references: [id])
 
-  @@index([propertyId])
-  @@index([pmId])
+  @@index([companyId])
+  @@index([contactId])
 }
 
 model AnnualCategoryAmount {
