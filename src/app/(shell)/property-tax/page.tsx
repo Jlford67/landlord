@@ -3,7 +3,9 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import RowActions from "@/components/ui/RowActions";
 import { Receipt } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -72,6 +74,13 @@ async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> 
   }
 
   return null;
+}
+
+async function deleteTaxAccount(id: string) {
+  "use server";
+  await requireUser();
+  await prisma.propertyTaxAccount.delete({ where: { id } });
+  redirect("/property-tax?msg=deleted");
 }
 
 const taxColumns = [
@@ -291,9 +300,13 @@ export default async function PropertyTaxPage({
                     <td>{fmtDate(a.lastPaid)}</td>
                     <td>{a.email || "-"}</td>
                     <td style={{ whiteSpace: "nowrap" }}>
-                      <Link className="ll_btnSecondary" href={`/property-tax/${a.id}/edit`}>
-                        Edit
-                      </Link>
+                      <RowActions
+                        editHref={`/property-tax/${a.id}/edit`}
+                        deleteAction={deleteTaxAccount.bind(null, a.id)}
+                        deleteConfirmText={`Delete property tax account "${a.name || a.billNumber || "this account"}"? This cannot be undone.`}
+                        ariaLabelEdit={`Edit property tax account ${a.name || a.billNumber || a.id}`}
+                        ariaLabelDelete={`Delete property tax account ${a.name || a.billNumber || a.id}`}
+                      />
                     </td>
                   </tr>
                 ))}

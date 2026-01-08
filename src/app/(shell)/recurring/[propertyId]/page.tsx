@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import RowActions from "@/components/ui/RowActions";
 
 interface PageProps {
   params: { propertyId?: string; id?: string };
@@ -74,12 +75,7 @@ export default async function PropertyRecurringPage({ params, searchParams }: Pa
                     <td>{item.frequency}</td>
                     <td>{item.nextPostDate ? item.nextPostDate.toISOString().slice(0, 10) : "—"}</td>
                     <td className="text-right">
-                      <Link
-                        href={`/recurring/${item.id}/edit`}
-                        className="ll_btn ll_btn_secondary"
-                      >
-                        Edit
-                      </Link>
+                      <RowActions editHref={`/recurring/${item.id}/edit`} ariaLabelEdit={`Edit ${item.name}`} />
                     </td>
                   </tr>
                 ))}

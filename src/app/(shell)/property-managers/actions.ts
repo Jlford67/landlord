@@ -103,3 +103,15 @@ export async function deletePropertyManagerContact(contactId: string, companyId:
 
   redirect(`/property-managers/${companyId}/edit?msg=contact-deleted`);
 }
+
+export async function deletePropertyManagerCompany(companyId: string) {
+  await requireUser();
+
+  await prisma.$transaction([
+    prisma.propertyManagerAssignment.deleteMany({ where: { companyId } }),
+    prisma.propertyManagerContact.deleteMany({ where: { companyId } }),
+    prisma.propertyManagerCompany.delete({ where: { id: companyId } }),
+  ]);
+
+  redirect("/property-managers?msg=deleted");
+}

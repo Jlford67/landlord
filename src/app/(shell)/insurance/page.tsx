@@ -3,7 +3,9 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import RowActions from "@/components/ui/RowActions";
 import { Shield } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -29,6 +31,13 @@ function money(n?: number | null) {
 function fmtDate(d?: Date | null) {
   if (!d) return "-";
   return new Date(d).toLocaleDateString("en-US", { timeZone: "UTC" });
+}
+
+async function deleteInsurancePolicy(id: string) {
+  "use server";
+  await requireUser();
+  await prisma.insurancePolicy.delete({ where: { id } });
+  redirect("/insurance?msg=deleted");
 }
 
 function propertyLabel(p: {
@@ -292,9 +301,13 @@ export default async function InsurancePage({
                       )}
                     </td>
                     <td style={{ whiteSpace: "nowrap" }}>
-                      <Link className="ll_btnSecondary" href={`/insurance/${p.id}/edit`}>
-                        Edit
-                      </Link>
+                      <RowActions
+                        editHref={`/insurance/${p.id}/edit`}
+                        deleteAction={deleteInsurancePolicy.bind(null, p.id)}
+                        deleteConfirmText={`Delete insurance policy "${p.insurer || p.policyNum || "this policy"}"? This cannot be undone.`}
+                        ariaLabelEdit={`Edit insurance policy ${p.insurer || p.policyNum || p.id}`}
+                        ariaLabelDelete={`Delete insurance policy ${p.insurer || p.policyNum || p.id}`}
+                      />
                     </td>
                   </tr>
                 ))}

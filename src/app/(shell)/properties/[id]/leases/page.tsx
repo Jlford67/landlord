@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { LeaseStatus } from "@prisma/client";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
+import RowActions from "@/components/ui/RowActions";
 
 function money(n: number) {
   return n.toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -135,12 +136,10 @@ export default async function PropertyLeasesPage({
                       </div>
 
                       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <Link
-                          className="ll_btnSecondary"
-                          href={`/properties/${property.id}/leases/${l.id}/edit`}
-                        >
-                          Edit
-                        </Link>
+                        <RowActions
+                          editHref={`/properties/${property.id}/leases/${l.id}/edit`}
+                          ariaLabelEdit={`Edit lease ${fmtDate(l.startDate)} to ${fmtDate(l.endDate)}`}
+                        />
 
                         {!isEnded ? (
                           <form

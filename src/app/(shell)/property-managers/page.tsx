@@ -3,7 +3,9 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import RowActions from "@/components/ui/RowActions";
 import { Building2 } from "lucide-react";
+import { deletePropertyManagerCompany } from "./actions";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -244,10 +246,14 @@ export default async function PropertyManagersPage({
                     <td>{company._count.assignments}</td>
                     <td>{company.phone || "-"}</td>
                     <td>{company.email || "-"}</td>
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <Link className="ll_btnSecondary" href={`/property-managers/${company.id}/edit`}>
-                        Edit
-                      </Link>
+                    <td>
+                      <RowActions
+                        editHref={`/property-managers/${company.id}/edit`}
+                        deleteAction={deletePropertyManagerCompany.bind(null, company.id)}
+                        deleteConfirmText={`Delete property manager company "${company.name}"? This cannot be undone.`}
+                        ariaLabelEdit={`Edit ${company.name}`}
+                        ariaLabelDelete={`Delete ${company.name}`}
+                      />
                     </td>
                   </tr>
                 ))}
