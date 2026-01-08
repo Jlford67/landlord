@@ -209,8 +209,8 @@ export default async function InsurancePage({
         {/* Filters */}
         <div className="ll_card" style={{ marginTop: 14, marginBottom: 14 }}>
           <form method="get" className="ll_form" style={{ margin: 0 }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label>
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="flex-1 min-w-[220px]">
                 Search (property, insurer, policy #, agent)
                 <input
                   className="ll_input"
@@ -222,7 +222,7 @@ export default async function InsurancePage({
                 />
               </label>
 
-              <label>
+              <label className="flex-1 min-w-[220px]">
                 Property filter (optional)
                 <select
                   name="propertyId"
@@ -238,14 +238,6 @@ export default async function InsurancePage({
                   ))}
                 </select>
               </label>
-            </div>
-
-            <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end" }}>
-              {(q || propertyId) && (
-                <Link className="ll_btn" href="/insurance">
-                  Clear
-                </Link>
-              )}
 
               <IconButton
                 className="ll_btn ll_btnPrimary"
@@ -254,6 +246,12 @@ export default async function InsurancePage({
                 title="Search"
                 icon={<Search size={18} />}
               />
+
+              {(q || propertyId) && (
+                <Link className="ll_btn" href="/insurance">
+                  Clear
+                </Link>
+              )}
             </div>
           </form>
         </div>

@@ -69,22 +69,20 @@ export default async function LedgerPickerPage({
         </div>
 
         <form method="get" className="mt-4">
-          <label className="block text-sm font-medium text-slate-700">
-            Search (nickname, street, city, state, zip)
+          <div className="ll_label mb-1">Search (nickname, street, city, state, zip)</div>
+          <div className="flex flex-wrap items-center gap-2">
             <input
-              className="mt-2 w-full max-w-xl rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-slate-300"
+              className="ll_input"
               name="q"
               defaultValue={q}
               placeholder="Type and press Enter…"
               autoComplete="off"
               suppressHydrationWarning
             />
-          </label>
 
-          <div className="mt-3 flex items-center gap-2">
             <IconButton
               type="submit"
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
+              className="ll_btn ll_btnPrimary"
               ariaLabel="Search"
               title="Search"
               icon={<Search size={18} />}
@@ -93,7 +91,7 @@ export default async function LedgerPickerPage({
             {q ? (
               <Link
                 href="/ledger"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
+                className="ll_btn"
               >
                 Clear
               </Link>

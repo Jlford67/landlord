@@ -221,8 +221,8 @@ export default async function PropertyTaxPage({
         {msg === "deleted" && <div className="ll_notice">Tax account deleted.</div>}
 
         <form method="get" className="ll_form" style={{ marginTop: 14 }}>
-          <div className="ll_grid2">
-            <label>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="flex-1 min-w-[220px]">
               Search (property, authority, parcel, bill #)
               <input
                 className="ll_input"
@@ -234,7 +234,7 @@ export default async function PropertyTaxPage({
               />
             </label>
 
-            <label>
+            <label className="flex-1 min-w-[220px]">
               Property filter (optional)
               <select name="propertyId" className="ll_input" defaultValue={propertyId} suppressHydrationWarning>
                 <option value="">All properties</option>
@@ -245,11 +245,9 @@ export default async function PropertyTaxPage({
                 ))}
               </select>
             </label>
-          </div>
 
-          <div style={{ display: "flex", gap: 10 }}>
             <IconButton
-              className="ll_btnSecondary"
+              className="ll_btn ll_btnPrimary"
               type="submit"
               ariaLabel="Search"
               title="Search"
@@ -257,7 +255,7 @@ export default async function PropertyTaxPage({
             />
 
             {(q || propertyId) && (
-              <Link className="ll_btnSecondary" href="/property-tax">
+              <Link className="ll_btn" href="/property-tax">
                 Clear
               </Link>
             )}
