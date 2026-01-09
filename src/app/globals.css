@@ -1239,4 +1239,6 @@ a.ll_btn.ll_btnDanger:visited{
   .ll_list_sub { @apply text-sm text-gray-500 truncate; }
 
   .ll_actions { @apply flex items-center gap-2; }
+  .ll_field { @apply flex flex-col gap-1; }
+
 }

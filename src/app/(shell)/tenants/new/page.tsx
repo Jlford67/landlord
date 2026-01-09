@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import TenantFormMount from "./TenantFormMount";
 
 export default async function NewTenantPage({
   searchParams,
@@ -10,7 +10,7 @@ export default async function NewTenantPage({
 
   const sp = searchParams ? await searchParams : undefined;
   const returnTo = sp?.returnTo || "/properties";
-
+  
   return (
     <div className="ll_page" suppressHydrationWarning>
       <div className="ll_panel">
@@ -23,44 +23,8 @@ export default async function NewTenantPage({
           </div>
         </div>
 
-        <form className="ll_form" action="/api/tenants" method="post">
-          <input type="hidden" name="returnTo" value={returnTo} />
+        <TenantFormMount returnTo={returnTo} />
 
-          <label>
-            First name
-            <input className="ll_input" name="firstName" required />
-          </label>
-
-          <label>
-            Last name
-            <input className="ll_input" name="lastName" required />
-          </label>
-
-          <label>
-            Email (optional)
-            <input className="ll_input" name="email" />
-          </label>
-
-          <label>
-            Phone (optional)
-            <input className="ll_input" name="phone" />
-          </label>
-
-          <label>
-            Notes (optional)
-            <input className="ll_input" name="notes" />
-          </label>
-
-          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <button className="ll_btn" type="submit">
-              Save tenant
-            </button>
-
-            <Link className="ll_btnSecondary" href={returnTo}>
-              Cancel
-            </Link>
-          </div>
-        </form>
       </div>
     </div>
   );

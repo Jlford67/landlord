@@ -14,7 +14,14 @@ export default function IconButton({
   className?: string;
 }) {
   return (
-    <button className={className} type={type} aria-label={ariaLabel} title={title}>
+    <button
+      className={className}
+      type={type}
+      aria-label={ariaLabel}
+      title={title}
+      data-lpignore="true"
+      data-1p-ignore
+    >
       {icon}
     </button>
   );

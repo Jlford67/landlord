@@ -6,6 +6,7 @@ import RowActions from "@/components/ui/RowActions";
 import IconButton from "@/components/ui/IconButton";
 import { Search, Users } from "lucide-react";
 import { deleteTenant } from "./actions";
+import TenantsSearchMount from "./TenantsSearchMount";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -69,35 +70,8 @@ export default async function TenantsPage({
         {msg === "deleted" && <div className="ll_notice">Tenant deleted.</div>}
         {msg === "blocked" && <div className="ll_notice">Tenant is linked to leases and cannot be deleted.</div>}
 
-        <div className="ll_card" style={{ marginTop: 14, marginBottom: 14 }}>
-          <form method="get" className="ll_form" style={{ margin: 0 }}>
-            <div className="ll_label mb-1">Search (name, email, phone)</div>
-            <div className="flex items-center gap-2">
-              <input
-                className="ll_input"
-                name="q"
-                defaultValue={q}
-                placeholder="Type and press Enter..."
-                autoComplete="off"
-                suppressHydrationWarning
-              />
+<TenantsSearchMount q={q} />
 
-              <IconButton
-                className="ll_btn ll_btnPrimary"
-                type="submit"
-                ariaLabel="Search"
-                title="Search"
-                icon={<Search size={18} />}
-              />
-
-              {q && (
-                <Link className="ll_btn" href="/tenants">
-                  Clear
-                </Link>
-              )}
-            </div>
-          </form>
-        </div>
 
         <div className="ll_table_wrap" style={{ marginTop: 14 }}>
           {tenants.length ? (
@@ -132,7 +106,9 @@ export default async function TenantsPage({
               </tbody>
             </table>
           ) : (
-            <div className="ll_muted">No tenants found.</div>
+		  
+          <div className="ll_muted">No tenants found.</div>
+
           )}
         </div>
       </div>
