@@ -141,14 +141,35 @@ async function main() {
     const signedAmount = cat.type === "expense" ? -r.amount : r.amount;
 
     const existing = await prisma.annualCategoryAmount.findUnique({
-      where: { propertyId_year_categoryId: { propertyId, year: r.year, categoryId: cat.id } },
+      where: {
+        propertyId_year_categoryId_propertyOwnershipId: {
+          propertyId,
+          year: r.year,
+          categoryId: cat.id,
+          propertyOwnershipId: null,
+        },
+      },
       select: { id: true },
     });
 
     await prisma.annualCategoryAmount.upsert({
-      where: { propertyId_year_categoryId: { propertyId, year: r.year, categoryId: cat.id } },
-      update: { amount: signedAmount, note: r.note ?? null },
-      create: { propertyId, year: r.year, categoryId: cat.id, amount: signedAmount, note: r.note ?? null },
+      where: {
+        propertyId_year_categoryId_propertyOwnershipId: {
+          propertyId,
+          year: r.year,
+          categoryId: cat.id,
+          propertyOwnershipId: null,
+        },
+      },
+      update: { amount: signedAmount, note: r.note ?? null, propertyOwnershipId: null },
+      create: {
+        propertyId,
+        year: r.year,
+        categoryId: cat.id,
+        amount: signedAmount,
+        note: r.note ?? null,
+        propertyOwnershipId: null,
+      },
     });
 
     if (existing) updated++;
