@@ -43,6 +43,7 @@ export async function POST(
 
     const startDateRaw = (formData.get("startDate")?.toString() || "").trim();
     const endDateRaw = (formData.get("endDate")?.toString() || "").trim();
+    const unitLabelRaw = (formData.get("unitLabel")?.toString() || "").trim();
     const rentAmountRaw = (formData.get("rentAmount")?.toString() || "").trim();
     const dueDayRaw = (formData.get("dueDay")?.toString() || "").trim();
     const depositRaw = (formData.get("deposit")?.toString() || "").trim();
@@ -94,6 +95,7 @@ export async function POST(
         back.searchParams.set("overlap", "1");
         back.searchParams.set("startDate", startDateRaw);
         if (endDateRaw) back.searchParams.set("endDate", endDateRaw);
+        if (unitLabelRaw) back.searchParams.set("unitLabel", unitLabelRaw);
         back.searchParams.set("rentAmount", rentAmountRaw);
         back.searchParams.set("dueDay", dueDayRaw);
         if (depositRaw) back.searchParams.set("deposit", depositRaw);
@@ -130,6 +132,7 @@ export async function POST(
           rentAmount,
           dueDay,
           deposit,
+          unitLabel: unitLabelRaw.length ? unitLabelRaw : null,
           status,
           managedByPm,
           notes: notesRaw.length ? notesRaw : null,

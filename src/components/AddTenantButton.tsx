@@ -38,6 +38,7 @@ export default function AddTenantButton({
 
     const startDate = getVal("startDate");
     const endDate = getVal("endDate");
+    const unitLabel = getVal("unitLabel");
     const rentAmount = getVal("rentAmount");
     const dueDay = getVal("dueDay");
     const deposit = getVal("deposit");
@@ -55,6 +56,7 @@ export default function AddTenantButton({
       `${returnToBasePath}` +
       `?startDate=${qsEncode(startDate)}` +
       `&endDate=${qsEncode(endDate)}` +
+      `&unitLabel=${qsEncode(unitLabel)}` +
       `&rentAmount=${qsEncode(rentAmount)}` +
       `&dueDay=${qsEncode(dueDay)}` +
       `&deposit=${qsEncode(deposit)}` +

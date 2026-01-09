@@ -54,6 +54,7 @@ export default async function EditLeasePage({
   // otherwise fall back to current lease values.
   const startDateQ = getStr(sp, "startDate");
   const endDateQ = getStr(sp, "endDate");
+  const unitLabelQ = getStr(sp, "unitLabel");
   const rentAmountQ = getStr(sp, "rentAmount");
   const dueDayQ = getStr(sp, "dueDay");
   const depositQ = getStr(sp, "deposit");
@@ -63,6 +64,7 @@ export default async function EditLeasePage({
 
   const defaultStartDate = startDateQ || toDateInputValue(lease.startDate);
   const defaultEndDate = endDateQ || (lease.endDate ? toDateInputValue(lease.endDate) : "");
+  const defaultUnitLabel = unitLabelQ || lease.unitLabel || "";
   const defaultRentAmount = rentAmountQ || String(lease.rentAmount);
   const defaultDueDay = dueDayQ || String(lease.dueDay);
   const defaultDeposit =
@@ -142,6 +144,17 @@ export default async function EditLeasePage({
           <label>
             End date (optional)
             <input className="ll_input" type="date" name="endDate" defaultValue={defaultEndDate} />
+          </label>
+
+          <label>
+            Unit / Room (optional)
+            <input
+              className="ll_input"
+              type="text"
+              name="unitLabel"
+              defaultValue={defaultUnitLabel}
+              placeholder="Unit A"
+            />
           </label>
 
           <label>

@@ -137,6 +137,7 @@ model Lease {
   rentAmount  Float
   dueDay      Int         @default(1)
   deposit     Float?
+  unitLabel   String?
   status      LeaseStatus @default(active)
   managedByPm Boolean     @default(true)
   notes       String?

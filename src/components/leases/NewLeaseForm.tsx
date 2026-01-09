@@ -14,6 +14,7 @@ export default function NewLeaseForm(props: {
 
   defaultStartDate: string;
   defaultEndDate: string;
+  defaultUnitLabel: string;
   defaultRentAmount: string;
   defaultDueDay: number;
   defaultDeposit: string;
@@ -93,6 +94,17 @@ export default function NewLeaseForm(props: {
           type="date"
           name="endDate"
           defaultValue={props.defaultEndDate}
+        />
+      </label>
+
+      <label>
+        Unit / Room (optional)
+        <input
+          className="ll_input"
+          type="text"
+          name="unitLabel"
+          defaultValue={props.defaultUnitLabel}
+          placeholder="Unit A"
         />
       </label>
 

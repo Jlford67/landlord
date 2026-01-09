@@ -65,6 +65,7 @@ export default async function NewLeasePage({
   // Defaults from query string (used when returning from Add Tenant)
   const defaultStartDate = getStr(sp, "startDate");
   const defaultEndDate = getStr(sp, "endDate");
+  const defaultUnitLabel = getStr(sp, "unitLabel");
   const defaultRentAmount = getStr(sp, "rentAmount");
   const defaultDueDay = getStr(sp, "dueDay") || "1";
   const defaultDeposit = getStr(sp, "deposit");
@@ -124,6 +125,7 @@ export default async function NewLeasePage({
             actionHref={`/api/properties/${property.id}/leases`}
             defaultStartDate={defaultStartDate}
             defaultEndDate={defaultEndDate}
+            defaultUnitLabel={defaultUnitLabel}
             defaultRentAmount={defaultRentAmount}
             defaultDueDay={Number(defaultDueDay || 1)}
             defaultDeposit={defaultDeposit}

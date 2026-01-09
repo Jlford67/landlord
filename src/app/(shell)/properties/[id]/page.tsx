@@ -99,11 +99,16 @@ export default async function PropertyDetailPage({
 
   if (!property) notFound();
 
+  const activeLeases = await prisma.lease.findMany({
+    where: { propertyId: id, status: "active" },
+    orderBy: [{ startDate: "desc" }],
+    include: { leaseTenants: { include: { tenant: true } } },
+  });
+
   const title =
     property.nickname?.trim() ||
     `${property.street}, ${property.city}, ${property.state} ${property.zip}`;
 
-  const activeLease = property.leases.find((l) => l.status === "active");
   const annualYear = new Date().getUTCFullYear();
 
   return (
@@ -324,32 +329,45 @@ export default async function PropertyDetailPage({
           </div>
 
           <div className="mt-3 text-sm text-gray-700">
-            {activeLease ? (
-              <div className="space-y-1">
-                <div>
-                  <span className="ll_label">Active:</span> {fmtDate(activeLease.startDate)}{" "}
-                  <span className="ll_muted">to</span>{" "}
-                  {activeLease.endDate ? fmtDate(activeLease.endDate) : "open"}{" "}
-                  <span className="ll_muted">• due day {activeLease.dueDay}</span>
-                </div>
+            {activeLeases.length ? (
+              <div className="space-y-3">
+                {activeLeases.map((lease) => (
+                  <div key={lease.id} className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {lease.unitLabel ? (
+                        <span className="ll_pill">{lease.unitLabel}</span>
+                      ) : null}
+                      <span className="ll_label">Active:</span> {fmtDate(lease.startDate)}{" "}
+                      <span className="ll_muted">to</span>{" "}
+                      {lease.endDate ? fmtDate(lease.endDate) : "open"}{" "}
+                      <span className="ll_muted">• due day {lease.dueDay}</span>
+                      <Link
+                        className="ll_btn ll_btnLink"
+                        href={`/properties/${property.id}/leases/${lease.id}/edit`}
+                      >
+                        Edit
+                      </Link>
+                    </div>
 
-                <div>
-                  <span className="ll_label">Rent:</span> <Money value={activeLease.rentAmount} />{" "}
-                  <span className="ll_label">Deposit:</span> <Money value={activeLease.deposit} />
-                </div>
+                    <div>
+                      <span className="ll_label">Rent:</span> <Money value={lease.rentAmount} />{" "}
+                      <span className="ll_label">Deposit:</span> <Money value={lease.deposit} />
+                    </div>
 
-                <div>
-                  <span className="ll_label">Managed by PM:</span> {activeLease.managedByPm ? "Yes" : "No"}
-                </div>
+                    <div>
+                      <span className="ll_label">Managed by PM:</span> {lease.managedByPm ? "Yes" : "No"}
+                    </div>
 
-                <div>
-                  <span className="ll_label">Tenants:</span>{" "}
-                  {activeLease.leaseTenants.length
-                    ? activeLease.leaseTenants
-                        .map((lt) => `${lt.tenant.lastName}, ${lt.tenant.firstName}`)
-                        .join(", ")
-                    : "n/a"}
-                </div>
+                    <div>
+                      <span className="ll_label">Tenants:</span>{" "}
+                      {lease.leaseTenants.length
+                        ? lease.leaseTenants
+                            .map((lt) => `${lt.tenant.lastName}, ${lt.tenant.firstName}`)
+                            .join(", ")
+                        : "n/a"}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="ll_muted">No active lease found.</div>

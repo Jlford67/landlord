@@ -54,6 +54,7 @@ export async function POST(
     // update
     const startDateRaw = (formData.get("startDate")?.toString() || "").trim();
     const endDateRaw = (formData.get("endDate")?.toString() || "").trim();
+    const unitLabelRaw = (formData.get("unitLabel")?.toString() || "").trim();
     const rentAmountRaw = (formData.get("rentAmount")?.toString() || "").trim();
     const dueDayRaw = (formData.get("dueDay")?.toString() || "").trim();
     const depositRaw = (formData.get("deposit")?.toString() || "").trim();
@@ -104,6 +105,7 @@ export async function POST(
           rentAmount,
           dueDay,
           deposit,
+          unitLabel: unitLabelRaw.length ? unitLabelRaw : null,
           status,
           managedByPm,
           notes: notesRaw.length ? notesRaw : null,

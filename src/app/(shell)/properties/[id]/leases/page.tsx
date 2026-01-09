@@ -130,6 +130,7 @@ export default async function PropertyLeasesPage({
                     >
                       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                         <span style={statusBadge(l.status)}>{l.status.toUpperCase()}</span>
+                        {l.unitLabel ? <span className="ll_pill">{l.unitLabel}</span> : null}
                         <div style={{ fontWeight: 800 }}>
                           {fmtDate(l.startDate)} → {fmtDate(l.endDate)}
                         </div>
