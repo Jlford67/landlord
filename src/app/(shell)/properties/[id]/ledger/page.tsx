@@ -64,6 +64,24 @@ const kpiMoney = (n: number) =>
     maximumFractionDigits: 2,
   }).format(n);
 
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function formatAmountDisplay(amount: number) {
+  if (amount === 0) {
+    return { text: currencyFormatter.format(0), className: "ll_muted" };
+  }
+
+  const abs = currencyFormatter.format(Math.abs(amount));
+
+  if (amount < 0) return { text: `(${abs})`, className: "ll_neg" };
+  return { text: abs, className: "ll_pos" };
+}
+
 type AnnualRow = Prisma.AnnualCategoryAmountGetPayload<{
   include: {
     category: { select: { id: true; name: true; type: true; parentId: true } };
@@ -85,7 +103,8 @@ export default async function PropertyLedgerPage({
   const { id: propertyId } = await params;
   const sp = await searchParams;
 
-  const month = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : ym(new Date());
+  const monthParam = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : "";
+  const month = monthParam || ym(new Date());
   const view = sp.view === "annual" ? "annual" : "monthly";
 
   const [yy, mm] = month.split("-").map(Number);
@@ -257,11 +276,6 @@ export default async function PropertyLedgerPage({
     return pct ? `${ownership.entity.name} (${pct}%)` : ownership.entity.name;
   };
 
-  const formattedAmount = (amount: number) => {
-    const abs = kpiMoney(Math.abs(amount));
-    return amount < 0 ? `(${abs})` : abs;
-  };
-
   /* ---------------- render ---------------- */
 
   return (
@@ -324,7 +338,7 @@ export default async function PropertyLedgerPage({
                     className="ll_input w-[160px]"
                     name="month"
                     type="month"
-                    defaultValue={month}
+                    defaultValue={monthParam}
                     suppressHydrationWarning
                     data-lpignore="true"
                   />
@@ -427,17 +441,24 @@ export default async function PropertyLedgerPage({
               <div className="mb-4 flex flex-wrap gap-6 text-sm">
                 <div>
                   <div className="ll_muted">Income</div>
-                  <div className="font-semibold">{kpiMoney(annualIncome)}</div>
+                  {(() => {
+                    const formatted = formatAmountDisplay(annualIncome);
+                    return <div className={`font-semibold ${formatted.className}`}>{formatted.text}</div>;
+                  })()}
                 </div>
                 <div>
                   <div className="ll_muted">Expenses</div>
-                  <div className="font-semibold ll_neg">{kpiMoney(annualExpenses)}</div>
+                  {(() => {
+                    const formatted = formatAmountDisplay(-annualExpenses);
+                    return <div className={`font-semibold ${formatted.className}`}>{formatted.text}</div>;
+                  })()}
                 </div>
                 <div>
                   <div className="ll_muted">Net</div>
-                  <div className={`font-semibold ${annualNet >= 0 ? "ll_pos" : "ll_neg"}`}>
-                    {kpiMoney(annualNet)}
-                  </div>
+                  {(() => {
+                    const formatted = formatAmountDisplay(annualNet);
+                    return <div className={`font-semibold ${formatted.className}`}>{formatted.text}</div>;
+                  })()}
                 </div>
               </div>
 
@@ -463,7 +484,10 @@ export default async function PropertyLedgerPage({
                             {row.category.name}
                           </td>
                           <td className="text-right whitespace-nowrap tabular-nums">
-                            {formattedAmount(Number(row.amount ?? 0))}
+                            {(() => {
+                              const formatted = formatAmountDisplay(Number(row.amount ?? 0));
+                              return <span className={formatted.className}>{formatted.text}</span>;
+                            })()}
                           </td>
                           <td>{ownershipLabel(row.propertyOwnership)}</td>
                           <td>{row.note || <span className="ll_muted">(none)</span>}</td>
@@ -538,7 +562,10 @@ export default async function PropertyLedgerPage({
                           <td>{t.memo || <span className="ll_muted">(none)</span>}</td>
 
                           <td className="text-right whitespace-nowrap tabular-nums">
-                            {Number(t.amount ?? 0).toFixed(2)}
+                            {(() => {
+                              const formatted = formatAmountDisplay(Number(t.amount ?? 0));
+                              return <span className={formatted.className}>{formatted.text}</span>;
+                            })()}
                           </td>
 
                           <td className="text-right">
