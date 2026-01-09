@@ -59,3 +59,6 @@ docs/
 landlord_all_years.csv
 prisma/wipe-annual.ts
 
+#backup db
+prisma/backups/
+scripts/
