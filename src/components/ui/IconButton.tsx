@@ -15,6 +15,7 @@ export default function IconButton({
 }) {
   return (
     <button
+      suppressHydrationWarning
       className={className}
       type={type}
       aria-label={ariaLabel}
