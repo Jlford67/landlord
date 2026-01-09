@@ -143,7 +143,6 @@ export async function POST(
             tenantId,
             role: idx === 0 ? "primary" : "additional",
           })),
-          skipDuplicates: true,
         });
       }
     });

@@ -132,7 +132,6 @@ export async function POST(
             tenantId,
             role: tenantIds.indexOf(tenantId) === 0 ? "primary" : "additional",
           })),
-          skipDuplicates: true,
         });
       }
     });
