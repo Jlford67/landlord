@@ -3,14 +3,9 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import { Tags, Trash2 } from "lucide-react";
+import { AddCategoryForm, CategoryInlineEditor } from "./CategoryClient";
 
 type CatType = "income" | "expense" | "transfer";
-
-function labelType(t: CatType) {
-  if (t === "income") return "Income";
-  if (t === "expense") return "Expense";
-  return "Transfer";
-}
 
 function canDelete(counts: { children: number; transactions: number }) {
   return counts.children === 0 && counts.transactions === 0;
@@ -48,6 +43,35 @@ export default async function CategoriesPage(props: {
   for (const c of categories) byType[c.type as CatType].push(c);
 
   const enabledCount = categories.filter((c) => c.active).length;
+  const categoryOptions = categories
+    .filter((c) => c.active)
+    .map((c) => ({ id: c.id, name: c.name, type: c.type as CatType, active: c.active }));
+
+  const childrenByParent = new Map<string, string[]>();
+  for (const c of categories) {
+    const key = c.parentId ?? "";
+    const list = childrenByParent.get(key) ?? [];
+    list.push(c.id);
+    childrenByParent.set(key, list);
+  }
+
+  const descendantMap = new Map<string, Set<string>>();
+  const collectDescendants = (id: string): Set<string> => {
+    const cached = descendantMap.get(id);
+    if (cached) return cached;
+    const set = new Set<string>();
+    const children = childrenByParent.get(id) ?? [];
+    for (const child of children) {
+      set.add(child);
+      for (const descendant of collectDescendants(child)) {
+        set.add(descendant);
+      }
+    }
+    descendantMap.set(id, set);
+    return set;
+  };
+
+  for (const c of categories) collectDescendants(c.id);
 
   return (
     <div className="ll_page">
@@ -81,6 +105,7 @@ export default async function CategoriesPage(props: {
           <div className="ll_notice">Category was disabled.</div>
         )}
         {msg === "notfound" && <div className="ll_notice">Category not found.</div>}
+        {msg === "updated" && <div className="ll_notice">Category updated.</div>}
 
         <div style={{ marginTop: 14 }} className="ll_panelInner">
           <div className="ll_rowBetween" style={{ marginBottom: 10 }}>
@@ -90,65 +115,30 @@ export default async function CategoriesPage(props: {
             </div>
           </div>
 
-          <form className="ll_form" method="post" action="/api/categories">
-            <div className="ll_grid2">
-              <div>
-                <label className="ll_label" htmlFor="name">
-                  Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  className="ll_input"
-                  placeholder="e.g., Plumbing, Insurance"
-                  required
-                  suppressHydrationWarning
-                />
-              </div>
-
-              <div>
-                <label className="ll_label" htmlFor="type">
-                  Type
-                </label>
-                <select id="type" name="type" className="ll_input" required suppressHydrationWarning>
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
-                  <option value="transfer">Transfer</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="ll_label" htmlFor="parentId">
-                  Parent (optional)
-                </label>
-                <select id="parentId" name="parentId" className="ll_input" suppressHydrationWarning>
-                  <option value="">(no parent)</option>
-                  {categories
-                    .filter((c) => c.active)
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {labelType(c.type as CatType)} • {c.name}
-                      </option>
-                    ))}
-                </select>
-                <div className="ll_muted">Parent type must match (enforced on submit).</div>
-              </div>
-            </div>
-
-            <div className="ll_actions">
-              <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
-                Add category
-              </button>
-            </div>
-          </form>
+          <AddCategoryForm categories={categoryOptions} />
         </div>
 
         <div style={{ marginTop: 18 }}>
           <h2 style={{ marginBottom: 10 }}>All categories</h2>
 
-          <Section title="Income" rows={byType.income} />
-          <Section title="Expense" rows={byType.expense} />
-          <Section title="Transfer" rows={byType.transfer} />
+          <Section
+            title="Income"
+            rows={byType.income}
+            categories={categoryOptions}
+            descendantMap={descendantMap}
+          />
+          <Section
+            title="Expense"
+            rows={byType.expense}
+            categories={categoryOptions}
+            descendantMap={descendantMap}
+          />
+          <Section
+            title="Transfer"
+            rows={byType.transfer}
+            categories={categoryOptions}
+            descendantMap={descendantMap}
+          />
         </div>
       </div>
 
@@ -169,6 +159,12 @@ export default async function CategoriesPage(props: {
 
         .ll_actionsCell { display:flex; justify-content:flex-end; }
         .ll_actionStack { display:inline-flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+        .ll_inlineEditor { display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+        .ll_inlineEditorForm { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+        .ll_inlineEditorFields { display:flex; gap:8px; flex-wrap:wrap; }
+        .ll_inlineEditorFields .ll_input { min-width: 160px; }
+        .ll_inlineEditorActions { display:flex; gap:8px; align-items:center; }
+        .ll_error { color: var(--danger, #dc2626); font-size: 12px; }
 
         .ll_btnDisabled {
           display: inline-flex;
@@ -188,7 +184,17 @@ export default async function CategoriesPage(props: {
   );
 }
 
-function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
+function Section({
+  title,
+  rows,
+  categories,
+  descendantMap,
+}: {
+  title: string;
+  rows: CategoryRow[];
+  categories: { id: string; name: string; type: CatType; active: boolean }[];
+  descendantMap: Map<string, Set<string>>;
+}) {
   if (rows.length === 0) return null;
 
   // Build a tree map: parentId -> children[]
@@ -245,6 +251,18 @@ function Section({ title, rows }: { title: string; rows: CategoryRow[] }) {
         {/* Column 3: Actions */}
         <div className="ll_actionsCell">
           <div className="ll_actionStack">
+            <CategoryInlineEditor
+              category={{
+                id: node.id,
+                name: node.name,
+                type: node.type as CatType,
+                active: node.active,
+                parentId: node.parentId,
+                _count: node._count,
+              }}
+              categories={categories}
+              descendantIds={Array.from(descendantMap.get(node.id) ?? new Set())}
+            />
             {/* Enable/Disable always available */}
             <form method="post" action={`/api/categories/${node.id}/toggle`} style={{ margin: 0 }}>
               <input type="hidden" name="returnTo" value="/categories" />
