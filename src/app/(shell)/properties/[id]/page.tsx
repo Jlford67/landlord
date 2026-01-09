@@ -346,7 +346,7 @@ export default async function PropertyDetailPage({
                   <span className="ll_label">Tenants:</span>{" "}
                   {activeLease.leaseTenants.length
                     ? activeLease.leaseTenants
-                        .map((lt) => `${lt.tenant.firstName} ${lt.tenant.lastName}`)
+                        .map((lt) => `${lt.tenant.lastName}, ${lt.tenant.firstName}`)
                         .join(", ")
                     : "n/a"}
                 </div>

@@ -106,7 +106,7 @@ export default async function PropertyLeasesPage({
             <div style={{ display: "grid", gap: 10 }}>
               {leases.map((l) => {
                 const tenants = l.leaseTenants
-                  .map((lt) => `${lt.tenant.firstName} ${lt.tenant.lastName}`)
+                  .map((lt) => `${lt.tenant.lastName}, ${lt.tenant.firstName}`)
                   .join(", ");
 
                 const isEnded = l.status === "ended";
@@ -177,7 +177,7 @@ export default async function PropertyLeasesPage({
                     </div>
 
                     <div style={{ opacity: 0.8, marginTop: 4 }}>
-                      Tenants: {tenants || "—"}
+                      Tenants: {tenants || "n/a"}
                     </div>
 
                     <div style={{ opacity: 0.75, marginTop: 4, fontSize: 12 }}>

@@ -105,17 +105,33 @@ export async function POST(
         },
       });
 
-      await tx.leaseTenant.deleteMany({ where: { leaseId } });
-
-      if (tenantIds.length) {
-      await tx.leaseTenant.createMany({
-        data: tenantIds.map((tenantId, idx) => ({
-          leaseId,
-          tenantId,
-          role: idx === 0 ? "primary" : "additional",
-        })),
+      const existing = await tx.leaseTenant.findMany({
+        where: { leaseId },
+        select: { tenantId: true },
       });
+      const existingIds = new Set(existing.map((row) => row.tenantId));
+      const incomingIds = new Set(tenantIds);
 
+      const toRemove = existing
+        .map((row) => row.tenantId)
+        .filter((tenantId) => !incomingIds.has(tenantId));
+      const toAdd = tenantIds.filter((tenantId) => !existingIds.has(tenantId));
+
+      if (toRemove.length) {
+        await tx.leaseTenant.deleteMany({
+          where: { leaseId, tenantId: { in: toRemove } },
+        });
+      }
+
+      if (toAdd.length) {
+        await tx.leaseTenant.createMany({
+          data: toAdd.map((tenantId) => ({
+            leaseId,
+            tenantId,
+            role: tenantIds.indexOf(tenantId) === 0 ? "primary" : "additional",
+          })),
+          skipDuplicates: true,
+        });
       }
     });
 
