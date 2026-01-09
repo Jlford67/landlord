@@ -196,6 +196,7 @@ export function CategoryInlineEditor({
         onClick={() => setIsEditing(true)}
         aria-label={`Edit ${category.name}`}
         style={{ padding: "4px 6px" }}
+        suppressHydrationWarning
       >
         <Pencil size={18} className="text-blue-600" />
       </button>
@@ -244,10 +245,20 @@ export function CategoryInlineEditor({
         </div>
 
         <div className="ll_inlineEditorActions">
-          <button type="submit" className="ll_btn ll_btnPrimary" disabled={isSaving}>
+          <button
+            type="submit"
+            className="ll_btn ll_btnPrimary"
+            disabled={isSaving}
+            suppressHydrationWarning
+          >
             {isSaving ? "Saving..." : "Save"}
           </button>
-          <button type="button" className="ll_btn ll_btnSecondary" onClick={handleCancel}>
+          <button
+            type="button"
+            className="ll_btn ll_btnSecondary"
+            onClick={handleCancel}
+            suppressHydrationWarning
+          >
             Cancel
           </button>
         </div>
@@ -259,6 +270,7 @@ export function CategoryInlineEditor({
         onClick={handleCancel}
         aria-label={`Close editor for ${category.name}`}
         style={{ padding: "4px 6px" }}
+        suppressHydrationWarning
       >
         <X size={16} className="text-slate-500" />
       </button>
