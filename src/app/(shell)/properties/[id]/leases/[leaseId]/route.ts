@@ -60,7 +60,9 @@ export async function POST(
     const statusRaw = (formData.get("status")?.toString() || "active").trim();
     const managedByPm = formData.get("managedByPm") === "on";
     const notesRaw = (formData.get("notes")?.toString() || "").trim();
-    const tenantIds = formData.getAll("tenantIds").map((v) => v.toString());
+    const tenantIds = Array.from(
+      new Set(formData.getAll("tenantIds").map((v) => v.toString()).filter(Boolean))
+    );
 
     if (!startDateRaw || !rentAmountRaw || !dueDayRaw) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
