@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Pencil, X } from "lucide-react";
+import SafeButton from "@/components/ui/SafeButton";
+import SafeInput from "@/components/ui/SafeInput";
+import SafeSelect from "@/components/ui/SafeSelect";
 
 type CatType = "income" | "expense" | "transfer";
 
@@ -46,7 +49,7 @@ export function AddCategoryForm({ categories }: { categories: CategoryOption[] }
           <label className="ll_label" htmlFor="name">
             Name
           </label>
-          <input
+          <SafeInput
             id="name"
             name="name"
             className="ll_input"
@@ -59,7 +62,7 @@ export function AddCategoryForm({ categories }: { categories: CategoryOption[] }
           <label className="ll_label" htmlFor="type">
             Type
           </label>
-          <select
+          <SafeSelect
             id="type"
             name="type"
             className="ll_input"
@@ -72,29 +75,29 @@ export function AddCategoryForm({ categories }: { categories: CategoryOption[] }
                 {TYPE_LABELS[opt]}
               </option>
             ))}
-          </select>
+          </SafeSelect>
         </div>
 
         <div>
           <label className="ll_label" htmlFor="parentId">
             Parent (optional)
           </label>
-          <select id="parentId" name="parentId" className="ll_input">
+          <SafeSelect id="parentId" name="parentId" className="ll_input">
             <option value="">(no parent)</option>
             {parentOptions.map((c) => (
               <option key={c.id} value={c.id}>
                 {TYPE_LABELS[c.type]} • {c.name}
               </option>
             ))}
-          </select>
+          </SafeSelect>
           <div className="ll_muted">Parent type must match (enforced on submit).</div>
         </div>
       </div>
 
       <div className="ll_actions">
-        <button type="submit" className="ll_btn ll_btnPrimary">
+        <SafeButton type="submit" className="ll_btn ll_btnPrimary">
           Add category
-        </button>
+        </SafeButton>
       </div>
     </form>
   );
@@ -190,16 +193,15 @@ export function CategoryInlineEditor({
 
   if (!isEditing) {
     return (
-      <button
+      <SafeButton
         type="button"
         className="ll_btn ll_btnLink"
         onClick={() => setIsEditing(true)}
         aria-label={`Edit ${category.name}`}
         style={{ padding: "4px 6px" }}
-        suppressHydrationWarning
       >
         <Pencil size={18} className="text-blue-600" />
-      </button>
+      </SafeButton>
     );
   }
 
@@ -207,7 +209,7 @@ export function CategoryInlineEditor({
     <div className="ll_inlineEditor">
       <form className="ll_inlineEditorForm" onSubmit={handleSubmit}>
         <div className="ll_inlineEditorFields">
-          <input
+          <SafeInput
             className="ll_input"
             name="name"
             value={name}
@@ -215,7 +217,7 @@ export function CategoryInlineEditor({
             required
           />
 
-          <select
+          <SafeSelect
             className="ll_input"
             name="type"
             value={type}
@@ -227,9 +229,9 @@ export function CategoryInlineEditor({
                 {TYPE_LABELS[opt]}
               </option>
             ))}
-          </select>
+          </SafeSelect>
 
-          <select
+          <SafeSelect
             className="ll_input"
             name="parentId"
             value={parentId}
@@ -241,39 +243,36 @@ export function CategoryInlineEditor({
                 {TYPE_LABELS[option.type]} • {option.name}
               </option>
             ))}
-          </select>
+          </SafeSelect>
         </div>
 
         <div className="ll_inlineEditorActions">
-          <button
+          <SafeButton
             type="submit"
             className="ll_btn ll_btnPrimary"
             disabled={isSaving}
-            suppressHydrationWarning
           >
             {isSaving ? "Saving..." : "Save"}
-          </button>
-          <button
+          </SafeButton>
+          <SafeButton
             type="button"
             className="ll_btn ll_btnSecondary"
             onClick={handleCancel}
-            suppressHydrationWarning
           >
             Cancel
-          </button>
+          </SafeButton>
         </div>
       </form>
 
-      <button
+      <SafeButton
         type="button"
         className="ll_btn ll_btnLink"
         onClick={handleCancel}
         aria-label={`Close editor for ${category.name}`}
         style={{ padding: "4px 6px" }}
-        suppressHydrationWarning
       >
         <X size={16} className="text-slate-500" />
-      </button>
+      </SafeButton>
 
       {error ? <div className="ll_error">{error}</div> : null}
       {!canChangeType ? (
