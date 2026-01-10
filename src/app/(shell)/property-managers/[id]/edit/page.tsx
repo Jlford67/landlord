@@ -9,6 +9,7 @@ import {
   updatePropertyManagerContact,
 } from "../../actions";
 import PropertyManagerAddContactPanelClient from "@/components/PropertyManagerAddContactPanelClient";
+import HydrationSafe from "@/components/HydrationSafe";
 
 function propertyLabel(p: {
   nickname: string | null;
@@ -155,10 +156,12 @@ export default async function EditPropertyManagerPage({
           Add contact
         </div>
 
-        <PropertyManagerAddContactPanelClient
-          defaultCollapsed={msg === "contact-added"}
-          action={createPropertyManagerContact.bind(null, company.id)}
-        />
+        <HydrationSafe className="ll_card" style={{ marginTop: 10 }}>
+          <PropertyManagerAddContactPanelClient
+            defaultCollapsed={msg === "contact-added"}
+            action={createPropertyManagerContact.bind(null, company.id)}
+          />
+        </HydrationSafe>
 
         <div className="ll_card_title mt-6" style={{ fontSize: 14 }}>
           Contacts
@@ -167,7 +170,7 @@ export default async function EditPropertyManagerPage({
         <div className="mt-3 space-y-3">
           {company.contacts.length ? (
             company.contacts.map((contact) => (
-              <div key={contact.id} className="ll_card">
+              <HydrationSafe key={contact.id} className="ll_card">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold text-gray-900">Contact: {contact.name}</div>
                   {msg === "contact-updated" && contactId === contact.id ? (
@@ -236,7 +239,7 @@ export default async function EditPropertyManagerPage({
                     Remove
                   </button>
                 </form>
-              </div>
+              </HydrationSafe>
             ))
           ) : (
             <div className="ll_muted">No contacts yet.</div>
