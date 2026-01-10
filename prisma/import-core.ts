@@ -112,6 +112,32 @@ async function readCsvRecords(folder: string, filename: string): Promise<Record<
 
 const importSpecs: ImportSpec[] = [
   {
+    name: "Entity",
+    filename: "Entity.csv",
+    fields: ["id", "name", "type", "notes", "createdAt"],
+    required: false,
+    parseRow: (row) => ({
+      id: row.id,
+      name: row.name,
+      type: row.type,
+      notes: parseString(row.notes),
+      createdAt: parseDate(row.createdAt) ?? new Date(),
+    }),
+    upsert: async (rows) =>
+      prisma.$transaction(async (tx) => {
+        let count = 0;
+        for (const data of rows) {
+          await tx.entity.upsert({
+            where: { id: String(data.id) },
+            update: data,
+            create: data,
+          });
+          count++;
+        }
+        return count;
+      }),
+  },
+  {
     name: "Category",
     filename: "Category.csv",
     fields: ["id", "type", "name", "active", "parentId"],
@@ -125,6 +151,10 @@ const importSpecs: ImportSpec[] = [
     }),
     upsert: async (rows) =>
       prisma.$transaction(async (tx) => {
+        const entityCount = await tx.entity.count();
+        if (entityCount === 0) {
+          throw new Error("Entity must be imported before Category to satisfy foreign keys.");
+        }
         let count = 0;
         for (const data of rows) {
           await tx.category.upsert({
@@ -196,32 +226,6 @@ const importSpecs: ImportSpec[] = [
         let count = 0;
         for (const data of rows) {
           await tx.property.upsert({
-            where: { id: String(data.id) },
-            update: data,
-            create: data,
-          });
-          count++;
-        }
-        return count;
-      }),
-  },
-  {
-    name: "Entity",
-    filename: "Entity.csv",
-    fields: ["id", "name", "type", "notes", "createdAt"],
-    required: false,
-    parseRow: (row) => ({
-      id: row.id,
-      name: row.name,
-      type: row.type,
-      notes: parseString(row.notes),
-      createdAt: parseDate(row.createdAt) ?? new Date(),
-    }),
-    upsert: async (rows) =>
-      prisma.$transaction(async (tx) => {
-        let count = 0;
-        for (const data of rows) {
-          await tx.entity.upsert({
             where: { id: String(data.id) },
             update: data,
             create: data,
