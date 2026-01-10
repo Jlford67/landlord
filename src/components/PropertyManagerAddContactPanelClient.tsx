@@ -3,35 +3,39 @@
 import { useEffect, useRef, useState } from "react";
 
 type PropertyManagerAddContactPanelClientProps = {
+  companyId: string;
   defaultCollapsed: boolean;
   action: (formData: FormData) => void;
 };
 
 export default function PropertyManagerAddContactPanelClient({
+  companyId,
   defaultCollapsed,
   action,
 }: PropertyManagerAddContactPanelClientProps) {
-  const [showAddForm, setShowAddForm] = useState(!defaultCollapsed);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const nameRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    setShowAddForm(!defaultCollapsed);
+    setCollapsed(defaultCollapsed);
   }, [defaultCollapsed]);
 
   useEffect(() => {
-    if (showAddForm) {
-      nameRef.current?.focus();
+    if (!collapsed) {
+      requestAnimationFrame(() => {
+        document.getElementById("newContactName")?.focus();
+      });
     }
-  }, [showAddForm]);
+  }, [collapsed]);
 
-  if (!showAddForm) {
+  if (collapsed) {
     return (
       <>
-        {defaultCollapsed ? <div className="ll_notice">Contact saved.</div> : null}
+        <div className="ll_notice">Contact saved.</div>
         <button
           type="button"
           className="ll_btn ll_btnLink"
-          onClick={() => setShowAddForm(true)}
+          onClick={() => setCollapsed(false)}
         >
           + Add another contact
         </button>
@@ -40,13 +44,13 @@ export default function PropertyManagerAddContactPanelClient({
   }
 
   return (
-    <form className="ll_form" action={action} suppressHydrationWarning>
-      <label className="ll_label" htmlFor="contactName">
+    <form className="ll_form" action={action} suppressHydrationWarning data-company-id={companyId}>
+      <label className="ll_label" htmlFor="newContactName">
         Name
       </label>
       <input
         ref={nameRef}
-        id="contactName"
+        id="newContactName"
         name="contactName"
         className="ll_input"
         placeholder="Contact name"

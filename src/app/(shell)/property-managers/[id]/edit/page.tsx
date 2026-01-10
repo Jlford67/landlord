@@ -158,6 +158,7 @@ export default async function EditPropertyManagerPage({
 
         <HydrationSafe className="ll_card" style={{ marginTop: 10 }}>
           <PropertyManagerAddContactPanelClient
+            companyId={company.id}
             defaultCollapsed={msg === "contact-added"}
             action={createPropertyManagerContact.bind(null, company.id)}
           />
