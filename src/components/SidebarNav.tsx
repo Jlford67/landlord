@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SidebarLogoutClient from "@/components/SidebarLogoutClient";
 import {
   LayoutDashboard,
   Building2,
@@ -13,7 +14,6 @@ import {
   Shield,
   Settings,
   BarChart3,
-  LogOut,
 } from "lucide-react";
 
 const NAV = [
@@ -57,14 +57,7 @@ export default function SidebarNav() {
           );
         })}
       </div>
-      <form action="/api/auth/logout" method="post" className="mt-auto pt-4">
-        <button type="submit" className="ll_side_link w-full">
-          <span className="ll_side_icon" aria-hidden="true">
-            <LogOut size={18} />
-          </span>
-          <span className="ll_side_label">Logout</span>
-        </button>
-      </form>
+      <SidebarLogoutClient />
     </nav>
   );
 }
