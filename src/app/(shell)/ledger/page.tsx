@@ -111,7 +111,7 @@ export default async function LedgerPickerPage({
           {properties.map((p) => (
             <Link
               key={p.id}
-              href={`/properties/${p.id}/ledger`}
+              href={`/ledger/${p.id}`}
               className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md"
             >
               {/* Thumbnail */}
