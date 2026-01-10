@@ -91,7 +91,7 @@ export async function updatePropertyManagerContact(contactId: string, companyId:
     },
   });
 
-  redirect(`/property-managers/${companyId}/edit?msg=contact-updated`);
+  redirect(`/property-managers/${companyId}/edit?msg=contact-updated&contactId=${contactId}`);
 }
 
 export async function deletePropertyManagerContact(contactId: string, companyId: string) {
@@ -101,7 +101,7 @@ export async function deletePropertyManagerContact(contactId: string, companyId:
     where: { id: contactId },
   });
 
-  redirect(`/property-managers/${companyId}/edit?msg=contact-deleted`);
+  redirect(`/property-managers/${companyId}/edit?msg=contact-deleted&contactId=${contactId}`);
 }
 
 export async function deletePropertyManagerCompany(companyId: string) {

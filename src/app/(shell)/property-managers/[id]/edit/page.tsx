@@ -32,6 +32,7 @@ export default async function EditPropertyManagerPage({
   const { id } = await params;
   const sp = searchParams ? await searchParams : {};
   const msg = typeof sp.msg === "string" ? sp.msg : "";
+  const contactId = typeof sp.contactId === "string" ? sp.contactId : "";
 
   const company = await prisma.propertyManagerCompany.findUnique({
     where: { id },
@@ -150,13 +151,14 @@ export default async function EditPropertyManagerPage({
 
         <div className="ll_divider" />
         <div className="ll_card_title" style={{ fontSize: 14 }}>
-          Contacts
+          Add contact
         </div>
 
         <div className="ll_card" style={{ marginTop: 10 }}>
+          {msg === "contact-added" && <div className="ll_notice">Contact added.</div>}
           <form className="ll_form" action={createPropertyManagerContact.bind(null, company.id)}>
             <label className="ll_label" htmlFor="contactName">
-              New Contact Name
+              Name
             </label>
             <input id="contactName" name="contactName" className="ll_input" placeholder="Contact name" required suppressHydrationWarning />
 
@@ -183,10 +185,20 @@ export default async function EditPropertyManagerPage({
           </form>
         </div>
 
+        <div className="ll_card_title mt-6" style={{ fontSize: 14 }}>
+          Contacts
+        </div>
+
         <div className="mt-3 space-y-3">
           {company.contacts.length ? (
             company.contacts.map((contact) => (
               <div key={contact.id} className="ll_card">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold text-gray-900">Contact: {contact.name}</div>
+                  {msg === "contact-updated" && contactId === contact.id ? (
+                    <div className="text-xs text-green-700">Saved</div>
+                  ) : null}
+                </div>
                 <form
                   className="ll_form"
                   action={updatePropertyManagerContact.bind(null, contact.id, company.id)}
@@ -240,13 +252,13 @@ export default async function EditPropertyManagerPage({
 
                   <div className="ll_actions">
                     <button className="ll_btn" type="submit" suppressHydrationWarning>
-                      Save contact
+                      Save
                     </button>
                   </div>
                 </form>
                 <form action={deletePropertyManagerContact.bind(null, contact.id, company.id)} style={{ marginTop: 10 }}>
                   <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-                    Remove contact
+                    Remove
                   </button>
                 </form>
               </div>
