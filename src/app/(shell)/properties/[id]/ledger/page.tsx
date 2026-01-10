@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import RecurringPanel from "@/components/ledger/RecurringPanel";
 import TransactionRowActions from "@/components/ledger/TransactionRowActions";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import MonthInputClient from "@/components/ledger/MonthInputClient";
 import IconButton from "@/components/ui/IconButton";
 import { PencilLine, Trash2 } from "lucide-react";
 import { promises as fs } from "fs";
@@ -103,7 +104,7 @@ export default async function PropertyLedgerPage({
 
   const fallbackMonth = ym(new Date());
   const month = normalizeMonth(sp.month, fallbackMonth);
-  const monthDefault = month;
+  const monthValue = month;
   const view = sp.view === "annual" ? "annual" : "monthly";
 
   const [yy, mm] = month.split("-").map(Number);
@@ -334,12 +335,10 @@ export default async function PropertyLedgerPage({
 
                 <form method="get" className="flex items-center gap-2">
                   <input type="hidden" name="view" value="monthly" />
-                  <input
-                    className="ll_input w-[160px]"
+                  <MonthInputClient
                     name="month"
-                    type="month"
-                    defaultValue={monthDefault}
-                    placeholder="YYYY-MM"
+                    initialValue={monthValue}
+                    className="ll_input w-[160px]"
                   />
 
                   <button
