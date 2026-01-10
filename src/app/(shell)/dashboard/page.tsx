@@ -319,12 +319,6 @@ export default async function DashboardPage({
         <div className="ll_dash_topRight">
           <PropertyPicker properties={pickerOptions} selectedId={selectedPropertyId} />
 
-          <form action="/api/auth/logout" method="post">
-            <button type="submit" className="ll_btn">
-              Logout
-            </button>
-          </form>
-
           <Link href="/transactions/new" className="ll_btn ll_btnPrimary">
             Add transaction
           </Link>
