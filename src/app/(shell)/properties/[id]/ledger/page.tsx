@@ -108,6 +108,7 @@ export default async function PropertyLedgerPage({
 
   const monthParam = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : "";
   const month = monthParam || ym(new Date());
+  const monthValue = monthParam || month;
   const view = sp.view === "annual" ? "annual" : "monthly";
 
   const [yy, mm] = month.split("-").map(Number);
@@ -341,7 +342,7 @@ export default async function PropertyLedgerPage({
                     className="ll_input w-[160px]"
                     name="month"
                     type="month"
-                    defaultValue={month}
+                    defaultValue={monthValue}
                     placeholder="YYYY-MM"
                   />
 
