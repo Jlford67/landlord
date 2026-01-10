@@ -98,6 +98,30 @@ a:hover{ text-decoration: underline; }
   background: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 45%, #e5e7eb 100%);
 }
 
+.ll_side_logo{
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  text-decoration: none;
+}
+
+.ll_side_logo:hover{
+  text-decoration: none;
+}
+
+.ll_side_logoImage{
+  max-width: 160px;
+  width: 100%;
+  height: auto;
+  max-height: 40px;
+}
+
+.ll_side_divider{
+  height: 1px;
+  background: var(--border);
+  margin: 6px 12px 12px;
+}
+
 .ll_shell_main{
   flex: 1;
   min-width: 0;

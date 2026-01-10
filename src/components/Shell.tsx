@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ReactNode } from "react";
 import SidebarNav from "@/components/SidebarNav";
@@ -18,9 +19,17 @@ export default function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="ll_shell">
       <aside className="ll_shell_sidebar">
-        <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
-          Landlord
-        </div>
+        <Link href="/dashboard" className="ll_side_logo" aria-label="Landlord">
+          <Image
+            src="/brand/landlord-logo.png"
+            alt="Landlord"
+            width={160}
+            height={40}
+            className="ll_side_logoImage"
+            priority
+          />
+        </Link>
+        <div className="ll_side_divider" role="presentation" />
 
         <SidebarNav />
       </aside>
