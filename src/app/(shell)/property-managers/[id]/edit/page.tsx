@@ -32,14 +32,6 @@ export default async function EditPropertyManagerPage({
   const sp = searchParams ? await searchParams : {};
   const msg = typeof sp.msg === "string" ? sp.msg : "";
   const contactId = typeof sp.contactId === "string" ? sp.contactId : "";
-  const contacts = company.contacts.map((contact) => ({
-    id: contact.id,
-    name: contact.name,
-    phone: contact.phone ?? null,
-    email: contact.email ?? null,
-    notes: contact.notes ?? null,
-  }));
-
   const company = await prisma.propertyManagerCompany.findUnique({
     where: { id },
     include: {
@@ -55,6 +47,14 @@ export default async function EditPropertyManagerPage({
   });
 
   if (!company) notFound();
+
+  const contacts = company.contacts.map((contact) => ({
+    id: contact.id,
+    name: contact.name,
+    phone: contact.phone ?? null,
+    email: contact.email ?? null,
+    notes: contact.notes ?? null,
+  }));
 
   return (
     <div className="ll_page">
