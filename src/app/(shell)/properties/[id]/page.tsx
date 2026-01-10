@@ -129,10 +129,6 @@ export default async function PropertyDetailPage({
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link className="ll_btn" href="/properties">
-                Back
-              </Link>
-
               <Link className="ll_btn ll_btnLink" href={`/properties/${property.id}/edit`}>
                 Edit
               </Link>
@@ -140,17 +136,6 @@ export default async function PropertyDetailPage({
               <Link className="ll_btn ll_btnPrimary" href={`/properties/${property.id}/leases/new`}>
                 New lease
               </Link>
-
-              <form action="/api/auth/logout" method="post">
-                <button
-                  className="ll_btn"
-                  type="submit"
-                  suppressHydrationWarning
-                >
-                  Logout
-                </button>
-              </form>
-
             </div>
           </div>
         </div>
