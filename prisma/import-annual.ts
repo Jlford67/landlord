@@ -11,7 +11,6 @@ type Row = {
 };
 
 function parseCsvLine(line: string): string[] {
-  // Simple CSV parser supporting quoted fields
   const out: string[] = [];
   let cur = "";
   let inQuotes = false;
@@ -19,7 +18,6 @@ function parseCsvLine(line: string): string[] {
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') {
-      // handle escaped quotes ""
       if (inQuotes && line[i + 1] === '"') {
         cur += '"';
         i++;
@@ -45,9 +43,7 @@ function mustNumber(v: string, label: string) {
 
 async function main() {
   const csvPath = path.resolve(process.cwd(), "prisma", "annual-import.csv");
-  if (!fs.existsSync(csvPath)) {
-    throw new Error(`Missing CSV file: ${csvPath}`);
-  }
+  if (!fs.existsSync(csvPath)) throw new Error(`Missing CSV file: ${csvPath}`);
 
   const raw = fs.readFileSync(csvPath, "utf8");
   const lines = raw
@@ -55,9 +51,7 @@ async function main() {
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
 
-  if (lines.length < 2) {
-    throw new Error("CSV must include header + at least one row");
-  }
+  if (lines.length < 2) throw new Error("CSV must include header + at least one row");
 
   const header = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
   const idx = (name: string) => {
@@ -70,7 +64,7 @@ async function main() {
   const iYear = idx("year");
   const iCategory = idx("category");
   const iAmount = idx("amount");
-  const iNote = header.indexOf("note"); // optional
+  const iNote = header.indexOf("note");
 
   const rows: Row[] = lines.slice(1).map((line, n) => {
     const cols = parseCsvLine(line);
@@ -89,26 +83,38 @@ async function main() {
     return { property, year, category, amount, note: note || undefined };
   });
 
-  // Build lookups
+  // Properties lookup
   const properties = await prisma.property.findMany({
     select: { id: true, nickname: true, street: true },
   });
 
   const propertyByLabel = new Map<string, string>();
   for (const p of properties) {
-    // Support a few naming styles
-    const labels = [
-      (p.nickname ?? "").trim(),
-      (p.street ?? "").trim(),
-    ].filter(Boolean);
-
-    for (const label of labels) {
-      propertyByLabel.set(label.toLowerCase(), p.id);
-    }
+    const labels = [(p.nickname ?? "").trim(), (p.street ?? "").trim()].filter(Boolean);
+    for (const label of labels) propertyByLabel.set(label.toLowerCase(), p.id);
   }
 
+  // Ownership lookup (choose a deterministic default per property)
+  // NOTE: PropertyOwnership has no createdAt in this schema, so we pick the latest by id.
+  const ownerships = await prisma.propertyOwnership.findMany({
+    select: {
+      id: true,
+      propertyId: true,
+    },
+    orderBy: [{ propertyId: "asc" }, { id: "desc" }],
+  });
+  
+  const ownershipByProperty = new Map<string, string>();
+  for (const o of ownerships) {
+    // Because we ordered desc by id, first we see for each property is "latest"
+    if (!ownershipByProperty.has(o.propertyId)) {
+      ownershipByProperty.set(o.propertyId, o.id);
+    }
+  }
+  
+  // Categories lookup
   const categories = await prisma.category.findMany({
-    select: { id: true, name: true, type: true, active: true },
+    select: { id: true, name: true, type: true },
   });
 
   const categoryByName = new Map<string, { id: string; type: string }>();
@@ -122,18 +128,20 @@ async function main() {
   for (const r of rows) {
     const propertyId = propertyByLabel.get(r.property.toLowerCase());
     if (!propertyId) {
+      throw new Error(`Property not found for "${r.property}". Fix CSV to match property nickname/street.`);
+    }
+
+    const propertyOwnershipId = ownershipByProperty.get(propertyId);
+    if (!propertyOwnershipId) {
       throw new Error(
-        `Property not found for "${r.property}". Fix the CSV value to match property nickname/name/street.`
+        `No PropertyOwnership found for property "${r.property}" (${propertyId}). Create ownership record(s) first.`
       );
     }
 
     const cat = categoryByName.get(r.category.toLowerCase());
     if (!cat) {
-      throw new Error(
-        `Category not found for "${r.category}". Create it in Categories first, or fix the CSV.`
-      );
+      throw new Error(`Category not found for "${r.category}". Create it in Categories first, or fix CSV.`);
     }
-
     if (cat.type === "transfer") {
       throw new Error(`Category "${r.category}" is type "transfer" which is not allowed for annual data.`);
     }
@@ -141,14 +149,39 @@ async function main() {
     const signedAmount = cat.type === "expense" ? -r.amount : r.amount;
 
     const existing = await prisma.annualCategoryAmount.findUnique({
-      where: { propertyId_year_categoryId: { propertyId, year: r.year, categoryId: cat.id } },
+      where: {
+        propertyId_year_categoryId_propertyOwnershipId: {
+          propertyId,
+          year: r.year,
+          categoryId: cat.id,
+          propertyOwnershipId,
+        },
+      },
       select: { id: true },
     });
 
     await prisma.annualCategoryAmount.upsert({
-      where: { propertyId_year_categoryId: { propertyId, year: r.year, categoryId: cat.id } },
-      update: { amount: signedAmount, note: r.note ?? null },
-      create: { propertyId, year: r.year, categoryId: cat.id, amount: signedAmount, note: r.note ?? null },
+      where: {
+        propertyId_year_categoryId_propertyOwnershipId: {
+          propertyId,
+          year: r.year,
+          categoryId: cat.id,
+          propertyOwnershipId,
+        },
+      },
+      update: {
+        amount: signedAmount,
+        note: r.note ?? null,
+        propertyOwnershipId,
+      },
+      create: {
+        propertyId,
+        year: r.year,
+        categoryId: cat.id,
+        amount: signedAmount,
+        note: r.note ?? null,
+        propertyOwnershipId,
+      },
     });
 
     if (existing) updated++;

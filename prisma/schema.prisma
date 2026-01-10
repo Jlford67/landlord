@@ -224,7 +224,7 @@ model AnnualCategoryAmount {
   propertyOwnership   PropertyOwnership? @relation(fields: [propertyOwnershipId], references: [id])
   propertyOwnershipId String?
 
-  @@unique([propertyId, year, categoryId])
+  @@unique([propertyId, year, categoryId, propertyOwnershipId])
   @@index([propertyId, year])
   @@index([categoryId])
 }

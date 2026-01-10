@@ -242,7 +242,7 @@ export default async function DashboardPage({
 
   /* -------- Yearly Summary (merged) -------- */
 
-  // 1) Ledger transactions (source of truth when present)
+  // 1) Ledger transactions
   const txnsForYearly = await prisma.transaction.findMany({
     where: {
       deletedAt: null,
@@ -265,7 +265,7 @@ export default async function DashboardPage({
     yearlyFromTxns.set(y, cur);
   }
 
-  // 2) Annual imported totals (fallback for years with no ledger txns)
+  // 2) Annual imported totals
   const annualRows = selectedPropertyId
     ? await prisma.annualCategoryAmount.findMany({
         where: {
@@ -291,7 +291,7 @@ export default async function DashboardPage({
     yearlyFromAnnual.set(r.year, cur);
   }
 
-  // 3) Merge: prefer ledger years; fill missing years from annual
+  // 3) Merge: sum ledger + annual for matching years
   const allYears = new Set<number>([
     ...Array.from(yearlyFromTxns.keys()),
     ...Array.from(yearlyFromAnnual.keys()),
@@ -299,10 +299,14 @@ export default async function DashboardPage({
 
   const yearlyRows: YearRow[] = Array.from(allYears)
     .map((year) => {
-      const fromTxns = yearlyFromTxns.get(year);
-      const fromAnnual = yearlyFromAnnual.get(year);
-      const v = fromTxns ?? fromAnnual ?? { income: 0, expenses: 0, net: 0 };
-      return { year, ...v };
+      const fromTxns = yearlyFromTxns.get(year) ?? { income: 0, expenses: 0, net: 0 };
+      const fromAnnual = yearlyFromAnnual.get(year) ?? { income: 0, expenses: 0, net: 0 };
+      return {
+        year,
+        income: fromTxns.income + fromAnnual.income,
+        expenses: fromTxns.expenses + fromAnnual.expenses,
+        net: fromTxns.net + fromAnnual.net,
+      };
     })
     .filter((r) => r.income !== 0 || r.expenses !== 0 || r.net !== 0)
     .sort((a, b) => b.year - a.year);

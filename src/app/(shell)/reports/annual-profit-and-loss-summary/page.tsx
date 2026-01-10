@@ -187,6 +187,9 @@ export default async function AnnualProfitAndLossSummaryPage({
   });
 
   const hasYears = result.years.length > 0;
+  const annualEntryLink = propertyId
+    ? `/properties/${propertyId}/ledger?view=annual&year=${startYear}`
+    : null;
 
   return (
     <div className="ll_page">
@@ -206,6 +209,11 @@ export default async function AnnualProfitAndLossSummaryPage({
               Transfers are {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
+          {annualEntryLink ? (
+            <Link className="ll_btn ll_btnSecondary" href={annualEntryLink}>
+              Annual entries
+            </Link>
+          ) : null}
         </div>
 
         <form className="ll_form" method="get">

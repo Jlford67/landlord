@@ -103,9 +103,28 @@ export default async function PropertyAnnualPage(props: PageProps) {
 
   const rows = await prisma.annualCategoryAmount.findMany({
     where: { propertyId, year },
-    include: { category: { select: { name: true, type: true } } },
-    orderBy: [{ category: { type: "asc" } }, { category: { name: "asc" } }],
+    include: {
+      category: { select: { name: true, type: true } },
+      propertyOwnership: { include: { entity: { select: { name: true } } } },
+    },
+    orderBy: [
+      { category: { type: "asc" } },
+      { category: { name: "asc" } },
+      { propertyOwnershipId: "asc" },
+    ],
   });
+
+  const ownerships = await prisma.propertyOwnership.findMany({
+    where: { propertyId },
+    include: { entity: { select: { name: true } } },
+    orderBy: [{ startDate: "asc" }, { entity: { name: "asc" } }],
+  });
+
+  const ownershipLabel = (ownership: (typeof ownerships)[number] | null) => {
+    if (!ownership) return "None";
+    const pct = Number.isFinite(ownership.ownershipPct) ? ownership.ownershipPct : null;
+    return pct ? `${ownership.entity.name} (${pct}%)` : ownership.entity.name;
+  };
 
   // ---- totals (amount is stored signed: income positive, expense negative) ----
   const incomeTotal = rows.filter((r) => r.amount > 0).reduce((s, r) => s + r.amount, 0);
@@ -218,6 +237,25 @@ export default async function PropertyAnnualPage(props: PageProps) {
             data-lpignore="true"
           />
 
+          {ownerships.length > 0 ? (
+            <select
+              name="propertyOwnershipId"
+              className="ll_input"
+              defaultValue={ownerships.length === 1 ? ownerships[0]?.id ?? "" : ""}
+              suppressHydrationWarning
+              data-lpignore="true"
+            >
+              <option value="">Ownership: None</option>
+              {ownerships.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {ownershipLabel(o)}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input type="hidden" name="propertyOwnershipId" value="" />
+          )}
+
           <input
             name="note"
             className="ll_input"
@@ -270,6 +308,7 @@ export default async function PropertyAnnualPage(props: PageProps) {
                   <th className="w-[40%]">Category</th>
                   <th className="w-[15%]">Type</th>
                   <th className="w-[15%]">Amount</th>
+                  <th className="w-[15%]">Ownership</th>
                   <th>Note</th>
                   <th className="w-px" />
                 </tr>
@@ -283,6 +322,7 @@ export default async function PropertyAnnualPage(props: PageProps) {
                       <td>{r.category.name}</td>
                       <td>{r.category.type}</td>
                       <td className="tabular-nums text-right">{financeMoney(amt)}</td>
+                      <td>{ownershipLabel(r.propertyOwnership)}</td>
                       <td>{r.note ?? ""}</td>
                       <td>
                         <form action={deleteAnnualLine}>

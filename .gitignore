@@ -62,3 +62,5 @@ prisma/wipe-annual.ts
 #backup db
 prisma/backups/
 scripts/
+prisma/db_backups/
+prisma/exports/

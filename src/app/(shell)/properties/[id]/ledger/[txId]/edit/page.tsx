@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { updateTransaction } from "./actions";
 
 function ym(d: Date) {
   const y = d.getFullYear();
@@ -72,7 +73,9 @@ export default async function EditTransactionPage(props: {
         </div>
 
         <div style={{ marginTop: 14 }} className="ll_panelInner">
-          <form className="ll_form" method="post" action={`/api/properties/${propertyId}/transactions/${txn.id}`}>
+          <form className="ll_form" action={updateTransaction}>
+            <input type="hidden" name="propertyId" value={propertyId} />
+            <input type="hidden" name="txId" value={txn.id} />
             <input type="hidden" name="month" value={month} />
 
             <div className="ll_grid2">
