@@ -17,12 +17,13 @@ export default function NavLink({
 
   // active when exact match OR when you're inside a section (e.g. /properties/123)
   const isPropertyLedgerRoute = /^\/properties\/[^/]+\/ledger(?:\/|$)/.test(pathname);
+  const isPropertyAnnualRoute = /^\/properties\/[^/]+\/annual(?:\/|$)/.test(pathname);
   const isLedgerNav = href === "/ledger";
   const isPropertiesNav = href === "/properties";
   const isActive = isLedgerNav
-    ? pathname === "/ledger" || pathname.startsWith("/ledger/") || isPropertyLedgerRoute
+    ? pathname === "/ledger" || isPropertyLedgerRoute
     : isPropertiesNav
-      ? pathname === "/properties" || (pathname.startsWith("/properties/") && !isPropertyLedgerRoute)
+      ? pathname === "/properties" || (/^\/properties\/[^/]+$/.test(pathname) && !isPropertyAnnualRoute)
       : pathname === href || pathname.startsWith(href + "/");
 
   return (
