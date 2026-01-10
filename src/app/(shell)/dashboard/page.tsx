@@ -4,9 +4,10 @@ export const revalidate = 0;
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
-import { formatUsd, formatUsdFromCents } from "@/lib/money";
+import { formatUsd } from "@/lib/money";
 import PropertyPicker from "@/components/dashboard/PropertyPicker";
 import PropertyPhoto from "@/components/properties/PropertyPhoto";
+import AnnualBarChartClient from "./AnnualBarChartClient";
 
 /* ---------------- date helpers ---------------- */
 
@@ -74,71 +75,12 @@ type MonthPoint = {
   expenses: number;
 };
 
-type UpcomingItem = {
-  id: string;
-  propertyName: string;
-  categoryName: string;
-  amountCents: number;
-  dueDate: Date;
-};
-
 type YearRow = {
   year: number;
   income: number;
   expenses: number; // negative
   net: number;
 };
-
-/* ---------------- recurring logic ---------------- */
-
-function computeNextDue(
-  recurring: {
-    id: string;
-    property: { nickname: string | null; street: string };
-    category: { name: string };
-    amountCents: number;
-    dayOfMonth: number;
-    startMonth: string;
-    endMonth: string | null;
-  }[],
-  now: Date
-): UpcomingItem[] {
-  const nowUTC = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
-
-  const results: UpcomingItem[] = [];
-
-  for (const r of recurring) {
-    for (let add = 0; add <= 1; add++) {
-      const due = new Date(
-        Date.UTC(
-          nowUTC.getUTCFullYear(),
-          nowUTC.getUTCMonth() + add,
-          Math.min(Math.max(r.dayOfMonth, 1), 28)
-        )
-      );
-
-      const mk = monthKeyUTC(due);
-      if (mk < r.startMonth) continue;
-      if (r.endMonth && mk > r.endMonth) continue;
-      if (due < nowUTC) continue;
-
-      results.push({
-        id: r.id,
-        propertyName: propertyLabel(r.property),
-        categoryName: r.category.name,
-        amountCents: r.amountCents,
-        dueDate: due,
-      });
-
-      break;
-    }
-  }
-
-  results.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
-  return results;
-}
 
 /* ---------------- chart ---------------- */
 
@@ -216,7 +158,7 @@ export default async function DashboardPage({
 
   /* -------- main queries -------- */
 
-  const [recentTxns, recurringActive] = await Promise.all([
+  const [recentTxns] = await Promise.all([
     prisma.transaction.findMany({
       where: { deletedAt: null, ...whereProperty },
       orderBy: [{ date: "desc" }, { id: "desc" }],
@@ -224,18 +166,6 @@ export default async function DashboardPage({
       include: {
         category: { select: { name: true } },
         property: { select: { nickname: true, street: true } },
-      },
-    }),
-
-    prisma.recurringTransaction.findMany({
-      where: {
-        isActive: true,
-        ...(selectedPropertyId ? { propertyId: selectedPropertyId } : {}),
-      },
-      orderBy: [{ dayOfMonth: "asc" }],
-      include: {
-        property: { select: { nickname: true, street: true } },
-        category: { select: { name: true } },
       },
     }),
   ]);
@@ -321,6 +251,11 @@ export default async function DashboardPage({
       { income: 0, expenses: 0, net: 0 }
     );
 
+  const annualChartData = yearlyRows
+    .slice()
+    .sort((a, b) => a.year - b.year)
+    .map((row) => ({ year: row.year, net: row.net }));
+
   /* -------- chart data -------- */
 
   const chartStart = addMonthsUTC(monthStart, -11);
@@ -368,21 +303,6 @@ export default async function DashboardPage({
   const cashflowLabel = activeCount
     ? `Average of ${activeCount} month${activeCount === 1 ? "" : "s"}`
     : "No data yet";
-
-  /* -------- recurring -------- */
-
-  const upcoming = computeNextDue(
-    recurringActive.map((r) => ({
-      id: r.id,
-      property: r.property,
-      category: r.category,
-      amountCents: r.amountCents,
-      dayOfMonth: r.dayOfMonth,
-      startMonth: r.startMonth,
-      endMonth: r.endMonth,
-    })),
-    now
-  ).slice(0, 3);
 
   const featuredProperty =
     selectedPropertyId
@@ -445,32 +365,17 @@ export default async function DashboardPage({
           <MiniIncomeExpenseBars points={months} />
         </section>
 
-        {/* Upcoming Recurring */}
+        {/* Annual Net Profit */}
         <section className="ll_card ll_dash_card">
           <div className="ll_dash_cardTop">
-            <div className="ll_dash_cardTitle">Upcoming Recurring</div>
-            <Link href="/recurring" className="ll_dash_link">
-              View all
-            </Link>
+            <div className="ll_dash_cardTitle">Annual Net Profit</div>
           </div>
 
-          <div className="ll_dash_list">
-            {upcoming.length === 0 ? (
-              <div className="ll_dash_empty">No upcoming items.</div>
-            ) : (
-              upcoming.map((u) => (
-                <div key={u.id} className="ll_dash_listRow">
-                  <div className="ll_dash_listLeft">
-                    <div className="ll_dash_listTitle">{u.categoryName}</div>
-                    <div className="ll_dash_listSub">
-                      {u.propertyName} · {formatDateUTC(u.dueDate)}
-                    </div>
-                  </div>
-                  <div className="ll_dash_listAmt">{formatUsdFromCents(u.amountCents)}</div>
-                </div>
-              ))
-            )}
-          </div>
+          {annualChartData.length === 0 ? (
+            <div className="ll_dash_empty">No annual data yet.</div>
+          ) : (
+            <AnnualBarChartClient data={annualChartData} />
+          )}
         </section>
 
         {/* Property */}
