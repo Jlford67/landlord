@@ -23,8 +23,8 @@ export default function Shell({ children }: { children: ReactNode }) {
           <Image
             src="/brand/landlord-logo.png"
             alt="Landlord"
-            width={160}
-            height={40}
+            width={180}
+            height={48}
             className="ll_side_logoImage"
             priority
           />
