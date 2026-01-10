@@ -138,36 +138,6 @@ const importSpecs: ImportSpec[] = [
       }),
   },
   {
-    name: "Category",
-    filename: "Category.csv",
-    fields: ["id", "type", "name", "active", "parentId"],
-    required: true,
-    parseRow: (row) => ({
-      id: row.id,
-      type: row.type,
-      name: row.name,
-      active: row.active === "" ? true : row.active.toLowerCase() === "true",
-      parentId: parseString(row.parentId),
-    }),
-    upsert: async (rows) =>
-      prisma.$transaction(async (tx) => {
-        const entityCount = await tx.entity.count();
-        if (entityCount === 0) {
-          throw new Error("Entity must be imported before Category to satisfy foreign keys.");
-        }
-        let count = 0;
-        for (const data of rows) {
-          await tx.category.upsert({
-            where: { id: String(data.id) },
-            update: data,
-            create: data,
-          });
-          count++;
-        }
-        return count;
-      }),
-  },
-  {
     name: "Property",
     filename: "Property.csv",
     fields: [
@@ -259,6 +229,43 @@ const importSpecs: ImportSpec[] = [
           });
           count++;
         }
+        return count;
+      }),
+  },
+  {
+    name: "Category",
+    filename: "Category.csv",
+    fields: ["id", "type", "name", "active", "parentId"],
+    required: true,
+    parseRow: (row) => ({
+      id: row.id,
+      type: row.type,
+      name: row.name,
+      active: row.active === "" ? true : row.active.toLowerCase() === "true",
+      parentId: parseString(row.parentId),
+    }),
+    upsert: async (rows) =>
+      prisma.$transaction(async (tx) => {
+        let count = 0;
+
+        for (const data of rows) {
+          const { parentId, ...rest } = data;
+          await tx.category.upsert({
+            where: { id: String(data.id) },
+            update: { ...rest, parentId: null },
+            create: { ...rest, parentId: null },
+          });
+          count++;
+        }
+
+        for (const data of rows) {
+          if (!data.parentId) continue;
+          await tx.category.update({
+            where: { id: String(data.id) },
+            data: { parentId: String(data.parentId) },
+          });
+        }
+
         return count;
       }),
   },
