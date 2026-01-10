@@ -38,7 +38,7 @@ export default function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="ll_side_nav flex h-full flex-col">
+    <nav className="ll_side_nav flex min-h-[calc(100vh-64px)] flex-col">
       <div>
         {NAV.map(({ href, label, Icon }) => {
           const active = isActivePath(pathname, href);
@@ -57,7 +57,7 @@ export default function SidebarNav() {
           );
         })}
       </div>
-      <form action="/api/auth/logout" method="post" className="mt-auto">
+      <form action="/api/auth/logout" method="post" className="mt-auto pt-4">
         <button type="submit" className="ll_side_link w-full">
           <span className="ll_side_icon" aria-hidden="true">
             <LogOut size={18} />
