@@ -5,8 +5,11 @@ import { requireUser } from "@/lib/auth";
 import RecurringPanel from "@/components/ledger/RecurringPanel";
 import TransactionRowActions from "@/components/ledger/TransactionRowActions";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import IconButton from "@/components/ui/IconButton";
+import { PencilLine, Trash2 } from "lucide-react";
 import { promises as fs } from "fs";
 import path from "path";
+import { deleteAnnualEntry } from "./actions";
 
 /* ---------------- helpers ---------------- */
 
@@ -338,7 +341,7 @@ export default async function PropertyLedgerPage({
                     className="ll_input w-[160px]"
                     name="month"
                     type="month"
-                    value={monthParam}
+                    defaultValue={month}
                     placeholder="YYYY-MM"
                   />
 
@@ -492,12 +495,30 @@ export default async function PropertyLedgerPage({
                           <td>{ownershipLabel(row.propertyOwnership)}</td>
                           <td>{row.note || <span className="ll_muted">(none)</span>}</td>
                           <td className="text-right">
-                            <Link
-                              className="ll_btnSecondary"
-                              href={`/properties/${propertyId}/annual/${row.id}/edit?year=${year}&view=annual`}
-                            >
-                              Edit
-                            </Link>
+                            <div className="flex justify-end gap-2">
+                              <Link
+                                className="ll_btnSecondary inline-flex items-center justify-center"
+                                href={`/properties/${propertyId}/annual/${row.id}/edit?year=${year}&view=annual`}
+                                aria-label={`Edit ${row.category.name}`}
+                                title="Edit"
+                              >
+                                <PencilLine size={16} />
+                              </Link>
+
+                              <form action={deleteAnnualEntry}>
+                                <input type="hidden" name="propertyId" value={propertyId} />
+                                <input type="hidden" name="year" value={year} />
+                                <input type="hidden" name="month" value={month} />
+                                <input type="hidden" name="id" value={row.id} />
+                                <IconButton
+                                  className="ll_btnSecondary"
+                                  type="submit"
+                                  ariaLabel={`Delete ${row.category.name}`}
+                                  title="Delete"
+                                  icon={<Trash2 size={16} />}
+                                />
+                              </form>
+                            </div>
                           </td>
                         </tr>
                       ))}
