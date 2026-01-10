@@ -302,7 +302,7 @@ export default async function PropertyLedgerPage({
                     className="ll_input w-[120px]"
                     name="year"
                     type="number"
-                    defaultValue={year}
+                    defaultValue={year ?? ""}
                     suppressHydrationWarning
                     data-lpignore="true"
                   />
@@ -338,10 +338,10 @@ export default async function PropertyLedgerPage({
                     className="ll_input w-[160px]"
                     name="month"
                     type="month"
-                    defaultValue={monthParam}
-                    suppressHydrationWarning
-                    data-lpignore="true"
+                    value={monthParam}
+                    placeholder="YYYY-MM"
                   />
+
                   <button
                     className="ll_btnSecondary"
                     type="submit"
