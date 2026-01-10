@@ -8,6 +8,7 @@ import {
   updatePropertyManagerCompany,
   updatePropertyManagerContact,
 } from "../../actions";
+import PropertyManagerAddContactPanelClient from "@/components/PropertyManagerAddContactPanelClient";
 
 function propertyLabel(p: {
   nickname: string | null;
@@ -154,40 +155,10 @@ export default async function EditPropertyManagerPage({
           Add contact
         </div>
 
-        <div className="ll_card" style={{ marginTop: 10 }} suppressHydrationWarning>
-          {msg === "contact-added" && <div className="ll_notice">Contact added.</div>}
-          <form
-            className="ll_form"
-            action={createPropertyManagerContact.bind(null, company.id)}
-            suppressHydrationWarning
-          >
-            <label className="ll_label" htmlFor="contactName">
-              Name
-            </label>
-            <input id="contactName" name="contactName" className="ll_input" placeholder="Contact name" required suppressHydrationWarning />
-
-            <label className="ll_label" htmlFor="contactPhone">
-              Phone
-            </label>
-            <input id="contactPhone" name="contactPhone" className="ll_input" placeholder="555-123-4567" suppressHydrationWarning />
-
-            <label className="ll_label" htmlFor="contactEmail">
-              Email
-            </label>
-            <input id="contactEmail" name="contactEmail" className="ll_input" placeholder="name@email.com" suppressHydrationWarning />
-
-            <label className="ll_label" htmlFor="contactNotes">
-              Notes
-            </label>
-            <textarea id="contactNotes" name="contactNotes" className="ll_input" rows={2} suppressHydrationWarning />
-
-            <div className="ll_actions">
-              <button className="ll_btn" type="submit" suppressHydrationWarning>
-                Add contact
-              </button>
-            </div>
-          </form>
-        </div>
+        <PropertyManagerAddContactPanelClient
+          defaultCollapsed={msg === "contact-added"}
+          action={createPropertyManagerContact.bind(null, company.id)}
+        />
 
         <div className="ll_card_title mt-6" style={{ fontSize: 14 }}>
           Contacts
