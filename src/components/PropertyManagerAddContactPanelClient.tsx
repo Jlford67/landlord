@@ -11,27 +11,27 @@ export default function PropertyManagerAddContactPanelClient({
   defaultCollapsed,
   action,
 }: PropertyManagerAddContactPanelClientProps) {
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const [showAddForm, setShowAddForm] = useState(!defaultCollapsed);
   const nameRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    setCollapsed(defaultCollapsed);
+    setShowAddForm(!defaultCollapsed);
   }, [defaultCollapsed]);
 
   useEffect(() => {
-    if (!collapsed) {
+    if (showAddForm) {
       nameRef.current?.focus();
     }
-  }, [collapsed]);
+  }, [showAddForm]);
 
-  if (collapsed) {
+  if (!showAddForm) {
     return (
       <div className="ll_card" style={{ marginTop: 10 }} suppressHydrationWarning>
         {defaultCollapsed ? <div className="ll_notice">Contact saved.</div> : null}
         <button
           type="button"
           className="ll_btn ll_btnLink"
-          onClick={() => setCollapsed(false)}
+          onClick={() => setShowAddForm(true)}
         >
           + Add another contact
         </button>
@@ -83,7 +83,7 @@ export default function PropertyManagerAddContactPanelClient({
         <textarea
           id="contactNotes"
           name="contactNotes"
-          className="ll_input"
+          className="ll_input resize-none"
           rows={2}
           suppressHydrationWarning
         />

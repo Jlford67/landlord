@@ -134,7 +134,7 @@ export default async function EditPropertyManagerPage({
           <textarea
             id="notes"
             name="notes"
-            className="ll_input"
+            className="ll_input resize-none"
             rows={3}
             defaultValue={company.notes ?? ""}
             suppressHydrationWarning
@@ -219,7 +219,7 @@ export default async function EditPropertyManagerPage({
                   <textarea
                     id={`contactNotes-${contact.id}`}
                     name="contactNotes"
-                    className="ll_input"
+                    className="ll_input resize-none"
                     rows={2}
                     defaultValue={contact.notes ?? ""}
                     suppressHydrationWarning
