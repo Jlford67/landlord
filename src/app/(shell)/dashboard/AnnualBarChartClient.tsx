@@ -3,6 +3,7 @@
 import {
   Bar,
   BarChart,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -34,7 +35,12 @@ export default function AnnualBarChartClient({ data }: AnnualBarChartClientProps
           formatter={(value) => currencyFormatter.format(Number(value))}
           labelFormatter={(label) => `Year ${label}`}
         />
-        <Bar dataKey="net" fill="#0f172a" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="net" radius={[4, 4, 0, 0]}>
+          {data.map((entry) => {
+            const fill = entry.net < 0 ? "#dc2626" : entry.net > 0 ? "#059669" : "#374151";
+            return <Cell key={`cell-${entry.year}`} fill={fill} />;
+          })}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
