@@ -10,6 +10,7 @@ import { PencilLine, Trash2 } from "lucide-react";
 import { promises as fs } from "fs";
 import path from "path";
 import { deleteAnnualEntry } from "./actions";
+import { normalizeMonth, normalizeYear, monthToYear } from "@/lib/dateSelectors";
 
 /* ---------------- helpers ---------------- */
 
@@ -31,12 +32,6 @@ function shiftMonth(month: string, delta: number) {
   const d = new Date(Date.UTC(y, (m ?? 1) - 1, 1));
   d.setUTCMonth(d.getUTCMonth() + delta);
   return ym(d);
-}
-
-function parseYear(raw: string | undefined, fallback: number) {
-  const num = Number(raw);
-  if (!Number.isFinite(num)) return fallback;
-  return Math.trunc(num);
 }
 
 async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
@@ -106,15 +101,16 @@ export default async function PropertyLedgerPage({
   const { id: propertyId } = await params;
   const sp = await searchParams;
 
-  const monthParam = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : "";
-  const month = monthParam || ym(new Date());
-  const monthValue = monthParam || month;
+  const fallbackMonth = ym(new Date());
+  const month = normalizeMonth(sp.month, fallbackMonth);
+  const monthValue = month;
   const view = sp.view === "annual" ? "annual" : "monthly";
 
   const [yy, mm] = month.split("-").map(Number);
   const start = new Date(Date.UTC(yy, mm - 1, 1, 0, 0, 0));
   const end = new Date(Date.UTC(yy, mm, 1, 0, 0, 0)); // first day of next month
-  const year = parseYear(sp.year, yy);
+  const fallbackYear = monthToYear(month);
+  const year = normalizeYear(sp.year, fallbackYear);
 
   const property = await prisma.property.findUnique({
     where: { id: propertyId },

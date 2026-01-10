@@ -6,6 +6,7 @@ import path from "path";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import IconButton from "@/components/ui/IconButton";
 import { Save, Trash2 } from "lucide-react";
+import { normalizeYear } from "@/lib/dateSelectors";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -60,8 +61,7 @@ export default async function PropertyAnnualPage(props: PageProps) {
   const { id: propertyId } = await props.params;
   const sp = await props.searchParams;
 
-  const yearRaw = Number(sp.year ?? currentYearUtc());
-  const year = Number.isFinite(yearRaw) ? Math.trunc(yearRaw) : currentYearUtc();
+  const year = normalizeYear(sp.year, currentYearUtc());
 
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
