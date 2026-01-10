@@ -98,6 +98,17 @@ a:hover{ text-decoration: underline; }
   background: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 45%, #e5e7eb 100%);
 }
 
+.ll_shell_sidebarInner{
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.ll_side_header{
+  display: flex;
+  flex-direction: column;
+}
+
 .ll_side_logo{
   display: flex;
   align-items: center;
@@ -112,9 +123,9 @@ a:hover{ text-decoration: underline; }
 .ll_side_logoImage{
   display: block;
   width: auto;
-  height: 44px;
-  max-width: 180px;
-  max-height: 48px;
+  height: 56px;
+  max-width: 220px;
+  max-height: 56px;
   object-fit: contain;
 }
 
@@ -122,6 +133,16 @@ a:hover{ text-decoration: underline; }
   height: 1px;
   background: var(--border);
   margin: 8px 12px 12px;
+}
+
+.ll_side_navWrap{
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 12px;
+}
+
+.ll_side_footer{
+  padding-bottom: 64px;
 }
 
 .ll_shell_main{
