@@ -33,7 +33,7 @@ export default function PropertyManagerContactsClient({
       <div className="ll_card" style={{ marginTop: 10 }}>
         <PropertyManagerAddContactPanelClient
           defaultCollapsed={msg === "contact-added"}
-          actionUrl={`/api/property-managers/${companyId}/contacts`}
+          actionUrl={`/api/property-managers/by-company/${companyId}/contacts`}
         />
       </div>
 

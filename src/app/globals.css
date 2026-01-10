@@ -98,6 +98,53 @@ a:hover{ text-decoration: underline; }
   background: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 45%, #e5e7eb 100%);
 }
 
+.ll_shell_sidebarInner{
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.ll_side_header{
+  display: flex;
+  flex-direction: column;
+}
+
+.ll_side_logo{
+  display: flex;
+  align-items: center;
+  padding: 24px 16px;
+  text-decoration: none;
+}
+
+.ll_side_logo:hover{
+  text-decoration: none;
+}
+
+.ll_side_logoImage{
+  display: block;
+  width: auto;
+  height: 96px;
+  max-width: 280px;
+  max-height: 96px;
+  object-fit: contain;
+}
+
+.ll_side_divider{
+  height: 1px;
+  background: var(--border);
+  margin: 8px 12px 12px;
+}
+
+.ll_side_navWrap{
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 12px;
+}
+
+.ll_side_footer{
+  padding-bottom: 64px;
+}
+
 .ll_shell_main{
   flex: 1;
   min-width: 0;

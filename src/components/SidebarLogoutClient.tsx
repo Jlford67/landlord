@@ -7,7 +7,7 @@ export default function SidebarLogoutClient() {
     <form
       action="/api/auth/logout"
       method="post"
-      className="mt-auto pt-4"
+      className="mt-auto pt-4 pb-6"
       suppressHydrationWarning
     >
       <button

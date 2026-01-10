@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import SidebarLogoutClient from "@/components/SidebarLogoutClient";
 import {
   LayoutDashboard,
   Building2,
@@ -31,6 +30,16 @@ const NAV = [
 ];
 
 function isActivePath(pathname: string, href: string) {
+  // Ledger should stay active even when nested under /properties/[id]/ledger
+  if (href === "/ledger") {
+    return pathname === "/ledger" || pathname.includes("/ledger");
+  }
+
+  // If ledger is active, do NOT mark properties active
+  if (href === "/properties" && pathname.includes("/ledger")) {
+    return false;
+  }
+
   return pathname === href || pathname.startsWith(href + "/");
 }
 
@@ -38,26 +47,23 @@ export default function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="ll_side_nav flex min-h-[calc(100vh-64px)] flex-col pb-16">
-      <div>
-        {NAV.map(({ href, label, Icon }) => {
-          const active = isActivePath(pathname, href);
+    <nav className="ll_side_nav">
+      {NAV.map(({ href, label, Icon }) => {
+        const active = isActivePath(pathname, href);
 
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`ll_side_link ${active ? "is-active" : ""}`}
-            >
-              <span className="ll_side_icon" aria-hidden="true">
-                <Icon size={18} />
-              </span>
-              <span className="ll_side_label">{label}</span>
-            </Link>
-          );
-        })}
-      </div>
-      <SidebarLogoutClient />
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`ll_side_link ${active ? "is-active" : ""}`}
+          >
+            <span className="ll_side_icon" aria-hidden="true">
+              <Icon size={18} />
+            </span>
+            <span className="ll_side_label">{label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }
