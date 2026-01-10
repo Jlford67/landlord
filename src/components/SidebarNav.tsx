@@ -30,6 +30,16 @@ const NAV = [
 ];
 
 function isActivePath(pathname: string, href: string) {
+  // Ledger should stay active even when nested under /properties/[id]/ledger
+  if (href === "/ledger") {
+    return pathname === "/ledger" || pathname.includes("/ledger");
+  }
+
+  // If ledger is active, do NOT mark properties active
+  if (href === "/properties" && pathname.includes("/ledger")) {
+    return false;
+  }
+
   return pathname === href || pathname.startsWith(href + "/");
 }
 

@@ -4,13 +4,13 @@ export default async function LedgerPropertyPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ propertyId: string }>;
-  searchParams: Promise<{ month?: string; view?: string; year?: string }>;
+  params: { propertyId: string };
+  searchParams?: { month?: string; view?: string; year?: string };
 }) {
   const { propertyId } = await params;
 
   return PropertyLedgerPage({
-    params: Promise.resolve({ id: propertyId }),
-    searchParams,
-  });
+    params: { id: propertyId },
+    searchParams: searchParams ?? {},
+  } as any);
 }
