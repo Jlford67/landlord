@@ -112,7 +112,7 @@ a:hover{ text-decoration: underline; }
 .ll_side_logo{
   display: flex;
   align-items: center;
-  padding: 12px;
+  padding: 16px 12px;
   text-decoration: none;
 }
 
@@ -123,9 +123,9 @@ a:hover{ text-decoration: underline; }
 .ll_side_logoImage{
   display: block;
   width: auto;
-  height: 56px;
-  max-width: 220px;
-  max-height: 56px;
+  height: 64px;
+  max-width: 240px;
+  max-height: 64px;
   object-fit: contain;
 }
 
