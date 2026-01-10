@@ -1,21 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 type PropertyManagerAddContactPanelClientProps = {
-  companyId: string;
   defaultCollapsed: boolean;
-  action: (formData: FormData) => void;
+  actionUrl: string;
 };
 
 export default function PropertyManagerAddContactPanelClient({
-  companyId,
   defaultCollapsed,
-  action,
+  actionUrl,
 }: PropertyManagerAddContactPanelClientProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
-  const nameRef = useRef<HTMLInputElement | null>(null);
-
   useEffect(() => {
     setCollapsed(defaultCollapsed);
   }, [defaultCollapsed]);
@@ -44,12 +40,11 @@ export default function PropertyManagerAddContactPanelClient({
   }
 
   return (
-    <form className="ll_form" action={action} suppressHydrationWarning data-company-id={companyId}>
+    <form className="ll_form" action={actionUrl} method="post" suppressHydrationWarning>
       <label className="ll_label" htmlFor="newContactName">
         Name
       </label>
       <input
-        ref={nameRef}
         id="newContactName"
         name="contactName"
         className="ll_input"

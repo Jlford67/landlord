@@ -3,13 +3,10 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import {
-  createPropertyManagerContact,
-  deletePropertyManagerContact,
   updatePropertyManagerCompany,
-  updatePropertyManagerContact,
 } from "../../actions";
-import PropertyManagerAddContactPanelClient from "@/components/PropertyManagerAddContactPanelClient";
-import HydrationSafe from "@/components/HydrationSafe";
+import ClientOnly from "@/components/ClientOnly";
+import PropertyManagerContactsClient from "@/components/PropertyManagerContactsClient";
 
 function propertyLabel(p: {
   nickname: string | null;
@@ -35,6 +32,13 @@ export default async function EditPropertyManagerPage({
   const sp = searchParams ? await searchParams : {};
   const msg = typeof sp.msg === "string" ? sp.msg : "";
   const contactId = typeof sp.contactId === "string" ? sp.contactId : "";
+  const contacts = company.contacts.map((contact) => ({
+    id: contact.id,
+    name: contact.name,
+    phone: contact.phone ?? null,
+    email: contact.email ?? null,
+    notes: contact.notes ?? null,
+  }));
 
   const company = await prisma.propertyManagerCompany.findUnique({
     where: { id },
@@ -151,101 +155,14 @@ export default async function EditPropertyManagerPage({
           </div>
         </form>
 
-        <div className="ll_divider" />
-        <div className="ll_card_title" style={{ fontSize: 14 }}>
-          Add contact
-        </div>
-
-        <HydrationSafe className="ll_card" style={{ marginTop: 10 }}>
-          <PropertyManagerAddContactPanelClient
+        <ClientOnly fallback={<div className="ll_card">Loading contacts…</div>}>
+          <PropertyManagerContactsClient
             companyId={company.id}
-            defaultCollapsed={msg === "contact-added"}
-            action={createPropertyManagerContact.bind(null, company.id)}
+            contacts={contacts}
+            msg={msg}
+            contactId={contactId}
           />
-        </HydrationSafe>
-
-        <div className="ll_card_title mt-6" style={{ fontSize: 14 }}>
-          Contacts
-        </div>
-
-        <div className="mt-3 space-y-3">
-          {company.contacts.length ? (
-            company.contacts.map((contact) => (
-              <HydrationSafe key={contact.id} className="ll_card">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-gray-900">Contact: {contact.name}</div>
-                  {msg === "contact-updated" && contactId === contact.id ? (
-                    <div className="text-xs text-green-700">Saved</div>
-                  ) : null}
-                </div>
-                <form
-                  className="ll_form"
-                  action={updatePropertyManagerContact.bind(null, contact.id, company.id)}
-                  style={{ margin: 0 }}
-                >
-                  <label className="ll_label" htmlFor={`contactName-${contact.id}`}>
-                    Contact Name
-                  </label>
-                  <input
-                    id={`contactName-${contact.id}`}
-                    name="contactName"
-                    className="ll_input"
-                    defaultValue={contact.name}
-                    required
-                    suppressHydrationWarning
-                  />
-
-                  <label className="ll_label" htmlFor={`contactPhone-${contact.id}`}>
-                    Phone
-                  </label>
-                  <input
-                    id={`contactPhone-${contact.id}`}
-                    name="contactPhone"
-                    className="ll_input"
-                    defaultValue={contact.phone ?? ""}
-                    suppressHydrationWarning
-                  />
-
-                  <label className="ll_label" htmlFor={`contactEmail-${contact.id}`}>
-                    Email
-                  </label>
-                  <input
-                    id={`contactEmail-${contact.id}`}
-                    name="contactEmail"
-                    className="ll_input"
-                    defaultValue={contact.email ?? ""}
-                    suppressHydrationWarning
-                  />
-
-                  <label className="ll_label" htmlFor={`contactNotes-${contact.id}`}>
-                    Notes
-                  </label>
-                  <textarea
-                    id={`contactNotes-${contact.id}`}
-                    name="contactNotes"
-                    className="ll_input resize-none"
-                    rows={2}
-                    defaultValue={contact.notes ?? ""}
-                    suppressHydrationWarning
-                  />
-
-                  <div className="ll_actions">
-                    <button className="ll_btn" type="submit" suppressHydrationWarning>
-                      Save
-                    </button>
-                  </div>
-                </form>
-                <form action={deletePropertyManagerContact.bind(null, contact.id, company.id)} style={{ marginTop: 10 }}>
-                  <button className="ll_btnSecondary" type="submit" suppressHydrationWarning>
-                    Remove
-                  </button>
-                </form>
-              </HydrationSafe>
-            ))
-          ) : (
-            <div className="ll_muted">No contacts yet.</div>
-          )}
-        </div>
+        </ClientOnly>
 
         <div className="ll_divider" />
         <div className="ll_card_title" style={{ fontSize: 14 }}>
