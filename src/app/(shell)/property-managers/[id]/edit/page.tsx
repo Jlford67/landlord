@@ -154,9 +154,13 @@ export default async function EditPropertyManagerPage({
           Add contact
         </div>
 
-        <div className="ll_card" style={{ marginTop: 10 }}>
+        <div className="ll_card" style={{ marginTop: 10 }} suppressHydrationWarning>
           {msg === "contact-added" && <div className="ll_notice">Contact added.</div>}
-          <form className="ll_form" action={createPropertyManagerContact.bind(null, company.id)}>
+          <form
+            className="ll_form"
+            action={createPropertyManagerContact.bind(null, company.id)}
+            suppressHydrationWarning
+          >
             <label className="ll_label" htmlFor="contactName">
               Name
             </label>
