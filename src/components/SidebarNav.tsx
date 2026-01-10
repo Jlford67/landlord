@@ -38,7 +38,7 @@ export default function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="ll_side_nav flex min-h-[calc(100vh-64px)] flex-col">
+    <nav className="ll_side_nav flex min-h-[calc(100vh-64px)] flex-col pb-6">
       <div>
         {NAV.map(({ href, label, Icon }) => {
           const active = isActivePath(pathname, href);
