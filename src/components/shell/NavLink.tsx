@@ -16,7 +16,7 @@ export default function NavLink({
   const pathname = usePathname();
 
   // active when exact match OR when you're inside a section (e.g. /properties/123)
-  const isPropertyLedgerRoute = pathname.startsWith("/properties/") && pathname.includes("/ledger");
+  const isPropertyLedgerRoute = /^\/properties\/[^/]+\/ledger(?:\/|$)/.test(pathname);
   const isLedgerNav = href === "/ledger";
   const isPropertiesNav = href === "/properties";
   const isActive = isLedgerNav
