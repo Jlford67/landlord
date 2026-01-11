@@ -1,4 +1,4 @@
-import { prisma } from "../src/lib/db";
+import { prisma } from "../src/lib/db.ts";
 import { promises as fs } from "fs";
 import path from "path";
 

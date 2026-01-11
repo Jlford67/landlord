@@ -8,6 +8,8 @@ import { formatUsd } from "@/lib/money";
 import PropertyPicker from "@/components/dashboard/PropertyPicker";
 import PropertyPhoto from "@/components/properties/PropertyPhoto";
 import AnnualBarChartClient from "./AnnualBarChartClient";
+import NotificationsToastClient from "@/components/notifications/NotificationsToastClient";
+import { generateNotificationsIfNeeded, getTodayInAppNotifications } from "../settings/actions";
 
 /* ---------------- date helpers ---------------- */
 
@@ -116,6 +118,8 @@ export default async function DashboardPage({
   searchParams?: Promise<{ propertyId?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
+  await generateNotificationsIfNeeded();
+  const todayInApp = await getTodayInAppNotifications();
 
   const cookieStore: any = await cookies();
   const cookiePropertyId =
@@ -313,6 +317,10 @@ export default async function DashboardPage({
 
   return (
     <div className="ll_dash">
+      <NotificationsToastClient
+        events={todayInApp.map((event) => ({ id: event.id, message: event.message }))}
+        inboxHref="/settings#notifications-inbox"
+      />
       <div className="ll_dash_top">
         <div className="ll_dash_title">Dashboard</div>
 
