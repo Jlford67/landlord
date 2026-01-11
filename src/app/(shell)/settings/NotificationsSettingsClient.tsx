@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import SafeInput from "@/components/ui/SafeInput";
 import SafeSelect from "@/components/ui/SafeSelect";
+import HydrationSafeButton from "@/components/ui/HydrationSafeButton";
 import {
   acknowledgeNotification,
   saveSettings,
@@ -217,16 +218,17 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
                 onChange={(event) =>
                   setFormState((prev) => ({ ...prev, emailAddress: event.target.value }))
                 }
+                suppressHydrationWarning
                 disabled={controlsDisabled || !formState.emailEnabled}
               />
-              <button
+              <HydrationSafeButton
                 type="button"
                 className="ll_btn ll_btnSecondary"
                 onClick={handleTestEmail}
                 disabled={controlsDisabled || !formState.emailEnabled}
               >
                 Test Email
-              </button>
+              </HydrationSafeButton>
             </div>
           </div>
           {testMessage ? <div className="text-xs text-slate-500">{testMessage}</div> : null}
@@ -352,14 +354,14 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
               ))}
             </SafeSelect>
           </div>
-          <button
+          <HydrationSafeButton
             type="button"
             className="ll_btn ll_btnPrimary"
             onClick={handleSave}
             disabled={isPending}
           >
             {isPending ? "Saving..." : "Save Changes"}
-          </button>
+          </HydrationSafeButton>
         </div>
         {statusMessage ? <div className="mt-3 text-xs text-emerald-600">{statusMessage}</div> : null}
       </section>
@@ -398,14 +400,14 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
                       {row.acknowledged ? (
                         <span className="text-xs text-slate-500">Acknowledged</span>
                       ) : (
-                        <button
+                        <HydrationSafeButton
                           type="button"
                           className="ll_btn ll_btnSecondary"
                           onClick={() => acknowledgeRow(row.id)}
                           disabled={isPending}
                         >
                           Acknowledge
-                        </button>
+                        </HydrationSafeButton>
                       )}
                     </td>
                   </tr>

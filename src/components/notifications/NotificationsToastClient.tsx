@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { acknowledgeNotification } from "@/app/(shell)/settings/actions";
+import HydrationSafeButton from "@/components/ui/HydrationSafeButton";
 
 export type ToastNotification = {
   id: string;
@@ -32,13 +33,13 @@ export default function NotificationsToastClient({
     <div className="fixed bottom-6 right-6 z-50 w-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold text-slate-900">New notifications</div>
-        <button
+        <HydrationSafeButton
           type="button"
           className="text-xs text-slate-500"
           onClick={() => setOpen(false)}
         >
           Dismiss
-        </button>
+        </HydrationSafeButton>
       </div>
       <ul className="mt-3 space-y-2 text-sm text-slate-600">
         {events.slice(0, 3).map((event) => (
@@ -51,14 +52,14 @@ export default function NotificationsToastClient({
         <Link className="ll_btn ll_btnSecondary" href={inboxHref}>
           View inbox
         </Link>
-        <button
+        <HydrationSafeButton
           type="button"
           className="ll_btn ll_btnPrimary"
           onClick={handleAcknowledgeAll}
           disabled={isPending}
         >
           {isPending ? "Saving..." : "Acknowledge"}
-        </button>
+        </HydrationSafeButton>
       </div>
     </div>
   );
