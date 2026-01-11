@@ -430,7 +430,7 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
                           onClick={handleAcknowledgeAll}
                           disabled={isPending}
                         >
-                          Acknowledge
+                          Acknowledge All
                         </HydrationSafeButton>
                       )}
                     </td>
