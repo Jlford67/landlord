@@ -159,14 +159,6 @@ export default async function ReportsIndexPage() {
               <p className="ll_muted">Portfolio reporting and exports.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button type="button" className="ll_btn ll_btnSecondary" disabled>
-              Export all
-            </button>
-            <button type="button" className="ll_btn ll_btnSecondary" disabled>
-              Help
-            </button>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

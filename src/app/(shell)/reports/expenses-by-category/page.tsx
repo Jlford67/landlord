@@ -3,7 +3,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
-import { getExpensesByCategoryReport } from "@/lib/reports/expensesByCategory";
+import {
+  addDaysUTC,
+  calculateProratedAnnualAmount,
+  getExpensesByCategoryReport,
+} from "@/lib/reports/expensesByCategory";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -28,6 +32,12 @@ function formatInputDateUTC(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
+function formatMonthYearUTC(d: Date) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `${m}-${y}`;
+}
+
 function moneyAccounting(n: number) {
   const abs = Math.abs(n).toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -40,6 +50,22 @@ function amountClass(n: number) {
   if (n < 0) return "text-red-600";
   if (n > 0) return "text-emerald-600";
   return "text-gray-700";
+}
+
+function buildReportQuery(params: {
+  propertyId: string | null;
+  startDate: Date;
+  endDate: Date;
+  includeTransfers: boolean;
+  drillCategoryId?: string | null;
+}) {
+  const query = new URLSearchParams();
+  query.set("propertyId", params.propertyId ?? "all");
+  query.set("start", formatInputDateUTC(params.startDate));
+  query.set("end", formatInputDateUTC(params.endDate));
+  if (params.includeTransfers) query.set("includeTransfers", "1");
+  if (params.drillCategoryId) query.set("drillCategoryId", params.drillCategoryId);
+  return query.toString();
 }
 
 export default async function ExpensesByCategoryPage({
@@ -95,6 +121,197 @@ export default async function ExpensesByCategoryPage({
     endDate,
     includeTransfers,
   });
+
+  const drillCategoryId = getStr(sp, "drillCategoryId") || null;
+  const drillTarget = drillCategoryId
+    ? report.rows.find((row) => row.id === drillCategoryId) ?? null
+    : null;
+
+  type DrilldownRow = {
+    id: string;
+    type: "ledger" | "annual";
+    period: string;
+    sortKey: string;
+    dateLabel: string;
+    category: string;
+    description: string;
+    propertyLabel?: string;
+    amount: number;
+  };
+
+  const propertyLabelMap = new Map(properties.map((p) => [p.id, propertyLabel(p)]));
+  const propertyScopeLabel = propertyId
+    ? propertyLabelMap.get(propertyId) ?? "Selected property"
+    : "All properties";
+
+  let drilldownRows: DrilldownRow[] = [];
+  let drilldownTotal = 0;
+
+  if (drillTarget) {
+    const allowedTypes = includeTransfers ? ["expense", "transfer"] : ["expense"];
+    const categories = await prisma.category.findMany({
+      where: { type: { in: allowedTypes } },
+      select: {
+        id: true,
+        name: true,
+        parentId: true,
+      },
+    });
+
+    const childrenMap = new Map<string | null, string[]>();
+    categories.forEach((category) => {
+      const key = category.parentId ?? null;
+      const siblings = childrenMap.get(key) ?? [];
+      siblings.push(category.id);
+      childrenMap.set(key, siblings);
+    });
+
+    const drillCategoryIds = new Set<string>();
+    const stack = [drillTarget.id];
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current || drillCategoryIds.has(current)) continue;
+      drillCategoryIds.add(current);
+      const children = childrenMap.get(current) ?? [];
+      children.forEach((child) => stack.push(child));
+    }
+
+    const categoryIds = Array.from(drillCategoryIds);
+    const endExclusive = addDaysUTC(endDate, 1);
+
+    const transactionSelect = {
+      id: true,
+      date: true,
+      amount: true,
+      payee: true,
+      memo: true,
+      category: { select: { name: true } },
+      ...(propertyId
+        ? {}
+        : {
+            property: {
+              select: {
+                id: true,
+                nickname: true,
+                street: true,
+                city: true,
+                state: true,
+                zip: true,
+              },
+            },
+          }),
+    } as const;
+
+    const ledgerTxns = await prisma.transaction.findMany({
+      where: {
+        propertyId: propertyId || undefined,
+        categoryId: { in: categoryIds },
+        deletedAt: null,
+        date: {
+          gte: startDate,
+          lt: endExclusive,
+        },
+        category: { type: { in: allowedTypes } },
+      },
+      select: transactionSelect,
+      orderBy: [{ date: "asc" }, { id: "asc" }],
+    });
+
+    const ledgerRows: DrilldownRow[] = ledgerTxns.map((txn) => {
+      const year = txn.date.getUTCFullYear();
+      const month = String(txn.date.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(txn.date.getUTCDate()).padStart(2, "0");
+      const description = txn.payee || txn.memo || "-";
+      const rowPropertyLabel =
+        propertyId || !("property" in txn) || !txn.property
+          ? undefined
+          : propertyLabel(txn.property);
+      drilldownTotal += txn.amount;
+      return {
+        id: txn.id,
+        type: "ledger",
+        period: formatMonthYearUTC(txn.date),
+        sortKey: `${year}-${month}-${day}`,
+        dateLabel: formatInputDateUTC(txn.date),
+        category: txn.category.name,
+        description,
+        propertyLabel: rowPropertyLabel,
+        amount: txn.amount,
+      };
+    });
+
+    const startYear = startDate.getUTCFullYear();
+    const endYear = endDate.getUTCFullYear();
+
+    const annualSelect = {
+      id: true,
+      year: true,
+      amount: true,
+      note: true,
+      category: { select: { name: true } },
+      ...(propertyId
+        ? {}
+        : {
+            property: {
+              select: {
+                id: true,
+                nickname: true,
+                street: true,
+                city: true,
+                state: true,
+                zip: true,
+              },
+            },
+          }),
+    } as const;
+
+    const annualRows = await prisma.annualCategoryAmount.findMany({
+      where: {
+        propertyId: propertyId || undefined,
+        categoryId: { in: categoryIds },
+        year: { gte: startYear, lte: endYear },
+      },
+      select: annualSelect,
+      orderBy: [{ year: "asc" }, { id: "asc" }],
+    });
+
+    const annualDetailRows: DrilldownRow[] = annualRows
+      .map((row) => {
+        const prorated = calculateProratedAnnualAmount({
+          amount: Number(row.amount ?? 0),
+          year: row.year,
+          startDate,
+          endDate,
+        });
+        if (prorated === 0) return null;
+        const rowPropertyLabel =
+          propertyId || !("property" in row) || !row.property
+            ? undefined
+            : propertyLabel(row.property);
+        drilldownTotal += prorated;
+        return {
+          id: row.id,
+          type: "annual",
+          period: `${row.year} (Annual)`,
+          sortKey: `${row.year}-00-00`,
+          dateLabel: "",
+          category: row.category.name,
+          description: row.note?.trim() || "Annual amount (prorated)",
+          propertyLabel: rowPropertyLabel,
+          amount: prorated,
+        };
+      })
+      .filter((row): row is DrilldownRow => Boolean(row));
+
+    drilldownRows = [...annualDetailRows, ...ledgerRows];
+    drilldownRows.sort((a, b) => {
+      if (a.sortKey !== b.sortKey) return a.sortKey.localeCompare(b.sortKey);
+      if (a.type !== b.type) return a.type.localeCompare(b.type);
+      return a.description.localeCompare(b.description);
+    });
+  }
+
+  const drilldownDifference = drillTarget ? drilldownTotal - drillTarget.amount : 0;
 
   return (
     <div className="ll_page">
@@ -244,9 +461,20 @@ export default async function ExpensesByCategoryPage({
                             </span>
                           </td>
                           <td className="text-right">
-                            <span className={amountClass(row.amount)}>
+                            <Link
+                              href={`/reports/expenses-by-category?${buildReportQuery({
+                                propertyId,
+                                startDate,
+                                endDate,
+                                includeTransfers,
+                                drillCategoryId: row.id,
+                              })}`}
+                              className={`cursor-pointer inline-flex justify-end hover:underline underline-offset-2 ${amountClass(
+                                row.amount
+                              )}`}
+                            >
                               {moneyAccounting(row.amount)}
-                            </span>
+                            </Link>
                           </td>
                         </tr>
                         {showSpacer ? (
@@ -274,6 +502,91 @@ export default async function ExpensesByCategoryPage({
             </table>
           </div>
         </div>
+
+        {drillTarget ? (
+          <div className="ll_card ll_stack" style={{ gap: 12 }}>
+            <div className="ll_stack" style={{ gap: 4 }}>
+              <h2 className="text-base font-semibold text-slate-900">
+                Details for {drillTarget.name}
+              </h2>
+              <p className="ll_muted text-sm">
+                {propertyScopeLabel} · {formatInputDateUTC(startDate)} to{" "}
+                {formatInputDateUTC(endDate)} · Transfers{" "}
+                {includeTransfers ? "included" : "excluded"}.
+              </p>
+            </div>
+
+            <div className="ll_table_wrap">
+              <table className="ll_table ll_table_zebra w-full table-fixed">
+                <colgroup>
+                  <col style={{ width: "120px" }} />
+                  <col style={{ width: "120px" }} />
+                  <col style={{ width: "180px" }} />
+                  <col />
+                  {!propertyId ? <col style={{ width: "180px" }} /> : null}
+                  <col style={{ width: "150px" }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    {!propertyId ? <th>Property</th> : null}
+                    <th className="!text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {drilldownRows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={propertyId ? 5 : 6}
+                        className="text-center text-sm text-slate-600"
+                      >
+                        No drill-down details available for this category.
+                      </td>
+                    </tr>
+                  ) : (
+                    drilldownRows.map((row) => (
+                      <tr key={`${row.type}-${row.id}`}>
+                        <td>{row.period}</td>
+                        <td>{row.dateLabel}</td>
+                        <td>{row.category}</td>
+                        <td className="truncate">{row.description}</td>
+                        {!propertyId ? <td>{row.propertyLabel ?? "-"}</td> : null}
+                        <td className="text-right">
+                          <span className={amountClass(row.amount)}>
+                            {moneyAccounting(row.amount)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="ll_table_total">
+                    <td colSpan={propertyId ? 4 : 5}>Total (drill-down)</td>
+                    <td className="text-right">
+                      <span className={amountClass(drillTarget.amount)}>
+                        {moneyAccounting(drillTarget.amount)}
+                      </span>
+                    </td>
+                  </tr>
+                  {Math.abs(drilldownDifference) > 0.01 ? (
+                    <tr>
+                      <td
+                        colSpan={propertyId ? 5 : 6}
+                        className="text-right text-xs text-slate-500"
+                      >
+                        Rounding difference: {moneyAccounting(drilldownDifference)}
+                      </td>
+                    </tr>
+                  ) : null}
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

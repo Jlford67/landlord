@@ -20,7 +20,7 @@ export type ExpensesByCategoryResult = {
   total: number;
 };
 
-function addDaysUTC(date: Date, days: number) {
+export function addDaysUTC(date: Date, days: number) {
   return new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days)
   );
@@ -111,10 +111,13 @@ export async function getExpensesByCategoryReport(
     });
 
     for (const row of annualRows) {
-      const overlapDays = overlapDaysInYear(filters.startDate, filters.endDate, row.year);
-      if (overlapDays <= 0) continue;
-      const fraction = overlapDays / daysInYear(row.year);
-      const proratedAmount = Number(row.amount ?? 0) * fraction;
+      const proratedAmount = calculateProratedAnnualAmount({
+        amount: Number(row.amount ?? 0),
+        year: row.year,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      });
+      if (proratedAmount === 0) continue;
       const current = directAmounts.get(row.categoryId) ?? 0;
       directAmounts.set(row.categoryId, current + proratedAmount);
     }
@@ -179,4 +182,16 @@ export async function getExpensesByCategoryReport(
   const total = Array.from(directAmounts.values()).reduce((sum, amt) => sum + amt, 0);
 
   return { rows, total };
+}
+
+export function calculateProratedAnnualAmount(params: {
+  amount: number;
+  year: number;
+  startDate: Date;
+  endDate: Date;
+}) {
+  const overlapDays = overlapDaysInYear(params.startDate, params.endDate, params.year);
+  if (overlapDays <= 0) return 0;
+  const fraction = overlapDays / daysInYear(params.year);
+  return params.amount * fraction;
 }

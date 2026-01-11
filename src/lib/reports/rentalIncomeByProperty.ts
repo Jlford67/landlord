@@ -95,7 +95,7 @@ function normalizeDate(value?: string | null): Date | null {
   return parseYmd(value);
 }
 
-function isRentalIncomeCategory(categoryName: string): boolean {
+export function isRentalIncomeCategory(categoryName: string): boolean {
   const name = categoryName.toLowerCase();
   const includeMatches = ["rent", "rental", "lease"];
   const excludeMatches = [
