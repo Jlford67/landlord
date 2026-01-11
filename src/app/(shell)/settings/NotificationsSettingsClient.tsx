@@ -6,6 +6,7 @@ import SafeSelect from "@/components/ui/SafeSelect";
 import HydrationSafeButton from "@/components/ui/HydrationSafeButton";
 import {
   acknowledgeNotification,
+  generateNotificationsIfNeeded,
   saveSettings,
   sendTestEmail,
   type NotificationSettingsInput,
@@ -232,6 +233,11 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
             </div>
           </div>
           {testMessage ? <div className="text-xs text-slate-500">{testMessage}</div> : null}
+          <form action={generateNotificationsIfNeeded}>
+            <HydrationSafeButton type="submit" className="ll_btn ll_btnSecondary">
+              Run Reminders Now
+            </HydrationSafeButton>
+          </form>
           <label className="flex items-center justify-between gap-4 text-sm text-slate-500">
             <span>SMS Alerts (Coming Soon)</span>
             <SafeInput type="checkbox" disabled checked={false} />
