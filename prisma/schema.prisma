@@ -40,6 +40,22 @@ enum TransactionSource {
   tax_year_import
 }
 
+enum NotificationChannel {
+  inapp
+  email
+}
+
+enum NotificationEventType {
+  insurance_due
+  property_tax_due
+}
+
+enum NotificationDeliveryStatus {
+  queued
+  sent
+  failed
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -413,6 +429,40 @@ model Notification {
   @@index([userId, status])
   @@index([propertyId])
   @@index([dueDate])
+}
+
+model NotificationSettings {
+  id                   String   @id @default(cuid())
+  enabled              Boolean  @default(true)
+  inAppEnabled         Boolean  @default(true)
+  emailEnabled         Boolean  @default(true)
+  emailAddress         String?
+  emailSendTimeLocal   String   @default("08:00")
+  insuranceEnabled     Boolean  @default(true)
+  insuranceStartDays   Int      @default(60)
+  insuranceOffsetsCsv  String   @default("60,30,14,7,1")
+  insuranceOverdueDaily Boolean @default(true)
+  propertyTaxEnabled   Boolean  @default(true)
+  propertyTaxStartDays Int      @default(60)
+  propertyTaxOffsetsCsv String  @default("60,30,14,7,1")
+  propertyTaxOverdueDaily Boolean @default(true)
+  lastGeneratedAt      DateTime?
+  updatedAt            DateTime @updatedAt
+}
+
+model NotificationEvent {
+  id              String                   @id @default(cuid())
+  createdAt       DateTime                 @default(now())
+  channel         NotificationChannel
+  type            NotificationEventType
+  propertyId      String?
+  relatedEntityId String?
+  dueDate         DateTime?
+  message         String
+  acknowledgedAt  DateTime?
+  sentAt          DateTime?
+  status          NotificationDeliveryStatus @default(queued)
+  dedupeKey       String                   @unique
 }
 
 model Session {
