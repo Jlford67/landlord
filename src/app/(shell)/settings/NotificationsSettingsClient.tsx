@@ -181,9 +181,17 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
   const acknowledgeRow = (id: string) => {
     startTransition(async () => {
       await acknowledgeNotification(id);
-      setInboxRows((prev) =>
-        prev.map((row) => (row.id === id ? { ...row, acknowledged: true } : row))
-      );
+      setInboxRows((prev) => prev.map((row) => (row.id === id ? { ...row, acknowledged: true } : row)));
+    });
+  };
+
+  const handleAcknowledgeAll = () => {
+    startTransition(async () => {
+      const targets = inboxRows.filter((r) => !r.acknowledged).map((r) => r.id);
+      if (targets.length === 0) return;
+
+      await Promise.all(targets.map((id) => acknowledgeNotification(id)));
+      setInboxRows((prev) => prev.map((row) => ({ ...row, acknowledged: true })));
     });
   };
 
@@ -197,12 +205,14 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
             checked={formState.enabled}
             onChange={(value) => setFormState((prev) => ({ ...prev, enabled: value }))}
           />
+
           <ToggleSwitch
             label="In-App Alerts"
             checked={formState.inAppEnabled}
             onChange={(value) => setFormState((prev) => ({ ...prev, inAppEnabled: value }))}
             disabled={controlsDisabled}
           />
+
           <div className="flex flex-wrap items-center justify-between gap-3">
             <ToggleSwitch
               label="Email Alerts"
@@ -210,18 +220,18 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
               onChange={(value) => setFormState((prev) => ({ ...prev, emailEnabled: value }))}
               disabled={controlsDisabled}
             />
+
             <div className="flex flex-1 flex-wrap items-center gap-2">
               <SafeInput
                 className="ll_input min-w-[220px] flex-1"
                 type="email"
                 placeholder="user@example.com"
                 value={formState.emailAddress ?? ""}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, emailAddress: event.target.value }))
-                }
+                onChange={(event) => setFormState((prev) => ({ ...prev, emailAddress: event.target.value }))}
                 suppressHydrationWarning
                 disabled={controlsDisabled || !formState.emailEnabled}
               />
+
               <HydrationSafeButton
                 type="button"
                 className="ll_btn ll_btnSecondary"
@@ -230,14 +240,21 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
               >
                 Test Email
               </HydrationSafeButton>
+
+              <form action={generateNotificationsIfNeeded}>
+                <HydrationSafeButton
+                  type="submit"
+                  className="ll_btn ll_btnSecondary"
+                  disabled={controlsDisabled || !formState.emailEnabled}
+                >
+                  Run Reminders Now
+                </HydrationSafeButton>
+              </form>
             </div>
           </div>
+
           {testMessage ? <div className="text-xs text-slate-500">{testMessage}</div> : null}
-          <form action={generateNotificationsIfNeeded}>
-            <HydrationSafeButton type="submit" className="ll_btn ll_btnSecondary">
-              Run Reminders Now
-            </HydrationSafeButton>
-          </form>
+
           <label className="flex items-center justify-between gap-4 text-sm text-slate-500">
             <span>SMS Alerts (Coming Soon)</span>
             <SafeInput type="checkbox" disabled checked={false} />
@@ -269,6 +286,7 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
             </SafeSelect>
             <span className="text-slate-500">days before due date</span>
           </div>
+
           <div>
             <div className="font-medium">Reminder Frequency:</div>
             <div className="mt-2">
@@ -279,13 +297,12 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
               />
             </div>
           </div>
+
           <label className="flex items-center gap-2">
             <SafeInput
               type="checkbox"
               checked={formState.insuranceOverdueDaily}
-              onChange={(event) =>
-                setFormState((prev) => ({ ...prev, insuranceOverdueDaily: event.target.checked }))
-              }
+              onChange={(event) => setFormState((prev) => ({ ...prev, insuranceOverdueDaily: event.target.checked }))}
               disabled={controlsDisabled}
             />
             Daily until marked paid
@@ -317,6 +334,7 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
             </SafeSelect>
             <span className="text-slate-500">days before due date</span>
           </div>
+
           <div>
             <div className="font-medium">Reminder Frequency:</div>
             <div className="mt-2">
@@ -327,13 +345,12 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
               />
             </div>
           </div>
+
           <label className="flex items-center gap-2">
             <SafeInput
               type="checkbox"
               checked={formState.propertyTaxOverdueDaily}
-              onChange={(event) =>
-                setFormState((prev) => ({ ...prev, propertyTaxOverdueDaily: event.target.checked }))
-              }
+              onChange={(event) => setFormState((prev) => ({ ...prev, propertyTaxOverdueDaily: event.target.checked }))}
               disabled={controlsDisabled}
             />
             Daily until marked paid
@@ -348,9 +365,7 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
             <SafeSelect
               className="ll_input"
               value={formState.emailSendTimeLocal}
-              onChange={(event) =>
-                setFormState((prev) => ({ ...prev, emailSendTimeLocal: event.target.value }))
-              }
+              onChange={(event) => setFormState((prev) => ({ ...prev, emailSendTimeLocal: event.target.value }))}
               disabled={controlsDisabled}
             >
               {SEND_TIME_OPTIONS.map((time) => (
@@ -360,6 +375,7 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
               ))}
             </SafeSelect>
           </div>
+
           <HydrationSafeButton
             type="button"
             className="ll_btn ll_btnPrimary"
@@ -369,6 +385,7 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
             {isPending ? "Saving..." : "Save Changes"}
           </HydrationSafeButton>
         </div>
+
         {statusMessage ? <div className="mt-3 text-xs text-emerald-600">{statusMessage}</div> : null}
       </section>
 
@@ -377,6 +394,7 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
           <div className="ll_card_title">Notifications Inbox</div>
           <span className="text-xs text-slate-500">Recent notification events</span>
         </div>
+
         <div className="mt-4 overflow-x-auto">
           <table className="ll_table ll_table_zebra">
             <thead>
@@ -409,7 +427,7 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
                         <HydrationSafeButton
                           type="button"
                           className="ll_btn ll_btnSecondary"
-                          onClick={() => acknowledgeRow(row.id)}
+                          onClick={handleAcknowledgeAll}
                           disabled={isPending}
                         >
                           Acknowledge

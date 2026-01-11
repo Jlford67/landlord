@@ -104,10 +104,40 @@ async function getOrCreateSettings() {
   return prisma.notificationSettings.create({ data: DEFAULT_SETTINGS });
 }
 
+import { Resend } from "resend";
+
 async function sendNotificationEmail(to: string, subject: string, html: string) {
-  console.log("Sending notification email", { to, subject, html });
-  return { ok: true };
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.error("Missing RESEND_API_KEY. Email not sent.", { to, subject });
+    return { ok: false as const, error: "Missing RESEND_API_KEY" };
+  }
+
+  const resend = new Resend(apiKey);
+
+  try {
+    const from = "Landlord App <onboarding@resend.dev>"; // safe default for quick testing
+    const result = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+    });
+
+    if ((result as any)?.error) {
+      console.error("Resend error", (result as any).error);
+      return { ok: false as const, error: String((result as any).error?.message ?? "Resend error") };
+    }
+
+    console.log("Email sent via Resend", { to, subject, id: (result as any)?.data?.id });
+    return { ok: true as const };
+  } catch (err: any) {
+    console.error("Failed to send email via Resend", err);
+    return { ok: false as const, error: String(err?.message ?? err) };
+  }
 }
+
 
 async function createNotificationEvent(seed: NotificationSeed) {
   const existing = await prisma.notificationEvent.findUnique({ where: { dedupeKey: seed.dedupeKey } });
