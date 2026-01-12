@@ -108,6 +108,16 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
   const whereProperty = propertyId ? { propertyId } : {};
   const amountFilter = kind === "income" ? { gt: 0 } : { lt: 0 };
 
+  if (process.env.NODE_ENV !== "production") {
+    const totalInYear = await prisma.transaction.count({
+      where: { deletedAt: null, date: { gte: start, lt: end } },
+    });
+    console.log(
+      `[dashboard drilldown] propertyId=${propertyId ?? "all"} year=${year} kind=${kind} ` +
+        `start=${start.toISOString()} end=${end.toISOString()} totalInYear=${totalInYear}`,
+    );
+  }
+
   const rows = await prisma.transaction.findMany({
     where: {
       deletedAt: null,
@@ -127,20 +137,26 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
     },
   });
 
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      `[dashboard drilldown] matched=${rows.length} propertyId=${propertyId ?? "all"} ` +
+        `year=${year} kind=${kind}`,
+    );
+  }
+
   const mapped = rows.map((row) => ({
     id: row.id,
-    dateLabel: formatDateUTC(row.date),
+    dateIso: row.date.toISOString(),
     description: row.payee ?? row.memo ?? "—",
-    category: row.category.name,
-    amountLabel: moneyAccounting(row.amount),
+    categoryName: row.category.name,
     amount: row.amount,
   }));
 
   const total = mapped.reduce((sum, row) => sum + row.amount, 0);
 
   return {
-    rows: mapped.map(({ amount, ...rest }) => rest),
-    totalLabel: moneyAccounting(total),
+    rows: mapped,
+    total,
   };
 }
 

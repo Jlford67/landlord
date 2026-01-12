@@ -23,15 +23,15 @@ type YearTotalsDisplay = {
 
 type DrilldownRow = {
   id: string;
-  dateLabel: string;
+  dateIso: string;
   description: string;
-  category: string;
-  amountLabel: string;
+  categoryName: string;
+  amount: number;
 };
 
 type DrilldownResult = {
   rows: DrilldownRow[];
-  totalLabel: string;
+  total: number;
 };
 
 type DrilldownParams = {
@@ -47,6 +47,22 @@ type YearlySummaryClientProps = {
   getYearDrilldown: (params: DrilldownParams) => Promise<DrilldownResult>;
 };
 
+function formatDate(dateIso: string) {
+  const d = new Date(dateIso);
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const yyyy = d.getUTCFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+function formatMoney(amount: number) {
+  const abs = Math.abs(amount).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return amount < 0 ? `($${abs})` : `$${abs}`;
+}
+
 export default function YearlySummaryClient({
   rows,
   totals,
@@ -60,7 +76,7 @@ export default function YearlySummaryClient({
   const [drilldown, setDrilldown] = useState<{
     title: string;
     rows: DrilldownRow[];
-    totalLabel: string;
+    total: number;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -76,7 +92,7 @@ export default function YearlySummaryClient({
       setDrilldown({
         title: `${year} ${kind === "income" ? "Income" : "Expense"} details`,
         rows: result.rows,
-        totalLabel: result.totalLabel,
+        total: result.total,
       });
     });
   };
@@ -218,17 +234,17 @@ export default function YearlySummaryClient({
                   <>
                     {drilldown.rows.map((row) => (
                       <tr key={row.id}>
-                        <td>{row.dateLabel}</td>
+                        <td>{formatDate(row.dateIso)}</td>
                         <td>{row.description}</td>
-                        <td>{row.category}</td>
-                        <td className="text-right">{row.amountLabel}</td>
+                        <td>{row.categoryName}</td>
+                        <td className="text-right">{formatMoney(row.amount)}</td>
                       </tr>
                     ))}
                     <tr className="border-t border-gray-200">
                       <td className="font-semibold" colSpan={3}>
                         Total
                       </td>
-                      <td className="text-right font-semibold">{drilldown.totalLabel}</td>
+                      <td className="text-right font-semibold">{formatMoney(drilldown.total)}</td>
                     </tr>
                   </>
                 )}
