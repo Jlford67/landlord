@@ -41,7 +41,7 @@ function formatDateISODateUTC(d: Date) {
   const yyyy = d.getUTCFullYear();
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(d.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  return `${mm}/${dd}/${yyyy}`;
 }
 
 function formatMonthLabelUTC(d: Date) {
@@ -335,9 +335,28 @@ export default async function DashboardPage({
     activeLease?.endDate ? formatDateISODateUTC(activeLease.endDate) : "—";
   const rentLabel = activeLease ? `${formatUsd(activeLease.rentAmount)} / month` : "—";
   const leaseHref =
-    activeLease && featuredPropertyId
+    activeLease && featuredPropertyId && activeLease.endDate
       ? `/properties/${featuredPropertyId}/leases/${activeLease.id}/edit`
       : "";
+  const leaseSeverity = (() => {
+    if (!activeLease?.endDate) return "ok";
+    const todayStartUtc = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
+    const endDateUtc = new Date(
+      Date.UTC(
+        activeLease.endDate.getUTCFullYear(),
+        activeLease.endDate.getUTCMonth(),
+        activeLease.endDate.getUTCDate(),
+      ),
+    );
+    const daysUntil = Math.floor(
+      (endDateUtc.getTime() - todayStartUtc.getTime()) / (24 * 60 * 60 * 1000),
+    );
+    if (daysUntil < 0) return "expired";
+    if (daysUntil <= 60) return "soon";
+    return "ok";
+  })();
 
   /* -------- render -------- */
 
@@ -436,10 +455,14 @@ export default async function DashboardPage({
                   <div className="flex items-baseline justify-between gap-4">
                     <div className="text-gray-500">Lease ends</div>
                     <div className="font-medium text-gray-900">
-                      {activeLease ? (
-                        <LeaseLinkMount endLabel={leaseEndLabel} leaseHref={leaseHref} />
+                      {activeLease?.endDate ? (
+                        <LeaseLinkMount
+                          endLabel={leaseEndLabel}
+                          leaseHref={leaseHref}
+                          severity={leaseSeverity}
+                        />
                       ) : (
-                        "—"
+                        <span className="text-sm text-gray-900">{leaseEndLabel}</span>
                       )}
                     </div>
                   </div>
