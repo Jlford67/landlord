@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { Prisma } from "@prisma/client";
 
 function toStr(value: FormDataEntryValue | null) {
   const str = String(value ?? "").trim();
@@ -10,27 +11,50 @@ function toStr(value: FormDataEntryValue | null) {
 }
 
 export async function createPropertyManagerCompany(formData: FormData) {
-  await requireUser();
-
-  const name = String(formData.get("name") ?? "").trim();
+  const name = toStr(formData.get("name")).trim();
   if (!name) throw new Error("Company name is required.");
 
-  await prisma.propertyManagerCompany.create({
-    data: {
-      name,
-      phone: toStr(formData.get("phone")),
-      email: toStr(formData.get("email")),
-      website: toStr(formData.get("website")),
-      address1: toStr(formData.get("address1")),
-      city: toStr(formData.get("city")),
-      state: toStr(formData.get("state")),
-      zip: toStr(formData.get("zip")),
-      notes: toStr(formData.get("notes")),
-    },
+  const phone = toStr(formData.get("phone"));
+  const email = toStr(formData.get("email"));
+  const website = toStr(formData.get("website"));
+  const notes = toStr(formData.get("notes"));
+
+  // 1) Pre-check to avoid throwing
+  const existing = await prisma.propertyManagerCompany.findUnique({
+    where: { name },
+    select: { id: true },
   });
 
-  redirect("/property-managers?msg=created");
+  if (existing) {
+    // If you want: redirect them to edit instead of erroring
+    // redirect(`/property-managers/${existing.id}/edit?msg=${encodeURIComponent("Company already exists.")}`);
+
+    // Minimal behavior: throw a friendly error (your UI likely shows it)
+    throw new Error(`A property manager company named "${name}" already exists.`);
+  }
+
+  // 2) Create, with a catch as a safety net (race condition / double submit)
+  try {
+    await prisma.propertyManagerCompany.create({
+      data: {
+        name,
+        phone,
+        email,
+        website,
+        notes,
+      },
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      throw new Error(`A property manager company named "${name}" already exists.`);
+    }
+    throw err;
+  }
 }
+
 
 export async function updatePropertyManagerCompany(id: string, formData: FormData) {
   await requireUser();
