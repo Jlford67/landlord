@@ -98,6 +98,10 @@ export default async function InsurancePage({
   const q = getStr(sp, "q").trim();
   const propertyId = getStr(sp, "propertyId").trim();
   const msg = getStr(sp, "msg").trim();
+  const exportParams = new URLSearchParams();
+  if (q) exportParams.set("q", q);
+  if (propertyId) exportParams.set("propertyId", propertyId);
+  const exportHref = `/api/exports/insurance${exportParams.toString() ? `?${exportParams}` : ""}`;
 
   const [policies, properties, selectedProperty] = await Promise.all([
     prisma.insurancePolicy.findMany({
@@ -175,6 +179,9 @@ export default async function InsurancePage({
               <Link className="ll_btn" href="/dashboard">
                 Back
               </Link>
+              <a className="ll_btn" href={exportHref}>
+                Export Excel
+              </a>
               <Link className="ll_btn ll_btnPrimary" href={addHref}>
                 Add insurance policy
               </Link>

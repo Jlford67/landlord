@@ -26,6 +26,9 @@ export default async function TenantsPage({
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
   const msg = getStr(sp, "msg").trim();
+  const exportParams = new URLSearchParams();
+  if (q) exportParams.set("q", q);
+  const exportHref = `/api/exports/tenants${exportParams.toString() ? `?${exportParams}` : ""}`;
 
   const tenants = await prisma.tenant.findMany({
     where: q
@@ -61,6 +64,9 @@ export default async function TenantsPage({
             <Link className="ll_btn" href="/dashboard">
               Back
             </Link>
+            <a className="ll_btn" href={exportHref}>
+              Export Excel
+            </a>
             <Link className="ll_btn ll_btnPrimary" href="/tenants/new">
               Add tenant
             </Link>
