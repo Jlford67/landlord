@@ -2,12 +2,14 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Link from "next/link";
+import { LeaseStatus } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { formatUsd } from "@/lib/money";
 import PropertyPicker from "@/components/dashboard/PropertyPicker";
 import PropertyPhoto from "@/components/properties/PropertyPhoto";
 import AnnualBarChartClient from "./AnnualBarChartClient";
+import LeaseLinkMount from "./LeaseLinkMount";
 import NotificationsToastClient from "@/components/notifications/NotificationsToastClient";
 import { generateNotificationsIfNeeded, getTodayInAppNotifications } from "../settings/actions";
 
@@ -33,6 +35,13 @@ function monthKeyUTC(d: Date) {
 
 function formatDateUTC(d: Date) {
   return d.toLocaleDateString("en-US", { timeZone: "UTC" });
+}
+
+function formatDateISODateUTC(d: Date) {
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function formatMonthLabelUTC(d: Date) {
@@ -160,9 +169,16 @@ export default async function DashboardPage({
     ? { propertyId: selectedPropertyId }
     : {};
 
+  const featuredProperty =
+    selectedPropertyId
+      ? properties.find((p) => p.id === selectedPropertyId) ?? null
+      : properties[0] ?? null;
+
+  const featuredPropertyId = featuredProperty?.id ?? null;
+
   /* -------- main queries -------- */
 
-  const [recentTxns] = await Promise.all([
+  const [recentTxns, activeLease] = await Promise.all([
     prisma.transaction.findMany({
       where: { deletedAt: null, ...whereProperty },
       orderBy: [{ date: "desc" }, { id: "desc" }],
@@ -172,6 +188,13 @@ export default async function DashboardPage({
         property: { select: { nickname: true, street: true } },
       },
     }),
+    featuredPropertyId
+      ? prisma.lease.findFirst({
+          where: { propertyId: featuredPropertyId, status: LeaseStatus.active },
+          orderBy: { startDate: "desc" },
+          select: { id: true, endDate: true, rentAmount: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   /* -------- Yearly Summary (merged) -------- */
@@ -308,10 +331,13 @@ export default async function DashboardPage({
     ? `Average of ${activeCount} month${activeCount === 1 ? "" : "s"}`
     : "No data yet";
 
-  const featuredProperty =
-    selectedPropertyId
-      ? properties.find((p) => p.id === selectedPropertyId) ?? null
-      : properties[0] ?? null;
+  const leaseEndLabel =
+    activeLease?.endDate ? formatDateISODateUTC(activeLease.endDate) : "—";
+  const rentLabel = activeLease ? `${formatUsd(activeLease.rentAmount)} / month` : "—";
+  const leaseHref =
+    activeLease && featuredPropertyId
+      ? `/properties/${featuredPropertyId}/leases/${activeLease.id}/edit`
+      : "";
 
   /* -------- render -------- */
 
@@ -395,12 +421,30 @@ export default async function DashboardPage({
             </div>
 
             {featuredProperty ? (
-              <div className="ll_dash_propSub">
-                <div>{featuredProperty.street}</div>
-                <div>
-                  {featuredProperty.city}, {featuredProperty.state} {featuredProperty.zip}
+              <>
+                <div className="ll_dash_propSub">
+                  <div>{featuredProperty.street}</div>
+                  <div>
+                    {featuredProperty.city}, {featuredProperty.state} {featuredProperty.zip}
+                  </div>
                 </div>
-              </div>
+                <div className="mt-3 space-y-2 text-sm text-gray-700">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <div className="text-gray-500">Rent</div>
+                    <div className="font-medium text-gray-900">{rentLabel}</div>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <div className="text-gray-500">Lease ends</div>
+                    <div className="font-medium text-gray-900">
+                      {activeLease ? (
+                        <LeaseLinkMount endLabel={leaseEndLabel} leaseHref={leaseHref} />
+                      ) : (
+                        "—"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="ll_dash_propSub">Add a property to get started.</div>
             )}
