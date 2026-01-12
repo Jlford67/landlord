@@ -10,6 +10,7 @@ import PropertyPicker from "@/components/dashboard/PropertyPicker";
 import PropertyPhoto from "@/components/properties/PropertyPhoto";
 import AnnualBarChartClient from "./AnnualBarChartClient";
 import LeaseLinkMount from "./LeaseLinkMount";
+import YearlySummaryClient from "./YearlySummaryClient";
 import NotificationsToastClient from "@/components/notifications/NotificationsToastClient";
 import { generateNotificationsIfNeeded, getTodayInAppNotifications } from "../settings/actions";
 
@@ -92,6 +93,56 @@ type YearRow = {
   expenses: number; // negative
   net: number;
 };
+
+type DrilldownParams = {
+  propertyId: string | null;
+  year: number;
+  kind: "income" | "expense";
+};
+
+async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
+  "use server";
+
+  const start = new Date(Date.UTC(year, 0, 1));
+  const end = new Date(Date.UTC(year + 1, 0, 1));
+  const whereProperty = propertyId ? { propertyId } : {};
+  const amountFilter = kind === "income" ? { gt: 0 } : { lt: 0 };
+
+  const rows = await prisma.transaction.findMany({
+    where: {
+      deletedAt: null,
+      ...whereProperty,
+      date: { gte: start, lt: end },
+      amount: amountFilter,
+      category: { type: { not: "transfer" } },
+    },
+    orderBy: [{ date: "desc" }, { id: "desc" }],
+    select: {
+      id: true,
+      date: true,
+      amount: true,
+      payee: true,
+      memo: true,
+      category: { select: { name: true } },
+    },
+  });
+
+  const mapped = rows.map((row) => ({
+    id: row.id,
+    dateLabel: formatDateUTC(row.date),
+    description: row.payee ?? row.memo ?? "—",
+    category: row.category.name,
+    amountLabel: moneyAccounting(row.amount),
+    amount: row.amount,
+  }));
+
+  const total = mapped.reduce((sum, row) => sum + row.amount, 0);
+
+  return {
+    rows: mapped.map(({ amount, ...rest }) => rest),
+    totalLabel: moneyAccounting(total),
+  };
+}
 
 /* ---------------- chart ---------------- */
 
@@ -335,7 +386,7 @@ export default async function DashboardPage({
     activeLease?.endDate ? formatDateISODateUTC(activeLease.endDate) : "—";
   const rentLabel = activeLease ? `${formatUsd(activeLease.rentAmount)} / month` : "—";
   const leaseHref =
-    activeLease && featuredPropertyId && activeLease.endDate
+    activeLease && featuredPropertyId
       ? `/properties/${featuredPropertyId}/leases/${activeLease.id}/edit`
       : "";
   const leaseSeverity = (() => {
@@ -357,6 +408,32 @@ export default async function DashboardPage({
     if (daysUntil <= 60) return "soon";
     return "ok";
   })();
+  const leaseEndClass =
+    leaseSeverity === "expired"
+      ? "text-red-600 hover:underline"
+      : leaseSeverity === "soon"
+        ? "text-amber-600 hover:underline"
+        : "ll_dash_link";
+  const rentLinkClass = "text-gray-900 hover:underline";
+
+  const yearlyRowsDisplay = yearlyRows.map((row) => ({
+    year: row.year,
+    incomeLabel: moneyAccounting(row.income),
+    expensesLabel: moneyAccounting(row.expenses),
+    netLabel: moneyAccounting(row.net),
+    incomeClass: amountClass(row.income),
+    expensesClass: amountClass(row.expenses),
+    netClass: amountClass(row.net),
+  }));
+
+  const yearlyTotalsDisplay = {
+    incomeLabel: moneyAccounting(yearlyTotals.income),
+    expensesLabel: moneyAccounting(yearlyTotals.expenses),
+    netLabel: moneyAccounting(yearlyTotals.net),
+    incomeClass: amountClass(yearlyTotals.income),
+    expensesClass: amountClass(yearlyTotals.expenses),
+    netClass: amountClass(yearlyTotals.net),
+  };
 
   /* -------- render -------- */
 
@@ -450,16 +527,26 @@ export default async function DashboardPage({
                 <div className="mt-3 space-y-2 text-sm text-gray-700">
                   <div className="flex items-baseline justify-between gap-4">
                     <div className="text-gray-500">Rent</div>
-                    <div className="font-medium text-gray-900">{rentLabel}</div>
+                    <div className="font-medium text-gray-900">
+                      {activeLease ? (
+                        <LeaseLinkMount
+                          label={rentLabel}
+                          href={leaseHref}
+                          className={rentLinkClass}
+                        />
+                      ) : (
+                        rentLabel
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
                     <div className="text-gray-500">Lease ends</div>
                     <div className="font-medium text-gray-900">
                       {activeLease?.endDate ? (
                         <LeaseLinkMount
-                          endLabel={leaseEndLabel}
-                          leaseHref={leaseHref}
-                          severity={leaseSeverity}
+                          label={leaseEndLabel}
+                          href={leaseHref}
+                          className={leaseEndClass}
                         />
                       ) : (
                         <span className="text-sm text-gray-900">{leaseEndLabel}</span>
@@ -480,71 +567,12 @@ export default async function DashboardPage({
         <div className="ll_dash_sectionTitle">Yearly Summary</div>
       </div>
 
-      <section className="ll_card ll_dash_tableCard">
-        <div className="ll_dash_tableWrap">
-          <table className="ll_table w-full table-fixed">
-
-            <thead>
-              <tr>
-                <th style={{ width: 120 }} className="text-left !text-left">
-                  Year
-                </th>
-                <th style={{ width: 180 }} className="text-right !text-right">
-                  Income
-                </th>
-                <th style={{ width: 180 }} className="text-right !text-right">
-                  Expenses
-                </th>
-                <th style={{ width: 180 }} className="text-right !text-right">
-                  Net Profit
-                </th>
-              </tr>
-            </thead>
-                      
-
-            <tbody>
-              {yearlyRows.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="py-3 text-gray-500">
-                    No data yet
-                  </td>
-                </tr>
-              ) : (
-                <>
-                  {yearlyRows.map((r) => (
-                    <tr key={r.year}>
-                      <td className="font-medium">{r.year}</td>
-                      <td className={`text-right ${amountClass(r.income)}`}>
-                        {moneyAccounting(r.income)}
-                      </td>
-                      <td className={`text-right ${amountClass(r.expenses)}`}>
-                        {moneyAccounting(r.expenses)}
-                      </td>
-                      <td className={`text-right font-medium ${amountClass(r.net)}`}>
-                        {moneyAccounting(r.net)}
-                      </td>
-                    </tr>
-                  ))}
-
-                  {/* Totals row */}
-                  <tr className="border-t border-gray-200">
-                    <td className="font-semibold">Total</td>
-                    <td className={`text-right font-semibold ${amountClass(yearlyTotals.income)}`}>
-                      {moneyAccounting(yearlyTotals.income)}
-                    </td>
-                    <td className={`text-right font-semibold ${amountClass(yearlyTotals.expenses)}`}>
-                      {moneyAccounting(yearlyTotals.expenses)}
-                    </td>
-                    <td className={`text-right font-semibold ${amountClass(yearlyTotals.net)}`}>
-                      {moneyAccounting(yearlyTotals.net)}
-                    </td>
-                  </tr>
-                </>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <YearlySummaryClient
+        rows={yearlyRowsDisplay}
+        totals={yearlyTotalsDisplay}
+        propertyId={selectedPropertyId}
+        getYearDrilldown={getYearDrilldown}
+      />
 
       {/* Transactions */}
       <div className="ll_dash_midHeader">

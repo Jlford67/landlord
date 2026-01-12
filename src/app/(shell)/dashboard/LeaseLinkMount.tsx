@@ -4,33 +4,25 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type LeaseLinkMountProps = {
-  endLabel: string;
-  leaseHref: string;
-  severity: "expired" | "soon" | "ok";
+  label: string;
+  href: string;
+  className?: string;
 };
 
-const severityClass = {
-  expired: "text-red-600",
-  soon: "text-amber-600",
-  ok: "ll_dash_link",
-};
-
-export default function LeaseLinkMount({ endLabel, leaseHref, severity }: LeaseLinkMountProps) {
+export default function LeaseLinkMount({ label, href, className }: LeaseLinkMountProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const className = severityClass[severity];
-
   if (!mounted) {
-    return <span className={`inline-block text-sm ${className}`}>{endLabel}</span>;
+    return <span className={`inline-block ${className ?? ""}`}>{label}</span>;
   }
 
   return (
-    <Link href={leaseHref} className={`text-sm ${className}`}>
-      {endLabel}
+    <Link href={href} className={className}>
+      {label}
     </Link>
   );
 }
