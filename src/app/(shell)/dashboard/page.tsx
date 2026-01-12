@@ -105,20 +105,12 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
 
   const start = new Date(Date.UTC(year, 0, 1));
   const end = new Date(Date.UTC(year + 1, 0, 1));
+
   const whereProperty = propertyId ? { propertyId } : {};
   const amountFilter = kind === "income" ? { gt: 0 } : { lt: 0 };
 
-  if (process.env.NODE_ENV !== "production") {
-    const totalInYear = await prisma.transaction.count({
-      where: { deletedAt: null, date: { gte: start, lt: end } },
-    });
-    console.log(
-      `[dashboard drilldown] propertyId=${propertyId ?? "all"} year=${year} kind=${kind} ` +
-        `start=${start.toISOString()} end=${end.toISOString()} totalInYear=${totalInYear}`,
-    );
-  }
-
-  const rows = await prisma.transaction.findMany({
+  // 1) Transactions (ledger lines)
+  const txRows = await prisma.transaction.findMany({
     where: {
       deletedAt: null,
       ...whereProperty,
@@ -133,31 +125,57 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
       amount: true,
       payee: true,
       memo: true,
-      category: { select: { name: true } },
+      category: { select: { name: true, type: true } },
     },
   });
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log(
-      `[dashboard drilldown] matched=${rows.length} propertyId=${propertyId ?? "all"} ` +
-        `year=${year} kind=${kind}`,
-    );
-  }
+  // 2) AnnualCategoryAmount (annual lines included in totals)
+  // These do not have deletedAt, and they’re already property-scoped.
+  const annualRows = await prisma.annualCategoryAmount.findMany({
+    where: {
+      ...whereProperty,
+      year,
+      amount: amountFilter,
+      category: { type: { not: "transfer" } },
+    },
+    orderBy: [{ category: { name: "asc" } }, { id: "asc" }],
+    select: {
+      id: true,
+      amount: true,
+      note: true,
+      category: { select: { name: true, type: true } },
+    },
+  });
 
-  const mapped = rows.map((row) => ({
-    id: row.id,
+  const mappedTx = txRows.map((row) => ({
+    id: `tx_${row.id}`,
     dateIso: row.date.toISOString(),
     description: row.payee ?? row.memo ?? "—",
     categoryName: row.category.name,
     amount: row.amount,
   }));
 
-  const total = mapped.reduce((sum, row) => sum + row.amount, 0);
+  // Annual rows do not have a natural date, so pick a stable one (Jan 1 of the year).
+  // This is deterministic and keeps sorting stable.
+  const annualDateIso = start.toISOString();
 
-  return {
-    rows: mapped,
-    total,
-  };
+  const mappedAnnual = annualRows.map((row) => ({
+    id: `annual_${row.id}`,
+    dateIso: annualDateIso,
+    description: row.note ? `Annual: ${row.note}` : "Annual amount",
+    categoryName: row.category.name,
+    amount: row.amount,
+  }));
+
+  // Combine and sort by date desc, then id desc for stability
+  const combined = [...mappedTx, ...mappedAnnual].sort((a, b) => {
+    if (a.dateIso === b.dateIso) return a.id < b.id ? 1 : -1;
+    return a.dateIso < b.dateIso ? 1 : -1;
+  });
+
+  const total = combined.reduce((sum, row) => sum + row.amount, 0);
+
+  return { rows: combined, total };
 }
 
 /* ---------------- chart ---------------- */
