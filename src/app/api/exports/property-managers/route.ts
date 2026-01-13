@@ -176,24 +176,31 @@ export async function GET(req: Request) {
       { key: "notes", header: "Notes", type: "notes", width: 50 },
     ],
     rows: companies.flatMap((company) =>
-      company.assignments.map((assignment) => ({
-        assignmentId: assignment.id,
-        companyId: company.id,
-        companyName: company.name,
-        propertyId: assignment.propertyId,
-        propertyName: propertyDisplayName(assignment.property),
-        propertyStreet: assignment.property.street,
-        propertyCity: assignment.property.city,
-        propertyState: assignment.property.state,
-        propertyZip: assignment.property.zip,
-        contactId: assignment.contact?.id ?? "",
-        contactName: assignment.contact?.name ?? "",
-        contactPhone: assignment.contact?.phone ?? "",
-        contactEmail: assignment.contact?.email ?? "",
-        startDate: assignment.startDate ?? null,
-        endDate: assignment.endDate ?? null,
-        notes: assignment.notes ?? "",
-      })),
+      company.assignments
+        .filter(
+          (assignment) =>
+            !propertyId || assignment.propertyId === propertyId
+        )
+        .map((assignment) => ({
+          assignmentId: assignment.id,
+          companyId: company.id,
+          companyName: company.name,
+          propertyId: assignment.propertyId,
+          propertyName: propertyDisplayName(assignment.property),
+          propertyStreet: assignment.property.street,
+          propertyCity: assignment.property.city,
+          propertyState: assignment.property.state,
+          propertyZip: assignment.property.zip,
+          contactId: assignment.contact?.id ?? "",
+          contactName: assignment.contact?.name ?? "",
+          contactPhone: assignment.contact?.phone ?? "",
+          contactEmail: assignment.contact?.email ?? "",
+          startDate: assignment.startDate ?? null,
+          endDate: assignment.endDate ?? null,
+          notes: assignment.notes ?? "",
+        }))
+    ),
+
     ),
   };
 
