@@ -255,6 +255,12 @@ export default async function PortfolioLeaderboardPage({
       ? (totals.netCashFlowCents / totals.purchasePriceCents) * 100
       : null;
 
+  const portfolioAppreciationPct =
+    totals.purchasePriceCents > 0
+      ? (totals.appreciationCents / totals.purchasePriceCents) * 100
+      : 0;
+
+
   return (
     <div className="ll_page">
       <div className="ll_panel ll_stack" style={{ gap: 24 }}>
@@ -491,10 +497,15 @@ export default async function PortfolioLeaderboardPage({
                 <th className="w-40">Avg monthly</th>
                 <th className="w-40">Purchase price</th>
                 <th className="w-40">Current value</th>
-                <th className="w-40">Appreciation</th>
+                {report.input.metric !== "appreciationDollar" && (
+                  <th className="w-40">Appreciation</th>
+                )}
                 <th className="w-40">Total return</th>
-                <th className="w-32">Yield on cost</th>
+                {report.input.metric !== "yieldOnCostPct" && (
+                  <th className="w-32">Yield on cost</th>
+                )}
                 <th className="w-40">{metricLabel(report.input.metric)}</th>
+
               </tr>
             </thead>
             <tbody>
@@ -520,24 +531,28 @@ export default async function PortfolioLeaderboardPage({
                       )}
                     </div>
                   </td>
-                  <td>
-                    {(() => {
-                      const formatted = fmtMoneyAccounting(row.appreciationCents);
-                      return <span className={formatted.className}>{formatted.text}</span>;
-                    })()}
-                  </td>
+                  {report.input.metric !== "appreciationDollar" && (
+                    <td>
+                      {(() => {
+                        const formatted = fmtMoneyAccounting(row.appreciationCents);
+                        return <span className={formatted.className}>{formatted.text}</span>;
+                      })()}
+                    </td>
+                  )}
                   <td>
                     {(() => {
                       const formatted = fmtMoneyAccounting(row.totalReturnCents);
                       return <span className={formatted.className}>{formatted.text}</span>;
                     })()}
                   </td>
-                  <td>
-                    {(() => {
-                      const formatted = fmtPctSigned(row.yieldOnCostPct);
-                      return <span className={formatted.className}>{formatted.text}</span>;
-                    })()}
-                  </td>
+                  {report.input.metric !== "yieldOnCostPct" && (
+                    <td>
+                      {(() => {
+                        const formatted = fmtPctSigned(row.yieldOnCostPct);
+                        return <span className={formatted.className}>{formatted.text}</span>;
+                      })()}
+                    </td>
+                  )}
                   <td className="font-semibold">{metricDisplay(report.input.metric, row)}</td>
                 </tr>
               ))}
@@ -569,12 +584,14 @@ export default async function PortfolioLeaderboardPage({
                     return <span className={formatted.className}>{formatted.text}</span>;
                   })()}
                 </td>
-                <td>
-                  {(() => {
-                    const formatted = fmtMoneyAccounting(totals.appreciationCents);
-                    return <span className={formatted.className}>{formatted.text}</span>;
-                  })()}
-                </td>
+				{report.input.metric !== "appreciationDollar" && (
+				<td>
+					{(() => {
+					const formatted = fmtMoneyAccounting(totals.appreciationCents);
+					return <span className={formatted.className}>{formatted.text}</span>;
+					})()}
+				</td>
+				)}
                 <td>
                   {(() => {
                     const formatted = fmtMoneyAccounting(totals.totalReturnCents);
@@ -589,10 +606,72 @@ export default async function PortfolioLeaderboardPage({
                 </td>
                 <td>
                   {(() => {
-                    const formatted = fmtMoneyAccounting(totals.totalReturnCents);
-                    return <span className={formatted.className}>{formatted.text}</span>;
+                    const metric = report.input.metric;
+                
+                    if (metric === "netCashFlow") {
+                      const formatted = fmtMoneyAccounting(totals.netCashFlowCents);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    }
+                
+                    if (metric === "avgMonthlyCashFlow") {
+                      const formatted = fmtMoneyAccounting(totals.avgMonthlyCashFlowCents);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    }
+                
+                    if (metric === "purchasePrice") {
+                      const formatted = fmtMoneyAccounting(totals.purchasePriceCents);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    }
+                
+                    if (metric === "currentValue") {
+                      const formatted = fmtMoneyAccounting(totals.currentValueCents);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    }
+                
+                    if (metric === "appreciationDollar") {
+                      const formatted = fmtMoneyAccounting(totals.appreciationCents);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    }
+                    
+					if (metric === "appreciationPct") {
+                      const formatted = fmtPctSigned(portfolioAppreciationPct);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    }
+					
+                    if (metric === "totalReturnDollar") {
+                      const formatted = fmtMoneyAccounting(totals.totalReturnCents);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    }
+                    
+                    if (metric === "yieldOnCostPct") {
+                      const formatted = fmtPctSigned(portfolioYieldPct);
+                      return <span className={formatted.className}>{formatted.text}</span>;
+                    }
+					
+					if (metric === "appreciationPct") {
+					const pct =
+						totals.purchasePriceCents > 0
+						? (totals.appreciationCents / totals.purchasePriceCents) * 100
+						: null;
+					
+					const formatted = fmtPctSigned(pct);
+					return <span className={formatted.className}>{formatted.text}</span>;
+					}
+					
+					if (metric === "totalReturnPct") {
+					const pct =
+						totals.purchasePriceCents > 0
+						? (totals.totalReturnCents / totals.purchasePriceCents) * 100
+						: null;
+					
+					const formatted = fmtPctSigned(pct);
+					return <span className={formatted.className}>{formatted.text}</span>;
+					}
+					                
+                    return "—";
                   })()}
                 </td>
+
               </tr>
             </tbody>
           </table>

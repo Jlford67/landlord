@@ -115,6 +115,10 @@ export default async function PropertyTaxPage({
   const q = getStr(sp, "q").trim();
   const propertyId = getStr(sp, "propertyId").trim();
   const msg = getStr(sp, "msg").trim();
+  const exportParams = new URLSearchParams();
+  if (q) exportParams.set("q", q);
+  if (propertyId) exportParams.set("propertyId", propertyId);
+  const exportHref = `/api/exports/property-tax${exportParams.toString() ? `?${exportParams}` : ""}`;
 
   const [accounts, properties, selectedProperty] = await Promise.all([
     prisma.propertyTaxAccount.findMany({
@@ -192,6 +196,9 @@ export default async function PropertyTaxPage({
             <Link className="ll_btn" href="/dashboard">
               Back
             </Link>
+            <a className="ll_btn" href={exportHref}>
+              Export Excel
+            </a>
             <Link className="ll_btn ll_btnPrimary" href={addHref}>
               Add tax account
             </Link>
