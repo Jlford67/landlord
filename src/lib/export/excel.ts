@@ -1,3 +1,8 @@
+// SECURITY NOTE:
+// We use SheetJS (xlsx) ONLY for generating exports from trusted DB data.
+// Do NOT add Excel import/upload parsing with this library due to known advisories.
+// If import is needed later, switch libraries or isolate parsing.
+
 import * as XLSX from "xlsx";
 
 type ExcelCellValue = string | number | Date | boolean | null | undefined;
