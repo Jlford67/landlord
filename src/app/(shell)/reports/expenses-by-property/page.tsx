@@ -92,6 +92,15 @@ export default async function ExpensesByPropertyPage({
     [startDate, endDate] = [endDate, startDate];
   }
 
+  const exportParams = new URLSearchParams();
+  if (propertyId) exportParams.set("propertyId", propertyId);
+  exportParams.set("start", formatInputDateUTC(startDate));
+  exportParams.set("end", formatInputDateUTC(endDate));
+  exportParams.set("includeTransfers", includeTransfers ? "1" : "0");
+  const drillPropertyIdParam = getStr(sp, "drillPropertyId");
+  if (drillPropertyIdParam) exportParams.set("drillPropertyId", drillPropertyIdParam);
+  const exportHref = `/api/exports/reports/expenses-by-property?${exportParams.toString()}`;
+
   const properties = await prisma.property.findMany({
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
@@ -252,6 +261,9 @@ export default async function ExpensesByPropertyPage({
               {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
+          <a className="ll_btn" href={exportHref}>
+            Export Excel
+          </a>
         </div>
 
         <form className="ll_card ll_form" method="get">

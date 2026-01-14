@@ -145,6 +145,17 @@ export default async function RentalIncomeByPropertyPage({
     ? result.rows.find((row) => row.propertyId === drillPropertyId) ?? null
     : null;
 
+  const exportParams = new URLSearchParams();
+  exportParams.set("propertyId", propertyId ?? "all");
+  exportParams.set("start", formatInputDateUTC(startDate));
+  exportParams.set("end", formatInputDateUTC(endDate));
+  exportParams.set("includeTransfers", includeTransfers ? "1" : "0");
+  exportParams.set("includeOtherIncome", includeOtherIncome ? "1" : "0");
+  if (drillPropertyId) exportParams.set("drillPropertyId", drillPropertyId);
+  if (drillBucket) exportParams.set("drillBucket", drillBucket);
+  const exportHref = `/api/exports/reports/rental-income-by-property?${exportParams.toString()}`;
+
+
   type DrilldownRow = {
     id: string;
     type: "ledger" | "annual";
@@ -311,6 +322,9 @@ export default async function RentalIncomeByPropertyPage({
                 : "Only rental income categories are counted."}
             </p>
           </div>
+          <a className="ll_btn" href={exportHref}>
+            Export Excel
+          </a>
         </div>
 
         <form className="ll_card ll_form" method="get">

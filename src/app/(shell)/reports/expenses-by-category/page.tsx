@@ -98,6 +98,15 @@ export default async function ExpensesByCategoryPage({
     [startDate, endDate] = [endDate, startDate];
   }
 
+  const exportParams = new URLSearchParams();
+  exportParams.set("propertyId", propertyId ?? "all");
+  exportParams.set("start", formatInputDateUTC(startDate));
+  exportParams.set("end", formatInputDateUTC(endDate));
+  exportParams.set("includeTransfers", includeTransfers ? "1" : "0");
+  const drillCategoryIdParam = getStr(sp, "drillCategoryId");
+  if (drillCategoryIdParam) exportParams.set("drillCategoryId", drillCategoryIdParam);
+  const exportHref = `/api/exports/reports/expenses-by-category?${exportParams.toString()}`;
+
   const properties = await prisma.property.findMany({
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
@@ -331,6 +340,9 @@ export default async function ExpensesByCategoryPage({
               are {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
+          <a className="ll_btn" href={exportHref}>
+            Export Excel
+          </a>
         </div>
 
         <form className="ll_card ll_form" method="get">

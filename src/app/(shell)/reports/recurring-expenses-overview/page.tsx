@@ -76,6 +76,15 @@ export default async function RecurringExpensesOverviewPage({
     [startDate, endDate] = [endDate, startDate];
   }
 
+  const exportParams = new URLSearchParams();
+  exportParams.set("propertyId", propertyId ?? "");
+  exportParams.set("start", formatInputDateUTC(startDate));
+  exportParams.set("end", formatInputDateUTC(endDate));
+  exportParams.set("includeTransfers", includeTransfers ? "1" : "0");
+  exportParams.set("includeInactive", includeInactive ? "1" : "0");
+  exportParams.set("group", group);
+  const exportHref = `/api/exports/reports/recurring-expenses-overview?${exportParams.toString()}`;
+
   const properties = await prisma.property.findMany({
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
@@ -134,6 +143,9 @@ export default async function RecurringExpensesOverviewPage({
               Expected vs posted recurring expenses for the range, plus other expenses for context.
             </p>
           </div>
+          <a className="ll_btn" href={exportHref}>
+            Export Excel
+          </a>
         </div>
 
         <form className="ll_card ll_form" method="get">
