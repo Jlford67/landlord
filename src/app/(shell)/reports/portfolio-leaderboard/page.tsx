@@ -214,6 +214,16 @@ export default async function PortfolioLeaderboardPage({
     valuation,
   });
 
+  const exportParams = new URLSearchParams();
+  exportParams.set("metric", metric);
+  if (yearParam) exportParams.set("year", String(yearParam));
+  exportParams.set("start", formatInputDateUTC(startDate));
+  exportParams.set("end", formatInputDateUTC(endDate));
+  exportParams.set("status", status);
+  exportParams.set("valuation", valuation);
+  exportParams.set("includeTransfers", includeTransfers ? "1" : "0");
+  const exportHref = `/api/exports/reports/portfolio-leaderboard?${exportParams.toString()}`;
+
   const showAppreciationNote =
     metric === "appreciationDollar" ||
     metric === "appreciationPct" ||
@@ -280,6 +290,9 @@ export default async function PortfolioLeaderboardPage({
               {report.input.includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
+          <a className="ll_btn" href={exportHref}>
+            Export Excel
+          </a>
         </div>
 
         <form className="ll_card ll_form" method="get">

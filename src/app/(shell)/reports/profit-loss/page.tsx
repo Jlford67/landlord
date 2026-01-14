@@ -68,6 +68,14 @@ export default async function ProfitLossReportPage({
     [startDate, endDate] = [endDate, startDate];
   }
 
+  const exportParams = new URLSearchParams();
+  if (propertyId) exportParams.set("propertyId", propertyId);
+  exportParams.set("startDate", formatInputDateUTC(startDate));
+  exportParams.set("endDate", formatInputDateUTC(endDate));
+  exportParams.set("includeTransfers", includeTransfers ? "true" : "false");
+  exportParams.set("includeAnnualTotals", includeAnnualTotals ? "true" : "false");
+  const exportHref = `/api/exports/reports/profit-loss?${exportParams.toString()}`;
+
   const properties = await prisma.property.findMany({
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
@@ -119,6 +127,9 @@ export default async function ProfitLossReportPage({
               Transfers are {includeTransfers ? "included" : "excluded"}.
             </div>
           </div>
+          <a className="ll_btn" href={exportHref}>
+            Export Excel
+          </a>
         </div>
 
         <form className="ll_form mt-4" method="get">

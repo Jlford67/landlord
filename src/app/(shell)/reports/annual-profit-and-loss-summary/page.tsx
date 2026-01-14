@@ -162,6 +162,13 @@ export default async function AnnualProfitAndLossSummaryPage({
     [startYear, endYear] = [endYear, startYear];
   }
 
+  const exportParams = new URLSearchParams();
+  exportParams.set("propertyId", propertyId ?? "all");
+  exportParams.set("startYear", String(startYear));
+  exportParams.set("endYear", String(endYear));
+  exportParams.set("includeTransfers", includeTransfers ? "1" : "0");
+  const exportHref = `/api/exports/reports/annual-profit-and-loss-summary?${exportParams.toString()}`;
+
   const properties = await prisma.property.findMany({
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
@@ -209,11 +216,16 @@ export default async function AnnualProfitAndLossSummaryPage({
               Transfers are {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
-          {annualEntryLink ? (
-            <Link className="ll_btn ll_btnSecondary" href={annualEntryLink}>
-              Annual entries
-            </Link>
-          ) : null}
+          <div className="flex items-center gap-2">
+            <a className="ll_btn" href={exportHref}>
+              Export Excel
+            </a>
+            {annualEntryLink ? (
+              <Link className="ll_btn ll_btnSecondary" href={annualEntryLink}>
+                Annual entries
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         <form className="ll_form" method="get">

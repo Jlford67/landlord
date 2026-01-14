@@ -88,6 +88,15 @@ export default async function ScheduleESummaryPage({
     [startDate, endDate] = [endDate, startDate];
   }
 
+  const exportParams = new URLSearchParams();
+  if (yearParam) exportParams.set("year", String(yearParam));
+  exportParams.set("start", formatInputDateUTC(startDate));
+  exportParams.set("end", formatInputDateUTC(endDate));
+  exportParams.set("propertyId", propertyId ?? "all");
+  exportParams.set("mode", mode);
+  exportParams.set("includeTransfers", includeTransfers ? "1" : "0");
+  const exportHref = `/api/exports/reports/schedule-e-summary?${exportParams.toString()}`;
+
   const properties = await prisma.property.findMany({
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
@@ -144,6 +153,9 @@ export default async function ScheduleESummaryPage({
               {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
+          <a className="ll_btn" href={exportHref}>
+            Export Excel
+          </a>
         </div>
 
         <form className="ll_card ll_form" method="get">
