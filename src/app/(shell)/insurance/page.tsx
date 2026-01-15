@@ -5,7 +5,9 @@ import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
 import IconButton from "@/components/ui/IconButton";
-import { Search, Shield } from "lucide-react";
+import Button from "@/components/ui/Button";
+import LinkButton from "@/components/ui/LinkButton";
+import { ArrowLeft, Download, Plus, Search, Shield } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import fs from "node:fs/promises";
@@ -175,16 +177,18 @@ export default async function InsurancePage({
               </div>
             </div>
 
-            <div className="ll_topbarRight">
-              <Link className="ll_btn" href="/dashboard">
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+              <LinkButton href="/dashboard" variant="outline" size="md" leftIcon={<ArrowLeft size={18} />}>
                 Back
-              </Link>
-              <a className="ll_btn" href={exportHref}>
-                Export Excel
-              </a>
-              <Link className="ll_btn ll_btnPrimary" href={addHref}>
+              </LinkButton>
+              <form action={exportHref} method="get">
+                <Button type="submit" variant="primary" size="md" leftIcon={<Download size={18} />}>
+                  Export Excel
+                </Button>
+              </form>
+              <LinkButton href={addHref} variant="secondary" size="md" leftIcon={<Plus size={18} />}>
                 Add insurance policy
-              </Link>
+              </LinkButton>
             </div>
           </div>
         </div>

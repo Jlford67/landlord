@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import IconButton from "@/components/ui/IconButton";
+import LinkButton from "@/components/ui/LinkButton";
 import { BookOpen, Search } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -89,12 +90,9 @@ export default async function LedgerPickerPage({
             />
 
             {q ? (
-              <Link
-                href="/ledger"
-                className="ll_btn"
-              >
+              <LinkButton href="/ledger" variant="outline" size="md">
                 Clear
-              </Link>
+              </LinkButton>
             ) : null}
 
             {q ? (

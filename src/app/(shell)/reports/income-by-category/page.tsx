@@ -8,6 +8,7 @@ import {
   prorateAnnualForRange,
   toYmd,
 } from "@/lib/reports/incomeByCategory";
+import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -350,9 +351,9 @@ const exportHref = `/api/exports/reports/income-by-category?${exportParams.toStr
               range. Transfers are {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
-          <a className="ll_btn" href={exportHref}>
+          <LinkButton href={exportHref} variant="outline" size="md">
             Export Excel
-          </a>
+          </LinkButton>
 
         </div>
 

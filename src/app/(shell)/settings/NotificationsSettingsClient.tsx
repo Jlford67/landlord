@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import SafeInput from "@/components/ui/SafeInput";
 import SafeSelect from "@/components/ui/SafeSelect";
-import HydrationSafeButton from "@/components/ui/HydrationSafeButton";
+import Button from "@/components/ui/Button";
 import {
   acknowledgeNotification,
   generateNotificationsIfNeeded,
@@ -232,23 +232,25 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
                 disabled={controlsDisabled || !formState.emailEnabled}
               />
 
-              <HydrationSafeButton
+              <Button
                 type="button"
-                className="ll_btn ll_btnSecondary"
+                variant="secondary"
+                size="md"
                 onClick={handleTestEmail}
                 disabled={controlsDisabled || !formState.emailEnabled}
               >
                 Test Email
-              </HydrationSafeButton>
+              </Button>
 
               <form action={generateNotificationsIfNeeded}>
-                <HydrationSafeButton
+                <Button
                   type="submit"
-                  className="ll_btn ll_btnSecondary"
+                  variant="secondary"
+                  size="md"
                   disabled={controlsDisabled || !formState.emailEnabled}
                 >
                   Run Reminders Now
-                </HydrationSafeButton>
+                </Button>
               </form>
             </div>
           </div>
@@ -376,14 +378,15 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
             </SafeSelect>
           </div>
 
-          <HydrationSafeButton
+          <Button
             type="button"
-            className="ll_btn ll_btnPrimary"
+            variant="primary"
+            size="md"
             onClick={handleSave}
             disabled={isPending}
           >
             {isPending ? "Saving..." : "Save Changes"}
-          </HydrationSafeButton>
+          </Button>
         </div>
 
         {statusMessage ? <div className="mt-3 text-xs text-emerald-600">{statusMessage}</div> : null}
@@ -424,14 +427,15 @@ export default function NotificationsSettingsClient({ settings, inbox }: Setting
                       {row.acknowledged ? (
                         <span className="text-xs text-slate-500">Acknowledged</span>
                       ) : (
-                        <HydrationSafeButton
+                        <Button
                           type="button"
-                          className="ll_btn ll_btnSecondary"
+                          variant="secondary"
+                          size="sm"
                           onClick={handleAcknowledgeAll}
                           disabled={isPending}
                         >
                           Acknowledge All
-                        </HydrationSafeButton>
+                        </Button>
                       )}
                     </td>
                   </tr>

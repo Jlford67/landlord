@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { fmtMoney, propertyLabel } from "@/lib/format";
 import { getRecurringExpensesOverviewReport } from "@/lib/reports/recurringExpensesOverview";
+import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -143,9 +144,9 @@ export default async function RecurringExpensesOverviewPage({
               Expected vs posted recurring expenses for the range, plus other expenses for context.
             </p>
           </div>
-          <a className="ll_btn" href={exportHref}>
+          <LinkButton href={exportHref} variant="outline" size="md">
             Export Excel
-          </a>
+          </LinkButton>
         </div>
 
         <form className="ll_card ll_form" method="get">

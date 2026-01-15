@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
 import { getCashVsAccrualPLReport } from "@/lib/reports/cashVsAccrualPL";
+import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -129,9 +130,9 @@ export default async function CashVsAccrualPLPage({
               </p>
             ) : null}
           </div>
-           <a className="ll_btn" href={exportHref}>
+          <LinkButton href={exportHref} variant="outline" size="md">
             Export Excel
-          </a>
+          </LinkButton>
         </div>
 
         <form className="ll_card ll_form" method="get">

@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { propertyLabel } from "@/lib/format";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import IconButton from "@/components/ui/IconButton";
+import LinkButton from "@/components/ui/LinkButton";
 import { Repeat, Search } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -86,12 +87,9 @@ export default async function RecurringPage({
             />
 
             {q ? (
-              <Link
-                href="/recurring"
-                className="ll_btn"
-              >
+              <LinkButton href="/recurring" variant="outline" size="md">
                 Clear
-              </Link>
+              </LinkButton>
             ) : null}
 
             {q ? (

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import RowActions from "@/components/ui/RowActions";
+import LinkButton from "@/components/ui/LinkButton";
 
 interface PageProps {
   params: { propertyId?: string; id?: string };
@@ -40,12 +40,9 @@ export default async function PropertyRecurringPage({ params, searchParams }: Pa
         <div className="card_header flex items-center justify-between">
           <h2 className="text-lg font-semibold">Recurring items</h2>
 
-          <Link
-            href={`/recurring/new?propertyId=${property.id}`}
-            className="ll_btn ll_btn_primary"
-          >
+          <LinkButton href={`/recurring/new?propertyId=${property.id}`} variant="primary" size="md">
             Add recurring item
-          </Link>
+          </LinkButton>
         </div>
 
         {property.recurringItems.length === 0 ? (

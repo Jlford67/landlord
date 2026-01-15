@@ -8,6 +8,7 @@ import {
   isRentalIncomeCategory,
   prorateAnnualForRange,
 } from "@/lib/reports/rentalIncomeByProperty";
+import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -322,9 +323,9 @@ export default async function RentalIncomeByPropertyPage({
                 : "Only rental income categories are counted."}
             </p>
           </div>
-          <a className="ll_btn" href={exportHref}>
+          <LinkButton href={exportHref} variant="outline" size="md">
             Export Excel
-          </a>
+          </LinkButton>
         </div>
 
         <form className="ll_card ll_form" method="get">

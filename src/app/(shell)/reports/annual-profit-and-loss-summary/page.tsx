@@ -6,6 +6,7 @@ import {
   getAnnualProfitAndLossSummary,
   type AnnualProfitAndLossSummaryResult,
 } from "@/lib/reports/annualProfitAndLossSummary";
+import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -217,13 +218,13 @@ export default async function AnnualProfitAndLossSummaryPage({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <a className="ll_btn" href={exportHref}>
+            <LinkButton href={exportHref} variant="outline" size="md">
               Export Excel
-            </a>
+            </LinkButton>
             {annualEntryLink ? (
-              <Link className="ll_btn ll_btnSecondary" href={annualEntryLink}>
+              <LinkButton href={annualEntryLink} variant="secondary" size="md">
                 Annual entries
-              </Link>
+              </LinkButton>
             ) : null}
           </div>
         </div>

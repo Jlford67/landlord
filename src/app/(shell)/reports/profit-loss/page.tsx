@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
 import { getProfitLossByProperty } from "@/lib/reports/profitLossByProperty";
+import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -127,9 +128,9 @@ export default async function ProfitLossReportPage({
               Transfers are {includeTransfers ? "included" : "excluded"}.
             </div>
           </div>
-          <a className="ll_btn" href={exportHref}>
+          <LinkButton href={exportHref} variant="outline" size="md">
             Export Excel
-          </a>
+          </LinkButton>
         </div>
 
         <form className="ll_form mt-4" method="get">

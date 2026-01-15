@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import Button from "@/components/ui/Button";
+import LinkButton from "@/components/ui/LinkButton";
 
 export default function RowActions({
   editHref,
@@ -27,44 +28,31 @@ export default function RowActions({
     [deleteConfirmText]
   );
 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <div className="flex items-center justify-end gap-2">
-      <Link
-        suppressHydrationWarning
-        className="ll_btn ll_btnLink"
+      <LinkButton
         href={editHref}
+        variant="ghost"
+        size="sm"
+        className="px-2"
         aria-label={ariaLabelEdit}
-        style={{ padding: "4px 6px" }}
       >
         <Pencil size={18} className="text-blue-600" />
-      </Link>
+      </LinkButton>
 
       {deleteAction ? (
-        mounted ? (
-          <form
-            action={deleteAction}
-            onSubmit={onDeleteSubmit}
-            data-lpignore="true"
-            data-lastpass-ignore="true"
+        <form action={deleteAction} onSubmit={onDeleteSubmit} data-lpignore="true" data-lastpass-ignore="true">
+          <Button
+            className="px-2"
+            type="submit"
+            variant="ghost"
+            size="sm"
+            mountGate
+            aria-label={ariaLabelDelete}
           >
-            <button
-              className="ll_btn ll_btnLink"
-              type="submit"
-              aria-label={ariaLabelDelete}
-              style={{ padding: "4px 6px" }}
-            >
-              <Trash2 size={18} className="text-blue-600" />
-            </button>
-          </form>
-        ) : (
-          <span style={{ width: 28, display: "inline-block" }} />
-        )
+            <Trash2 size={18} className="text-blue-600" />
+          </Button>
+        </form>
       ) : null}
     </div>
   );
