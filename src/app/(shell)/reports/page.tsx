@@ -105,6 +105,12 @@ const sections: ReportSection[] = [
         href: "/reports/portfolio-leaderboard",
         badgeText: "Leaderboard",
       },
+      {
+        title: "Return on Equity",
+        description: "Compare net cash flow to current equity by property.",
+        href: "/reports/return-on-equity",
+        badgeText: "Annual",
+      },
     ],
   },
 ];
