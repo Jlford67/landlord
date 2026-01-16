@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { getButtonClasses, getButtonIconClasses, type ButtonSize, type ButtonVariant } from "./buttonStyles";
+import { getButtonIconClasses, type ButtonSize, type ButtonVariant } from "./buttonStyles";
 
 type LinkButtonProps = ComponentPropsWithoutRef<typeof Link> & {
   variant?: ButtonVariant;
@@ -16,7 +16,7 @@ export default function LinkButton({
   children,
   ...props
 }: LinkButtonProps) {
-  const classes = getButtonClasses({ variant, size, className });
+  const classes = [buttonVariantClasses[variant], className].filter(Boolean).join(" ");
   const iconClasses = getButtonIconClasses(size);
 
   return (
@@ -26,3 +26,12 @@ export default function LinkButton({
     </Link>
   );
 }
+
+const buttonVariantClasses: Record<ButtonVariant, string> = {
+  primary: "ll_btnPrimary",
+  secondary: "ll_btnSecondary",
+  outline: "ll_btn",
+  danger: "ll_btnDanger",
+  ghost: "ll_btnGhost",
+  warning: "ll_btnWarning",
+};

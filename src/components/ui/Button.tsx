@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { getButtonClasses, getButtonIconClasses, type ButtonSize, type ButtonVariant } from "./buttonStyles";
+import { getButtonIconClasses, type ButtonSize, type ButtonVariant } from "./buttonStyles";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -25,7 +25,7 @@ export default function Button({
     if (mountGate) setMounted(true);
   }, [mountGate]);
 
-  const classes = getButtonClasses({ variant, size, className });
+  const classes = [buttonVariantClasses[variant], className].filter(Boolean).join(" ");
   const iconClasses = getButtonIconClasses(size);
 
   if (!mounted) {
@@ -44,3 +44,12 @@ export default function Button({
     </button>
   );
 }
+
+const buttonVariantClasses: Record<ButtonVariant, string> = {
+  primary: "ll_btnPrimary",
+  secondary: "ll_btnSecondary",
+  outline: "ll_btn",
+  danger: "ll_btnDanger",
+  ghost: "ll_btnGhost",
+  warning: "ll_btnWarning",
+};
