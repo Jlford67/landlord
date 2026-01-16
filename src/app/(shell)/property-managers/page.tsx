@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
+import LinkButton from "@/components/ui/LinkButton";
 import { Building2, Search } from "lucide-react";
 import { deletePropertyManagerCompany } from "./actions";
 import IconButton from "@/components/ui/IconButton";
@@ -154,9 +155,9 @@ export default async function PropertyManagersPage({
             <Link className="ll_btn" href="/dashboard">
               Back
             </Link>
-            <a className="ll_btnPrimary" href={exportHref}>
+            <LinkButton href={exportHref} variant="primary">
               Export Excel
-            </a>
+            </LinkButton>
             <Link className="ll_btn ll_btnWarning" href="/property-managers/new">
               New property manager
             </Link>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
+import LinkButton from "@/components/ui/LinkButton";
 import RowActions from "@/components/ui/RowActions";
 import IconButton from "@/components/ui/IconButton";
 import { Receipt, Search } from "lucide-react";
@@ -196,9 +197,9 @@ export default async function PropertyTaxPage({
             <Link className="ll_btn" href="/dashboard">
               Back
             </Link>
-            <a className="ll_btnPrimary" href={exportHref}>
+            <LinkButton href={exportHref} variant="primary">
               Export Excel
-            </a>
+            </LinkButton>
             <Link className="ll_btn ll_btnWarning" href={addHref}>
               Add tax account
             </Link>
