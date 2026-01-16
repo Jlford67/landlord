@@ -16,7 +16,8 @@ const variantClasses: Record<ButtonVariant, string> = {
   danger: "border border-transparent bg-red-600 text-white hover:bg-red-700 active:bg-red-800",
   ghost: "border border-transparent bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-200",
   warning:
-    "border border-transparent bg-[#f6bf25] text-black !important hover:bg-[#e0ad22] active:bg-[#cc9d1f] [&:visited]:text-black [&:visited]:!important",
+  "border border-transparent bg-[#f6bf25] !text-slate-900 !font-bold hover:bg-[#e0ad22] active:bg-[#cc9d1f]",
+
 };
 
 export function getButtonClasses({

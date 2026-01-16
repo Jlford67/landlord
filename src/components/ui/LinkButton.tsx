@@ -22,7 +22,7 @@ export default function LinkButton({
   return (
     <Link className={classes} {...props}>
       {leftIcon ? <span className={iconClasses}>{leftIcon}</span> : null}
-      <span className="whitespace-nowrap">{children}</span>
+      <span className="whitespace-nowrap text-inherit no-underline">{children}</span>
     </Link>
   );
 }
