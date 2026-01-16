@@ -1179,6 +1179,7 @@ a.ll_btn.ll_btnDanger:visited{
   }
 
   .ll_btnPrimary { @apply border-transparent bg-blue-600 text-white hover:bg-blue-700; }
+  .ll_btnWarning { @apply border-transparent bg-[#f6bf25] text-slate-900 hover:bg-[#e0ad22] active:bg-[#cc9d1f]; }
   .ll_btnDanger { @apply border-transparent bg-red-600 text-white hover:bg-blue-700; }
 
   /* Back-compat (remove later once all pages are updated) */
