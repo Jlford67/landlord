@@ -92,7 +92,7 @@ export default async function CategoriesPage(props: {
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btn ll_btnSecondary" href="/properties">
+            <Link className="ll_btn" href="/properties">
               Back to properties
             </Link>
           </div>
@@ -281,7 +281,7 @@ function Section({
                 <input type="hidden" name="returnTo" value="/categories" />
                 <button
                   type="submit"
-                  className="ll_btn ll_btnLink"
+                  className="ll_btn ll_btnGhost"
                   aria-label={`Delete ${node.name}`}
                   suppressHydrationWarning
                   style={{ padding: "4px 6px" }}

@@ -130,7 +130,7 @@ export default async function CashVsAccrualPLPage({
               </p>
             ) : null}
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
         </div>

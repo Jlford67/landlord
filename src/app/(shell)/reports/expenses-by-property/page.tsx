@@ -262,7 +262,7 @@ export default async function ExpensesByPropertyPage({
               {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
         </div>

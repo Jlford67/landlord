@@ -17,7 +17,7 @@ export default async function NewPropertyManagerPage() {
             </div>
   
             <div className="ll_topbarRight">
-              <Link className="ll_btnSecondary" href="/property-managers">
+              <Link className="ll_btn" href="/property-managers">
                 Cancel
               </Link>
             </div>
@@ -78,10 +78,10 @@ export default async function NewPropertyManagerPage() {
             <textarea id="notes" name="notes" className="ll_input" rows={3} suppressHydrationWarning />
   
             <div className="ll_actions">
-              <button className="ll_btn" type="submit" suppressHydrationWarning>
+              <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
                 Save company
               </button>
-              <Link className="ll_btnSecondary" href="/property-managers">
+              <Link className="ll_btn" href="/property-managers">
                 Cancel
               </Link>
             </div>

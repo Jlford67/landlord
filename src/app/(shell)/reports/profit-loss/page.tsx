@@ -128,7 +128,7 @@ export default async function ProfitLossReportPage({
               Transfers are {includeTransfers ? "included" : "excluded"}.
             </div>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
         </div>

@@ -323,7 +323,7 @@ export default async function RentalIncomeByPropertyPage({
                 : "Only rental income categories are counted."}
             </p>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
         </div>

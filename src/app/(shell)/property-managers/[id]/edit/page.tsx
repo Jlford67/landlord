@@ -68,7 +68,7 @@ export default async function EditPropertyManagerPage({
             </div>
   
             <div className="ll_topbarRight">
-              <Link className="ll_btnSecondary" href="/property-managers">
+              <Link className="ll_btn" href="/property-managers">
                 Cancel
               </Link>
             </div>
@@ -148,10 +148,10 @@ export default async function EditPropertyManagerPage({
             />
   
             <div className="ll_actions">
-              <button className="ll_btn" type="submit" suppressHydrationWarning>
+              <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
                 Save company
               </button>
-              <Link className="ll_btnSecondary" href="/property-managers">
+              <Link className="ll_btn" href="/property-managers">
                 Cancel
               </Link>
             </div>

@@ -25,7 +25,7 @@ export default function TransactionRowActions(props: {
       </Link>
       <button
         type="button"
-        className="ll_btnSecondary"
+        className="ll_btnDanger"
         disabled={pending}
         onClick={() => {
           startTransition(async () => {

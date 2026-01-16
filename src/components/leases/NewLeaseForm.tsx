@@ -182,10 +182,10 @@ export default function NewLeaseForm(props: {
       </div>
 
       <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-        <button className="ll_btn" type="submit">
+        <button className="ll_btn ll_btnWarning" type="submit">
           Create lease
         </button>
-        <Link className="ll_btnSecondary" href={props.backHref}>
+        <Link className="ll_btn" href={props.backHref}>
           Cancel
         </Link>
       </div>

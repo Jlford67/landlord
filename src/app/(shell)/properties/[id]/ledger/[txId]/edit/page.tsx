@@ -34,7 +34,7 @@ export default async function EditTransactionPage(props: {
       <div className="ll_page">
         <div className="ll_panel">
           <h1>Transaction not found</h1>
-          <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${encodeURIComponent(month)}`}>
+          <Link className="ll_btn" href={`/properties/${propertyId}/ledger?month=${encodeURIComponent(month)}`}>
             Back to ledger
           </Link>
         </div>
@@ -66,7 +66,7 @@ export default async function EditTransactionPage(props: {
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${encodeURIComponent(month)}`}>
+            <Link className="ll_btn" href={`/properties/${propertyId}/ledger?month=${encodeURIComponent(month)}`}>
               Back
             </Link>
           </div>
@@ -159,10 +159,10 @@ export default async function EditTransactionPage(props: {
             </div>
 
             <div className="ll_actions">
-              <button className="ll_btn" type="submit" suppressHydrationWarning>
+              <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
                 Save changes
               </button>
-              <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${encodeURIComponent(month)}`}>
+              <Link className="ll_btn" href={`/properties/${propertyId}/ledger?month=${encodeURIComponent(month)}`}>
                 Cancel
               </Link>
             </div>

@@ -291,7 +291,7 @@ export default async function PortfolioLeaderboardPage({
               {report.input.includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
         </div>

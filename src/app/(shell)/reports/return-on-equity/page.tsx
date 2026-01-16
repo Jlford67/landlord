@@ -165,7 +165,7 @@ export default async function ReturnOnEquityPage({
               Compare cash flow returns against current equity for {yearParam}.
             </p>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
         </div>

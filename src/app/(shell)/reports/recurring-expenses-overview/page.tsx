@@ -144,7 +144,7 @@ export default async function RecurringExpensesOverviewPage({
               Expected vs posted recurring expenses for the range, plus other expenses for context.
             </p>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
         </div>

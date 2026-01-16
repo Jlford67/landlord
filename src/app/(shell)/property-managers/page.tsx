@@ -154,10 +154,10 @@ export default async function PropertyManagersPage({
             <Link className="ll_btn" href="/dashboard">
               Back
             </Link>
-            <a className="ll_btn" href={exportHref}>
+            <a className="ll_btnPrimary" href={exportHref}>
               Export Excel
             </a>
-            <Link className="ll_btn ll_btnPrimary" href="/property-managers/new">
+            <Link className="ll_btn ll_btnWarning" href="/property-managers/new">
               New property manager
             </Link>
           </div>
@@ -218,7 +218,7 @@ export default async function PropertyManagersPage({
               </label>
 
               <IconButton
-                className="ll_btn ll_btnPrimary"
+                className="ll_btn ll_btnGhost"
                 type="submit"
                 ariaLabel="Search"
                 title="Search"

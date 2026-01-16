@@ -80,7 +80,7 @@ export default async function RecurringPage({
 
             <IconButton
               type="submit"
-              className="ll_btn ll_btnPrimary"
+              className="ll_btn ll_btnGhost"
               ariaLabel="Search"
               title="Search"
               icon={<Search size={18} />}

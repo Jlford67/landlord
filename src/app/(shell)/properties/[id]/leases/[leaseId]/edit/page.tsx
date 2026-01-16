@@ -121,7 +121,7 @@ export default async function EditLeasePage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={`/properties/${propertyId}/leases`}>
+            <Link className="ll_btn" href={`/properties/${propertyId}/leases`}>
               Back
             </Link>
           </div>
@@ -221,11 +221,11 @@ export default async function EditLeasePage({
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <button className="ll_btn" type="submit">
+            <button className="ll_btnPrimary" type="submit">
               Save changes
             </button>
 
-            <Link className="ll_btnSecondary" href={`/properties/${propertyId}/leases`}>
+            <Link className="ll_btn" href={`/properties/${propertyId}/leases`}>
               Cancel
             </Link>
           </div>
@@ -244,7 +244,7 @@ export default async function EditLeasePage({
               <input className="ll_input" type="date" name="endDate" defaultValue="" />
             </label>
 
-            <button className="ll_btnSecondary" type="submit">
+            <button className="ll_btnDanger" type="submit">
               End lease
             </button>
           </form>

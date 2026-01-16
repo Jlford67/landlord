@@ -133,7 +133,7 @@ export default async function PropertyDetailPage({
                 Edit
               </Link>
 
-              <Link className="ll_btn ll_btnPrimary" href={`/properties/${property.id}/leases/new`}>
+              <Link className="ll_btn ll_btnWarning" href={`/properties/${property.id}/leases/new`}>
                 New lease
               </Link>
             </div>
@@ -269,7 +269,7 @@ export default async function PropertyDetailPage({
               </div>
             ) : (
               <div className="mt-2">
-                <Link className="ll_btn ll_btnLink" href={`/properties/${property.id}/edit#purchase-date`}>
+                <Link className="ll_btn ll_btnWarning" href={`/properties/${property.id}/edit#purchase-date`}>
                   Add Purchase Date
                 </Link>
               </div>

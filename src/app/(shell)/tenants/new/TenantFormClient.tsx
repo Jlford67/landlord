@@ -79,11 +79,11 @@ export default function TenantFormClient({
       </div>
 
       <div className="ll_row ll_gap_sm" style={{ marginTop: 10 }}>
-        <button className="ll_btn" type="submit">
+        <button className="ll_btnPrimary" type="submit">
           Save tenant
         </button>
 
-        <Link className="ll_btnSecondary" href={returnTo}>
+        <Link className="ll_btn" href={returnTo}>
           Cancel
         </Link>
       </div>

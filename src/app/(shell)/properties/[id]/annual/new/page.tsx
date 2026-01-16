@@ -33,7 +33,7 @@ export default async function NewAnnualEntryPage(props: {
       <div className="ll_page">
         <div className="ll_panel">
           <h1>Property not found</h1>
-          <Link className="ll_btnSecondary" href="/properties">
+          <Link className="ll_btn" href="/properties">
             Back to properties
           </Link>
         </div>
@@ -87,7 +87,7 @@ export default async function NewAnnualEntryPage(props: {
           </div>
           <div className="ll_topbarRight">
             <Link
-              className="ll_btnSecondary"
+              className="ll_btn"
               href={`/properties/${propertyId}/ledger?view=annual&year=${year}`}
             >
               Back
@@ -194,11 +194,11 @@ export default async function NewAnnualEntryPage(props: {
           </div>
 
           <div className="ll_actions">
-            <button className="ll_btn" type="submit" suppressHydrationWarning>
+            <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
               Save annual entry
             </button>
             <Link
-              className="ll_btnSecondary"
+              className="ll_btn"
               href={`/properties/${propertyId}/ledger?view=annual&year=${year}`}
             >
               Cancel

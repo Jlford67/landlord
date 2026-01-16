@@ -64,10 +64,10 @@ export default async function TenantsPage({
             <Link className="ll_btn" href="/dashboard">
               Back
             </Link>
-            <a className="ll_btn" href={exportHref}>
+            <a className="ll_btnPrimary" href={exportHref}>
               Export Excel
             </a>
-            <Link className="ll_btn ll_btnPrimary" href="/tenants/new">
+            <Link className="ll_btn ll_btnWarning" href="/tenants/new">
               Add tenant
             </Link>
           </div>

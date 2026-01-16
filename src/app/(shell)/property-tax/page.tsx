@@ -196,10 +196,10 @@ export default async function PropertyTaxPage({
             <Link className="ll_btn" href="/dashboard">
               Back
             </Link>
-            <a className="ll_btn" href={exportHref}>
+            <a className="ll_btnPrimary" href={exportHref}>
               Export Excel
             </a>
-            <Link className="ll_btn ll_btnPrimary" href={addHref}>
+            <Link className="ll_btn ll_btnWarning" href={addHref}>
               Add tax account
             </Link>
           </div>
@@ -254,7 +254,7 @@ export default async function PropertyTaxPage({
             </label>
 
             <IconButton
-              className="ll_btn ll_btnPrimary"
+              className="ll_btn ll_btnGhost"
               type="submit"
               ariaLabel="Search"
               title="Search"

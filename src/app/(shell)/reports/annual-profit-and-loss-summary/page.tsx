@@ -218,7 +218,7 @@ export default async function AnnualProfitAndLossSummaryPage({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <LinkButton href={exportHref} variant="outline" size="md">
+            <LinkButton href={exportHref} variant="primary" size="md">
               Export Excel
             </LinkButton>
             {annualEntryLink ? (

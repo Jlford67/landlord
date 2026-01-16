@@ -77,7 +77,7 @@ export default async function NewInsurancePage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btn" href={cancelHref}>
               Cancel
             </Link>
           </div>
@@ -196,10 +196,10 @@ export default async function NewInsurancePage({
           <input id="loanRef" name="loanRef" className="ll_input" placeholder="Reference" suppressHydrationWarning />
 
           <div className="ll_actions">
-            <button className="ll_btn" type="submit" suppressHydrationWarning>
+            <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
               Save policy
             </button>
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btn" href={cancelHref}>
               Cancel
             </Link>
           </div>

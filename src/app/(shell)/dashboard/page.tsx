@@ -483,7 +483,7 @@ export default async function DashboardPage({
         <div className="ll_dash_topRight">
           <PropertyPicker properties={pickerOptions} selectedId={selectedPropertyId} />
 
-          <Link href="/transactions/new" className="ll_btn ll_btnPrimary">
+          <Link href="/transactions/new" className="ll_btn ll_btnWarning">
             Add transaction
           </Link>
         </div>

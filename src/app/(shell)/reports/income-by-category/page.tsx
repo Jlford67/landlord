@@ -351,7 +351,7 @@ const exportHref = `/api/exports/reports/income-by-category?${exportParams.toStr
               range. Transfers are {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
 

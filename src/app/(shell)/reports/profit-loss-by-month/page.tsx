@@ -121,7 +121,7 @@ export default async function ProfitLossByMonthPage({
               Annual totals are {includeAnnualTotals ? "included" : "excluded"}.
             </div>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
+          <LinkButton href={exportHref} variant="primary" size="md">
             Export Excel
           </LinkButton>
         </div>

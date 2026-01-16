@@ -91,7 +91,7 @@ export default async function PropertiesPage({
           </PageTitleIcon>
           <div className="text-lg font-semibold">Properties</div>
           <div className="ll_spacer" />
-          <Link className="ll_btn ll_btnPrimary" href="/properties/new">
+          <Link className="ll_btn ll_btnWarning" href="/properties/new">
             Add property
           </Link>
         </div>
@@ -116,7 +116,7 @@ export default async function PropertiesPage({
             />
 
             <IconButton
-              className="ll_btn ll_btnPrimary"
+              className="ll_btn ll_btnGhost"
               type="submit"
               ariaLabel="Search"
               title="Search"

@@ -30,7 +30,7 @@ export default function PropertyManagerAddContactPanelClient({
         <div className="ll_notice">Contact saved.</div>
         <button
           type="button"
-          className="ll_btn ll_btnLink"
+          className="ll_btn ll_btnWarning"
           onClick={() => setCollapsed(false)}
         >
           + Add another contact

@@ -56,7 +56,7 @@ export default async function PropertyTransactionsPage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={`/properties/${property.id}`}>
+            <Link className="ll_btn" href={`/properties/${property.id}`}>
               Back
             </Link>
           </div>

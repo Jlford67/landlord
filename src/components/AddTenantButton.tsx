@@ -69,7 +69,7 @@ export default function AddTenantButton({
   }
 
   return (
-    <button type="button" className="ll_btnSecondary" onClick={handleClick}>
+    <button type="button" className="ll_btnWarning" onClick={handleClick}>
       Add tenant
     </button>
   );
