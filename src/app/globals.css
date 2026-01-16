@@ -264,11 +264,13 @@ a:hover{ text-decoration: underline; }
 .ll_btnSecondary,
 .ll_btnGhost,
 .ll_btnDanger,
+.ll_btnWarning,
 a.ll_btn,
 a.ll_btnPrimary,
 a.ll_btnSecondary,
 a.ll_btnGhost,
-a.ll_btnDanger{
+a.ll_btnDanger,
+a.ll_btnWarning{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -296,7 +298,8 @@ a.ll_btnDanger{
 .ll_btnPrimary:active,
 .ll_btnSecondary:active,
 .ll_btnGhost:active,
-.ll_btnDanger:active{
+.ll_btnDanger:active,
+.ll_btnWarning:active{
   transform: translateY(1px);
   box-shadow: 0 0 0 rgba(17, 24, 39, 0);
 }
@@ -306,7 +309,8 @@ a.ll_btn,
 a.ll_btnPrimary,
 a.ll_btnSecondary,
 a.ll_btnGhost,
-a.ll_btnDanger{
+a.ll_btnDanger,
+a.ll_btnWarning{
   text-decoration: none;
 }
 
@@ -314,7 +318,8 @@ a.ll_btn:hover,
 a.ll_btnPrimary:hover,
 a.ll_btnSecondary:hover,
 a.ll_btnGhost:hover,
-a.ll_btnDanger:hover{
+a.ll_btnDanger:hover,
+a.ll_btnWarning:hover{
   text-decoration: none;
 }
 
@@ -339,6 +344,12 @@ a.ll_btnGhost:visited{
 a.ll_btnDanger,
 a.ll_btnDanger:visited{
   color: #ffd6d6;
+}
+
+a.ll_btnWarning,
+a.ll_btnWarning:visited{
+  color: #000;
+  font-weight: 600;
 }
 
 
@@ -1179,7 +1190,7 @@ a.ll_btn.ll_btnDanger:visited{
   }
 
   .ll_btnPrimary { @apply border-transparent bg-blue-600 text-white hover:bg-blue-700; }
-  .ll_btnWarning { @apply border-transparent bg-[#f6bf25] text-slate-900 hover:bg-[#e0ad22] active:bg-[#cc9d1f]; }
+  .ll_btnWarning { @apply border-transparent bg-[#f6bf25] text-black font-semibold hover:bg-[#e0ad22] active:bg-[#cc9d1f]; }
   .ll_btnDanger { @apply border-transparent bg-red-600 text-white hover:bg-blue-700; }
 
   /* Back-compat (remove later once all pages are updated) */
