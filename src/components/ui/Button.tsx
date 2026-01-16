@@ -1,7 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { getButtonIconClasses, type ButtonSize, type ButtonVariant } from "./buttonStyles";
+import {
+  getButtonClasses,
+  getButtonIconClasses,
+  type ButtonSize,
+  type ButtonVariant,
+} from "./buttonStyles";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -25,7 +30,8 @@ export default function Button({
     if (mountGate) setMounted(true);
   }, [mountGate]);
 
-  const classes = [buttonVariantClasses[variant], className].filter(Boolean).join(" ");
+  const classes = getButtonClasses({ variant, size, className });
+
   const iconClasses = getButtonIconClasses(size);
 
   if (!mounted) {
