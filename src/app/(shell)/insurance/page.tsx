@@ -186,7 +186,7 @@ export default async function InsurancePage({
                   Export Excel
                 </Button>
               </form>
-              <LinkButton href={addHref} variant="secondary" size="md" leftIcon={<Plus size={18} />}>
+              <LinkButton href={addHref} variant="warning" size="md" leftIcon={<Plus size={18} />}>
                 Add insurance policy
               </LinkButton>
             </div>
