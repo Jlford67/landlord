@@ -15,7 +15,8 @@ const variantClasses: Record<ButtonVariant, string> = {
   outline: "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 active:bg-slate-100",
   danger: "border border-transparent bg-red-600 text-white hover:bg-red-700 active:bg-red-800",
   ghost: "border border-transparent bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-200",
-  warning: "border border-transparent bg-[#f6bf25] text-slate-900 hover:bg-[#e0ad22] active:bg-[#cc9d1f]",
+  warning:
+    "border border-transparent bg-[#f6bf25] text-black !important hover:bg-[#e0ad22] active:bg-[#cc9d1f] [&:visited]:text-black [&:visited]:!important",
 };
 
 export function getButtonClasses({
