@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
 import { getCashVsAccrualPLReport } from "@/lib/reports/cashVsAccrualPL";
+import { ArrowLeft, Download } from "lucide-react";
+import Button from "@/components/ui/Button";
 import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -110,31 +112,59 @@ export default async function CashVsAccrualPLPage({
   return (
     <div className="ll_page">
       <div className="ll_panel ll_stack" style={{ gap: 24 }}>
-        <div className="ll_rowBetween items-start gap-3">
-          <div className="ll_stack" style={{ gap: 4 }}>
-            <div className="ll_breadcrumbs">
-              <Link href="/reports" className="ll_link">
-                Reports
-              </Link>
-              <span className="ll_muted">/</span>
-              <span className="ll_muted">Cash vs Accrual P&amp;L</span>
+        {/* Page header */}
+        <div className="ll_card" style={{ marginBottom: 14 }}>
+          <div className="ll_topbar" style={{ marginBottom: 0 }}>
+            <div className="ll_rowBetween items-start gap-3">
+              <div className="ll_stack" style={{ gap: 4 }}>
+                <div className="ll_breadcrumbs">
+                  <Link href="/reports" className="ll_link">
+                    Reports
+                  </Link>
+                  <span className="ll_muted">/</span>
+                  <span className="ll_muted">Cash vs Accrual P&amp;L</span>
+                </div>
+
+                <h1>Cash vs Accrual P&amp;L</h1>
+
+                <p className="ll_muted">
+                  Compare profit &amp; loss totals on cash and accrual bases for the selected
+                  range. Transfers are {includeTransfers ? "included" : "excluded"}.
+                </p>
+
+                {report.input.accrualMode === "fallback" ? (
+                  <p className="text-sm text-slate-500">
+                    Accrual dates aren&apos;t tracked yet; accrual totals match cash totals.
+                  </p>
+                ) : null}
+              </div>
             </div>
-            <h1>Cash vs Accrual P&amp;L</h1>
-            <p className="ll_muted">
-              Compare profit &amp; loss totals on cash and accrual bases for the selected
-              range. Transfers are {includeTransfers ? "included" : "excluded"}.
-            </p>
-            {report.input.accrualMode === "fallback" ? (
-              <p className="text-sm text-slate-500">
-                Accrual dates aren&apos;t tracked yet; accrual totals match cash totals.
-              </p>
-            ) : null}
+
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+              <LinkButton
+                href="/reports"
+                variant="outline"
+                size="md"
+                leftIcon={<ArrowLeft className="h-4 w-4" />}
+              >
+                Back
+              </LinkButton>
+
+              <form action={exportHref} method="get">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  leftIcon={<Download className="h-4 w-4" />}
+                >
+                  Export Excel
+                </Button>
+              </form>
+            </div>
           </div>
-          <LinkButton href={exportHref} variant="primary" size="md">
-            Export Excel
-          </LinkButton>
         </div>
 
+        {/* Filters */}
         <form className="ll_card ll_form" method="get">
           <div
             style={{
@@ -226,12 +256,20 @@ export default async function CashVsAccrualPLPage({
           </div>
 
           <div className="ll_actions" style={{ marginTop: 14 }}>
-            <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
+            <Button
+              type="submit"
+              variant="warning"
+              size="md"
+              suppressHydrationWarning
+            >
               Apply filters
-            </button>
+            </Button>
           </div>
+
+
         </form>
 
+        {/* Summary cards */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="ll_card ll_stack" style={{ gap: 8 }}>
             <div className="ll_rowBetween items-center">

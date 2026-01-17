@@ -6,6 +6,8 @@ import {
   getAnnualProfitAndLossSummary,
   type AnnualProfitAndLossSummaryResult,
 } from "@/lib/reports/annualProfitAndLossSummary";
+import { ArrowLeft, Download } from "lucide-react";
+import Button from "@/components/ui/Button";
 import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -195,37 +197,51 @@ export default async function AnnualProfitAndLossSummaryPage({
   });
 
   const hasYears = result.years.length > 0;
-  const annualEntryLink = propertyId
-    ? `/properties/${propertyId}/ledger?view=annual&year=${startYear}`
-    : null;
 
   return (
     <div className="ll_page">
       <div className="ll_panel ll_stack" style={{ gap: 24 }}>
-        <div className="ll_rowBetween">
-          <div className="ll_stack" style={{ gap: 4 }}>
-            <div className="ll_breadcrumbs">
-              <Link href="/reports" className="ll_link">
-                Reports
-              </Link>
-              <span className="ll_muted">/</span>
-              <span className="ll_muted">Annual Profit &amp; Loss Summary</span>
-            </div>
+        {/* Page header */}
+        <div className="ll_card" style={{ marginBottom: 14 }}>
+          <div className="ll_topbar" style={{ marginBottom: 0 }}>
+            <div className="ll_rowBetween items-start gap-3">
+              <div className="ll_stack" style={{ gap: 4 }}>
+                <div className="ll_breadcrumbs">
+                  <Link href="/reports" className="ll_link">
+                    Reports
+                  </Link>
+                  <span className="ll_muted">/</span>
+                  <span className="ll_muted">Annual Profit &amp; Loss Summary</span>
+                </div>
             <h1>Annual Profit &amp; Loss Summary</h1>
             <p className="ll_muted">
               Calendar-year rollup combining ledger transactions and annual category amounts.
               Transfers are {includeTransfers ? "included" : "excluded"}.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <LinkButton href={exportHref} variant="primary" size="md">
-              Export Excel
-            </LinkButton>
-            {annualEntryLink ? (
-              <LinkButton href={annualEntryLink} variant="secondary" size="md">
-                Annual entries
+            </div>
+
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+              <LinkButton
+                href="/reports"
+                variant="outline"
+                size="md"
+                leftIcon={<ArrowLeft className="h-4 w-4" />}
+              >
+                Back
               </LinkButton>
-            ) : null}
+
+              <form action={exportHref} method="get">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  leftIcon={<Download className="h-4 w-4" />}
+                >
+                  Export Excel
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
 

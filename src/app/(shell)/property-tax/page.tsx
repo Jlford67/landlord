@@ -3,11 +3,13 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
-import LinkButton from "@/components/ui/LinkButton";
 import RowActions from "@/components/ui/RowActions";
 import IconButton from "@/components/ui/IconButton";
-import { Receipt, Search } from "lucide-react";
+import Button from "@/components/ui/Button";
+import LinkButton from "@/components/ui/LinkButton";
+import { ArrowLeft, Download, Plus, Search, Shield, Receipt } from "lucide-react";
 import { redirect } from "next/navigation";
+
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -180,6 +182,8 @@ export default async function PropertyTaxPage({
   return (
     <div className="ll_page">
       <div className="ll_panel">
+        {/* Page header */}
+        <div className="ll_card" style={{ marginBottom: 14 }}>
         <div className="ll_topbar">
           <div className="flex items-center gap-3">
             <PageTitleIcon className="bg-amber-100 text-amber-700">
@@ -193,16 +197,19 @@ export default async function PropertyTaxPage({
             </div>
           </div>
 
-          <div className="ll_topbarRight">
-            <Link className="ll_btn" href="/dashboard">
-              Back
-            </Link>
-            <LinkButton href={exportHref} variant="primary">
-              Export Excel
-            </LinkButton>
-            <Link className="ll_btn ll_btnWarning" href={addHref}>
-              Add tax account
-            </Link>
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+              <LinkButton href="/dashboard" variant="outline" size="md" leftIcon={<ArrowLeft size={18} />}>
+                Back
+              </LinkButton>
+              <form action={exportHref} method="get">
+                <Button type="submit" variant="primary" size="md" leftIcon={<Download size={18} />}>
+                  Export Excel
+                </Button>
+              </form>
+              <LinkButton href={addHref} variant="warning" size="md" leftIcon={<Plus size={18} />}>
+                Add tax account
+              </LinkButton>
+            </div>
           </div>
         </div>
 

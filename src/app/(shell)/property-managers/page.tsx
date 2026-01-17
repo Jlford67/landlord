@@ -5,7 +5,7 @@ import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
 import LinkButton from "@/components/ui/LinkButton";
-import { Building2, Search } from "lucide-react";
+import { Building2, Search, Plus, Download, ArrowLeft } from "lucide-react";
 import { deletePropertyManagerCompany } from "./actions";
 import IconButton from "@/components/ui/IconButton";
 
@@ -152,15 +152,19 @@ export default async function PropertyManagersPage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btn" href="/dashboard">
-              Back
-            </Link>
-            <LinkButton href={exportHref} variant="primary">
+          <LinkButton href="/dashboard" variant="outline" leftIcon={<ArrowLeft size={18} />}>
+            Back
+          </LinkButton>
+            <LinkButton href={exportHref} variant="primary" leftIcon={<Download size={18} />}>
               Export Excel
             </LinkButton>
-            <Link className="ll_btn ll_btnWarning" href="/property-managers/new">
-              New property manager
-            </Link>
+            <LinkButton
+              href="/property-managers/new"
+              variant="warning"
+              leftIcon={<Plus size={18} />}
+            >
+              Add property manager
+            </LinkButton>
           </div>
         </div>
 

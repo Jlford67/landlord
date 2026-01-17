@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { fmtMoney, propertyLabel } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
 import { getScheduleESummaryReport } from "@/lib/reports/scheduleESummary";
+import Button from "@/components/ui/Button";
+import { ArrowLeft, Download } from "lucide-react";
 import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -139,24 +141,50 @@ export default async function ScheduleESummaryPage({
   return (
     <div className="ll_page">
       <div className="ll_panel ll_stack" style={{ gap: 24 }}>
-        <div className="ll_rowBetween">
-          <div className="ll_stack" style={{ gap: 4 }}>
-            <div className="ll_breadcrumbs">
-              <Link href="/reports" className="ll_link">
-                Reports
-              </Link>
-              <span className="ll_muted">/</span>
-              <span className="ll_muted">Schedule E Summary</span>
+        {/* Page header */}
+        <div className="ll_card">
+          <div className="ll_topbar">
+            <div className="min-w-0">
+              <div className="ll_breadcrumbs">
+                <Link href="/reports" className="ll_link">
+                  Reports
+                </Link>
+                <span className="ll_muted">/</span>
+                <span className="ll_muted">Schedule E Summary</span>
+              </div>
+
+              <h1>Schedule E Summary</h1>
+
+              <p className="ll_muted break-words">
+                Schedule E-style rollup for tax and year-end. Transfers are{" "}
+                {includeTransfers ? "included" : "excluded"}.
+              </p>
             </div>
-            <h1>Schedule E Summary</h1>
-            <p className="ll_muted">
-              Schedule E-style rollup for tax and year-end. Transfers are{" "}
-              {includeTransfers ? "included" : "excluded"}.
-            </p>
+
+            <div className="flex shrink-0 items-start gap-2">
+              <LinkButton
+                href="/reports"
+                variant="outline"
+                size="md"
+                leftIcon={<ArrowLeft className="h-4 w-4" />}
+                suppressHydrationWarning
+              >
+                Back
+              </LinkButton>
+
+              <form action={exportHref} method="get">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  leftIcon={<Download className="h-4 w-4" />}
+                  suppressHydrationWarning
+                >
+                  Export Excel
+                </Button>
+              </form>
+            </div>
           </div>
-          <LinkButton href={exportHref} variant="primary" size="md">
-            Export Excel
-          </LinkButton>
         </div>
 
         <form className="ll_card ll_form" method="get">
@@ -265,10 +293,11 @@ export default async function ScheduleESummaryPage({
           </div>
 
           <div className="ll_actions" style={{ marginTop: 14 }}>
-            <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
+            <Button type="submit" variant="warning" size="md" suppressHydrationWarning>
               Apply filters
-            </button>
+            </Button>
           </div>
+
         </form>
 
         {!hasActivity ? (
