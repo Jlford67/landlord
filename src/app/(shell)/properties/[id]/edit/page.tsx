@@ -4,6 +4,10 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyThumb from "@/components/properties/PropertyThumb";
 import PropertyManagerAssignmentFields from "@/components/properties/PropertyManagerAssignmentFields";
+import { ArrowLeft, Save } from "lucide-react";
+import LinkButton from "@/components/ui/LinkButton";
+import Button from "@/components/ui/Button";
+
 
 function inputValue<T extends string | number | null | undefined>(value: T) {
   if (value === null || value === undefined) return "";
@@ -48,24 +52,44 @@ export default async function EditPropertyPage({
   return (
     <div className="ll_page">
       <div className="ll_panel" suppressHydrationWarning>
-        <div className="ll_topbar">
-          <div className="flex items-center gap-3">
-            <PropertyThumb propertyId={property.id} />
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>Edit property</div>
-              <div className="ll_muted">Update property details.</div>
+        {/* Page header */}
+        <div className="ll_card" style={{ marginBottom: 14 }}>
+          <div className="ll_topbar" style={{ marginBottom: 0 }}>
+            <div className="flex items-center gap-3">
+              <PropertyThumb propertyId={property.id} />
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800 }}>
+                  Edit property
+                </div>
+                <div className="ll_muted">
+                  Update property details.
+                </div>
+              </div>
+            </div>
+
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+              <LinkButton
+                href={`/properties/${property.id}`}
+                variant="outline"
+                size="md"
+                leftIcon={<ArrowLeft size={18} />}
+              >
+                Back
+              </LinkButton>
+
+              <Button
+                type="submit"
+                form="edit-property-form"
+                variant="warning"
+                size="md"
+                leftIcon={<Save size={18} />}
+              >
+                Save changes
+              </Button>
             </div>
           </div>
-
-          <div className="ll_topbarRight">
-            <Link className="ll_btn" href={`/properties/${property.id}`}>
-              Cancel
-            </Link>
-            <button className="ll_btn ll_btnPrimary" type="submit" form="edit-property-form">
-              Save changes
-            </button>
-          </div>
         </div>
+
 
         <form
           className="ll_form"
