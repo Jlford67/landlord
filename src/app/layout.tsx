@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import "./globals.css";
 import TopNav from "@/components/TopNav";
 import { getCurrentUser } from "@/lib/auth";
@@ -27,9 +28,15 @@ export default async function RootLayout({
   // If this is only used for TopNavGate, it can be removed entirely.
   // Keeping it here is harmless, but not needed for layout.
   await getCurrentUser();
+  const cookieStore = await cookies();
+  const theme = cookieStore.get("theme")?.value === "dark" ? "dark" : "light";
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={theme === "dark" ? "dark" : ""}
+      suppressHydrationWarning
+    >
       <body
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -39,4 +46,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

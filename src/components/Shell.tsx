@@ -1,10 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { cookies } from "next/headers";
 import SidebarLogoutClient from "@/components/SidebarLogoutClient";
 import SidebarNav from "@/components/SidebarNav";
+import ThemeToggleClient from "@/components/ThemeToggleClient";
 
-export default function Shell({ children }: { children: ReactNode }) {
+export default async function Shell({ children }: { children: ReactNode }) {
+  const cookieStore = await cookies();
+  const theme = cookieStore.get("theme")?.value === "dark" ? "dark" : "light";
+
   return (
     <div className="ll_shell">
       <aside className="ll_shell_sidebar">
@@ -28,6 +33,7 @@ export default function Shell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="ll_side_footer">
+            <ThemeToggleClient initialTheme={theme} />
             <SidebarLogoutClient />
           </div>
         </div>
