@@ -95,7 +95,7 @@ export function AddCategoryForm({ categories }: { categories: CategoryOption[] }
       </div>
 
       <div className="ll_actions">
-        <SafeButton type="submit" className="ll_btn ll_btnPrimary">
+        <SafeButton type="submit" className="ll_btn ll_btnWarning">
           Add category
         </SafeButton>
       </div>
@@ -256,7 +256,7 @@ export function CategoryInlineEditor({
           </SafeButton>
           <SafeButton
             type="button"
-            className="ll_btn ll_btnSecondary"
+            className="ll_btn"
             onClick={handleCancel}
           >
             Cancel
@@ -266,7 +266,7 @@ export function CategoryInlineEditor({
 
       <SafeButton
         type="button"
-        className="ll_btn ll_btnLink"
+        className="ll_btn ll_btnGhost"
         onClick={handleCancel}
         aria-label={`Close editor for ${category.name}`}
         style={{ padding: "4px 6px" }}

@@ -58,7 +58,7 @@ export default async function EditPropertyPage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={`/properties/${property.id}`}>
+            <Link className="ll_btn" href={`/properties/${property.id}`}>
               Cancel
             </Link>
             <button className="ll_btn ll_btnPrimary" type="submit" form="edit-property-form">

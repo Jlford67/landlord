@@ -83,7 +83,7 @@ export default async function LedgerPickerPage({
 
             <IconButton
               type="submit"
-              className="ll_btn ll_btnWarning"
+              className="ll_btn ll_btnGhost"
               ariaLabel="Search"
               title="Search"
               icon={<Search size={18} />}

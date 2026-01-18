@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
 import { getProfitLossByProperty } from "@/lib/reports/profitLossByProperty";
+import { ArrowLeft, Download } from "lucide-react";
+import Button from "@/components/ui/Button";
 import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -111,28 +113,55 @@ export default async function ProfitLossReportPage({
 
   return (
     <div className="ll_page">
-      <div className="ll_panel">
-        <div className="ll_rowBetween">
-          <div>
-            <div className="ll_breadcrumbs">
-              <Link href="/reports" className="ll_link">
-                Reports
-              </Link>
-              <span className="ll_muted">/</span>
-              <span className="ll_muted">Profit &amp; Loss by Property</span>
-            </div>
-            <h1>Profit &amp; Loss by Property</h1>
-            <div className="ll_muted">
-              Ledger transactions and annual totals within the selected date range
-              (annual amounts are prorated when the range covers only part of a year).
-              Transfers are {includeTransfers ? "included" : "excluded"}.
+      <div className="ll_panel ll_stack" style={{ gap: 24 }}>
+        {/* Page header */}
+        <div className="ll_card" style={{ marginBottom: 14 }}>
+          <div className="ll_topbar" style={{ marginBottom: 0 }}>
+            <div className="ll_rowBetween items-start gap-3">
+              <div className="ll_stack min-w-0 flex-1" style={{ gap: 4 }}>
+                <div className="ll_breadcrumbs">
+                  <Link href="/reports" className="ll_link">
+                    Reports
+                  </Link>
+                  <span className="ll_muted">/</span>
+                  <span className="ll_muted">Profit &amp; Loss by Property</span>
+                </div>
+
+                <h1>Profit &amp; Loss by Property</h1>
+
+                <p className="ll_muted break-words">
+                  Ledger transactions and annual totals within the selected date range (annual amounts
+                  are prorated when the range covers only part of a year). Transfers are{" "}
+                  {includeTransfers ? "included" : "excluded"}.
+                </p>
+              </div>
+
+              <div className="ll_topbarRight flex flex-wrap items-center gap-2 shrink-0 justify-end">
+                <LinkButton
+                  href="/reports"
+                  variant="outline"
+                  size="md"
+                  leftIcon={<ArrowLeft className="h-4 w-4" />}
+                >
+                  Back
+                </LinkButton>
+
+                <form action={exportHref} method="get">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    leftIcon={<Download className="h-4 w-4" />}
+                  >
+                    Export Excel
+                  </Button>
+                </form>
+              </div>
             </div>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
-            Export Excel
-          </LinkButton>
         </div>
 
+        {/* Filters */}
         <form className="ll_form mt-4" method="get">
           <div
             style={{
@@ -225,9 +254,9 @@ export default async function ProfitLossReportPage({
           </div>
 
           <div className="ll_actions" style={{ marginTop: 14 }}>
-            <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
+            <Button type="submit" variant="warning" size="md" suppressHydrationWarning>
               Apply filters
-            </button>
+            </Button>
           </div>
         </form>
 

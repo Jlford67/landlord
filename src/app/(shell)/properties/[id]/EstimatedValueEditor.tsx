@@ -133,7 +133,7 @@ export default function EstimatedValueEditor(props: Props) {
                 suppressHydrationWarning
               />
               <button
-                className="ll_btn ll_btn_primary"
+                className="ll_btn ll_btnPrimary"
                 onClick={async () => {
                   setMsgZillow("");
                   setSavingZillow(true);
@@ -154,7 +154,7 @@ export default function EstimatedValueEditor(props: Props) {
                 {savingZillow ? "Saving..." : "Save"}
               </button>
               <button
-                className="ll_btn ll_btn_danger"
+                className="ll_btn ll_btnDanger"
                 onClick={async () => {
                   setMsgZillow("");
                   setSavingZillow(true);
@@ -189,7 +189,7 @@ export default function EstimatedValueEditor(props: Props) {
                 suppressHydrationWarning
               />
               <button
-                className="ll_btn"
+                className="ll_btn ll_btnPrimary"
                 onClick={async () => {
                   setMsgZillow("");
                   setSavingZillowLink(true);
@@ -249,7 +249,7 @@ export default function EstimatedValueEditor(props: Props) {
                 suppressHydrationWarning
               />
               <button
-                className="ll_btn ll_btn_primary"
+                className="ll_btn ll_btnPrimary"
                 onClick={async () => {
                   setMsgRedfin("");
                   setSavingRedfin(true);
@@ -270,7 +270,7 @@ export default function EstimatedValueEditor(props: Props) {
                 {savingRedfin ? "Saving..." : "Save"}
               </button>
               <button
-                className="ll_btn ll_btn_danger"
+                className="ll_btn ll_btnDanger"
                 onClick={async () => {
                   setMsgRedfin("");
                   setSavingRedfin(true);
@@ -305,7 +305,7 @@ export default function EstimatedValueEditor(props: Props) {
                 suppressHydrationWarning
               />
               <button
-                className="ll_btn"
+                className="ll_btn ll_btnPrimary"
                 onClick={async () => {
                   setMsgRedfin("");
                   setSavingRedfinLink(true);

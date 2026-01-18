@@ -77,7 +77,7 @@ export default async function NewPropertyTaxPage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btn" href={cancelHref}>
               Cancel
             </Link>
           </div>
@@ -200,10 +200,10 @@ export default async function NewPropertyTaxPage({
           <input id="zip" name="zip" className="ll_input" placeholder="Zip" suppressHydrationWarning />
 
           <div className="ll_actions">
-            <button className="ll_btn" type="submit" suppressHydrationWarning>
+            <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
               Save tax account
             </button>
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btn" href={cancelHref}>
               Cancel
             </Link>
           </div>

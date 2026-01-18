@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
 import IconButton from "@/components/ui/IconButton";
+import LinkButton from "@/components/ui/LinkButton";
 import { Search, Users } from "lucide-react";
 import { deleteTenant } from "./actions";
 import TenantsSearchMount from "./TenantsSearchMount";
@@ -64,10 +65,10 @@ export default async function TenantsPage({
             <Link className="ll_btn" href="/dashboard">
               Back
             </Link>
-            <a className="ll_btn" href={exportHref}>
+            <LinkButton href={exportHref} variant="primary">
               Export Excel
-            </a>
-            <Link className="ll_btn ll_btnPrimary" href="/tenants/new">
+            </LinkButton>
+            <Link className="ll_btn ll_btnWarning" href="/tenants/new">
               Add tenant
             </Link>
           </div>

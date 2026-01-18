@@ -55,7 +55,7 @@ export default async function PropertyRecurringPage({
         <h1 className="text-[28px] mb-2">Recurring</h1>
         <div className="ll_muted">Property not found.</div>
         <div className="mt-3">
-          <Link className="ll_btnSecondary" href="/recurring">
+          <Link className="ll_btn" href="/recurring">
             Back
           </Link>
         </div>
@@ -97,7 +97,7 @@ export default async function PropertyRecurringPage({
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-[32px] m-0 mb-1.5">Recurring</h1>
 
-        <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?month=${month}`}>
+        <Link className="ll_btn" href={`/properties/${propertyId}/ledger?month=${month}`}>
           Back to Ledger
         </Link>
       </div>

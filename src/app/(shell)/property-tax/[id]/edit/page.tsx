@@ -77,7 +77,7 @@ export default async function EditPropertyTaxPage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btn" href={cancelHref}>
               Cancel
             </Link>
           </div>
@@ -214,10 +214,10 @@ export default async function EditPropertyTaxPage({
           <input id="zip" name="zip" className="ll_input" defaultValue={account.zip ?? ""} suppressHydrationWarning />
 
           <div className="ll_actions">
-            <button className="ll_btn" type="submit" suppressHydrationWarning>
+            <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
               Save changes
             </button>
-            <Link className="ll_btnSecondary" href={cancelHref}>
+            <Link className="ll_btn" href={cancelHref}>
               Cancel
             </Link>
           </div>

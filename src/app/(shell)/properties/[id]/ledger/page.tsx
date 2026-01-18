@@ -131,7 +131,7 @@ export default async function PropertyLedgerPage({
         <h1 className="text-[28px] mb-2">Ledger</h1>
         <div className="ll_muted">Property not found.</div>
         <div className="mt-3">
-          <Link className="ll_btnSecondary" href="/properties">
+          <Link className="ll_btn" href="/properties">
             Back to properties
           </Link>
         </div>
@@ -378,12 +378,12 @@ export default async function PropertyLedgerPage({
         </div>
 
         <div className="flex gap-2.5 items-center">
-          <Link className="ll_btnSecondary" href="/properties">
+          <Link className="ll_btn" href="/properties">
             Back
           </Link>
 
           <Link
-            className={annualView ? "ll_btnSecondary" : "ll_btnPrimary"}
+            className="ll_btnWarning"
             href={`/properties/${propertyId}/ledger/new?returnTo=${encodeURIComponent(
               `/properties/${propertyId}/ledger?month=${month}`
             )}`}
@@ -392,7 +392,7 @@ export default async function PropertyLedgerPage({
           </Link>
 
           <Link
-            className={annualView ? "ll_btnPrimary" : "ll_btnSecondary"}
+            className="ll_btnWarning"
             href={`/properties/${propertyId}/annual/new?year=${year}&view=annual`}
           >
             Add annual entry
@@ -429,7 +429,7 @@ export default async function PropertyLedgerPage({
               </div>
 
               <Link
-                className="ll_btn ll_btnSecondary"
+                className="ll_btn ll_btnWarning"
                 href={`/properties/${propertyId}/annual/new?year=${year}&view=annual`}
               >
                 Add annual entry
@@ -493,7 +493,7 @@ export default async function PropertyLedgerPage({
                           <td className="text-right">
                             <div className="flex justify-end gap-2">
                               <Link
-                                className="ll_btnSecondary inline-flex items-center justify-center"
+                                className="ll_btnGhost inline-flex items-center justify-center"
                                 href={`/properties/${propertyId}/annual/${row.id}/edit?year=${year}&view=annual`}
                                 aria-label={`Edit ${row.category.name}`}
                                 title="Edit"
@@ -507,7 +507,7 @@ export default async function PropertyLedgerPage({
                                 <input type="hidden" name="month" value={month} />
                                 <input type="hidden" name="id" value={row.id} />
                                 <IconButton
-                                  className="ll_btnSecondary"
+                                  className="ll_btnGhost"
                                   type="submit"
                                   ariaLabel={`Delete ${row.category.name}`}
                                   title="Delete"

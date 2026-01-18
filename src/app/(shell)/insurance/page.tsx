@@ -251,7 +251,7 @@ export default async function InsurancePage({
               </label>
 
               <IconButton
-                className="ll_btn ll_btnWarning"
+                className="ll_btn ll_btnGhost"
                 type="submit"
                 ariaLabel="Search"
                 title="Search"

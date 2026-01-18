@@ -32,7 +32,7 @@ export default async function EditAnnualEntryPage(props: {
       <div className="ll_page">
         <div className="ll_panel">
           <h1>Annual entry not found</h1>
-          <Link className="ll_btnSecondary" href={`/properties/${propertyId}/ledger?view=annual&year=${fallbackYear}`}>
+          <Link className="ll_btn" href={`/properties/${propertyId}/ledger?view=annual&year=${fallbackYear}`}>
             Back to annual
           </Link>
         </div>
@@ -86,7 +86,7 @@ export default async function EditAnnualEntryPage(props: {
           </div>
           <div className="ll_topbarRight">
             <Link
-              className="ll_btnSecondary"
+              className="ll_btn"
               href={`/properties/${propertyId}/ledger?view=annual&year=${entry.year}`}
             >
               Back
@@ -190,11 +190,11 @@ export default async function EditAnnualEntryPage(props: {
           </div>
 
           <div className="ll_actions">
-            <button className="ll_btn" type="submit" suppressHydrationWarning>
+            <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
               Save changes
             </button>
             <Link
-              className="ll_btnSecondary"
+              className="ll_btn"
               href={`/properties/${propertyId}/ledger?view=annual&year=${entry.year}`}
             >
               Cancel

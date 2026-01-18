@@ -90,7 +90,7 @@ export default function TenantPicker({
 
                 <button
                   type="button"
-                  className="ll_btnSecondary"
+                  className="ll_btnDanger"
                   onClick={() => removeTenant(t.id)}
                 >
                   Remove
@@ -139,7 +139,7 @@ export default function TenantPicker({
 
                   <button
                     type="button"
-                    className="ll_btnSecondary"
+                    className="ll_btnWarning"
                     disabled={already}
                     onClick={() => addTenant(t)}
                   >

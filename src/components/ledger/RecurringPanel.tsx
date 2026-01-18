@@ -293,7 +293,7 @@ export default function RecurringPanel(props: RecurringPanelProps) {
                                   </label>
 
                                   <div className="mt-2.5 flex gap-2">
-                                    <button className="ll_btn" type="submit" suppressHydrationWarning>
+                                    <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
                                       Save
                                     </button>
                                   </div>
@@ -466,7 +466,7 @@ export default function RecurringPanel(props: RecurringPanelProps) {
 
                 <div className="mt-2.5 flex gap-2">
                   <button
-                    className="ll_btn"
+                    className="ll_btnWarning"
                     type="submit"
                     suppressHydrationWarning
                     data-lpignore="true"

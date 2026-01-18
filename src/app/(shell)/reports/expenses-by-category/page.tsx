@@ -8,6 +8,8 @@ import {
   calculateProratedAnnualAmount,
   getExpensesByCategoryReport,
 } from "@/lib/reports/expensesByCategory";
+import { ArrowLeft, Download } from "lucide-react";
+import Button from "@/components/ui/Button";
 import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -131,7 +133,8 @@ export default async function ExpensesByCategoryPage({
     endDate,
     includeTransfers,
   });
-
+  const rows = report.rows;
+ 
   const drillCategoryId = getStr(sp, "drillCategoryId") || null;
   const drillTarget = drillCategoryId
     ? report.rows.find((row) => row.id === drillCategoryId) ?? null
@@ -326,26 +329,52 @@ export default async function ExpensesByCategoryPage({
   return (
     <div className="ll_page">
       <div className="ll_panel ll_stack" style={{ gap: 24 }}>
-        <div className="ll_rowBetween">
-          <div className="ll_stack" style={{ gap: 4 }}>
-            <div className="ll_breadcrumbs">
-              <Link href="/reports" className="ll_link">
-                Reports
-              </Link>
-              <span className="ll_muted">/</span>
-              <span className="ll_muted">Expenses by Category</span>
-            </div>
+        {/* Page header */}
+        <div className="ll_card" style={{ marginBottom: 14 }}>
+          <div className="ll_topbar" style={{ marginBottom: 0 }}>
+            <div className="ll_rowBetween items-start gap-3">
+              <div className="ll_stack" style={{ gap: 4 }}>
+                <div className="ll_breadcrumbs">
+                  <Link href="/reports" className="ll_link">
+                    Reports
+                  </Link>
+                  <span className="ll_muted">/</span>
+                  <span className="ll_muted">Expenses by Category</span>
+                </div>
+
             <h1>Expenses by Category</h1>
             <p className="ll_muted">
               Breakdown of expenses by category within the selected date range. Transfers
               are {includeTransfers ? "included" : "excluded"}.
             </p>
+              </div>
+            </div>
+
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+              <LinkButton
+                href="/reports"
+                variant="outline"
+                size="md"
+                leftIcon={<ArrowLeft className="h-4 w-4" />}
+              >
+                Back
+              </LinkButton>
+
+              <form action={exportHref} method="get">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  leftIcon={<Download className="h-4 w-4" />}
+                >
+                  Export Excel
+                </Button>
+              </form>
+            </div>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
-            Export Excel
-          </LinkButton>
         </div>
 
+        {/* Filters */}
         <form className="ll_card ll_form" method="get">
           <div
             style={{
@@ -421,10 +450,11 @@ export default async function ExpensesByCategoryPage({
           </div>
 
           <div className="ll_actions" style={{ marginTop: 14 }}>
-            <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
+            <Button type="submit" variant="warning" size="md" suppressHydrationWarning>
               Apply filters
-            </button>
+            </Button>
           </div>
+
         </form>
 
         <div className="ll_card ll_stack" style={{ gap: 12 }}>
@@ -451,57 +481,53 @@ export default async function ExpensesByCategoryPage({
                 </tr>
               </thead>
               <tbody>
-                {report.rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={2} className="text-center text-sm text-slate-600">
-                      No expenses found for this range.
-                    </td>
-                  </tr>
-                ) : (
-                  report.rows.map((row, idx) => {
-                    const nextRow = report.rows[idx + 1];
-                    const showSpacer = nextRow && nextRow.depth === 0;
+                {rows.map((row, idx) => {
+                  const nextRow = rows[idx + 1];
+                  const showSpacer = nextRow && nextRow.depth === 0;
 
-                    return (
-                      <React.Fragment key={row.id}>
-                        <tr>
-                          <td>
-                            <span
-                              className="inline-block"
-                              style={{ paddingLeft: `${row.depth * 16}px` }}
-                            >
-                              {row.name}
-                            </span>
-                          </td>
-                          <td className="text-right">
-                            <Link
-                              href={`/reports/expenses-by-category?${buildReportQuery({
-                                propertyId,
-                                startDate,
-                                endDate,
-                                includeTransfers,
-                                drillCategoryId: row.id,
-                              })}`}
-                              className={`cursor-pointer inline-flex justify-end hover:underline underline-offset-2 ${amountClass(
-                                row.amount
-                              )}`}
-                            >
-                              {moneyAccounting(row.amount)}
-                            </Link>
+                  return (
+                    <React.Fragment key={row.id}>
+                      <tr>
+                        <td>
+                          <span
+                            className="inline-block"
+                            style={{ paddingLeft: `${row.depth * 16}px` }}
+                          >
+                            {row.name}
+                          </span>
+                        </td>
+
+                        <td className="text-right">
+                          <Link
+                            href={`/reports/expenses-by-category?${buildReportQuery({
+                              propertyId,
+                              startDate,
+                              endDate,
+                              includeTransfers,
+                              drillCategoryId: row.id,
+                            })}`}
+                            className={`cursor-pointer inline-flex justify-end hover:underline underline-offset-2 ${amountClass(
+                              row.amount
+                            )}`}
+                          >
+                            {moneyAccounting(row.amount)}
+                          </Link>
+                        </td>
+                      </tr>
+
+                      {showSpacer && (
+                        <tr aria-hidden="true">
+                          <td colSpan={2} className="p-0 border-0">
+                            <div className="h-3" />
                           </td>
                         </tr>
-                        {showSpacer ? (
-                          <tr aria-hidden="true">
-                            <td colSpan={2} className="p-0 border-0">
-                              <div className="h-3" />
-                            </td>
-                          </tr>
-                        ) : null}
-                      </React.Fragment>
-                    );
-                  })
-                )}
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
+
+
               <tfoot>
                 <tr className="ll_table_total">
                   <td>Total</td>

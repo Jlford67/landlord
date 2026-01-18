@@ -18,7 +18,7 @@ export default async function NewTenantPage({
         <div className="ll_topbar">
           <div style={{ fontSize: 18, fontWeight: 700 }}>New tenant</div>
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={returnTo}>
+            <Link className="ll_btn" href={returnTo}>
               Back
             </Link>
           </div>

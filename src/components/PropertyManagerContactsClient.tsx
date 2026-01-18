@@ -101,7 +101,7 @@ export default function PropertyManagerContactsClient({
                 />
 
                 <div className="ll_actions">
-                  <button className="ll_btn" type="submit">
+                  <button className="ll_btnPrimary" type="submit">
                     Save
                   </button>
                 </div>
@@ -112,7 +112,7 @@ export default function PropertyManagerContactsClient({
                 style={{ marginTop: 10 }}
               >
                 <input type="hidden" name="companyId" value={companyId} />
-                <button className="ll_btnSecondary" type="submit">
+                <button className="ll_btnDanger" type="submit">
                   Remove
                 </button>
               </form>

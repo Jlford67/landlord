@@ -170,11 +170,11 @@ export default async function PropertyAnnualPage(props: PageProps) {
         </div>
 
         <div className="flex gap-2.5 items-center">
-          <Link className="ll_btnSecondary" href="/properties">
+          <Link className="ll_btn" href="/properties">
             Back
           </Link>
           <Link
-            className="ll_btnPrimary"
+            className="ll_btnWarning"
             href={`/properties/${propertyId}/annual/new?year=${year}&view=annual`}
           >
             Add annual entry
@@ -267,7 +267,7 @@ export default async function PropertyAnnualPage(props: PageProps) {
             />
 
             <IconButton
-              className="ll_btn ll_btn_primary"
+              className="ll_btn ll_btnGhost"
               type="submit"
               ariaLabel="Save"
               title="Save"
@@ -286,12 +286,12 @@ export default async function PropertyAnnualPage(props: PageProps) {
             <div className="ll_card_title">Lines for {year}</div>
 
             <div className="flex items-center gap-2">
-              <a className="ll_btn" href={`/api/properties/${propertyId}/annual/export?year=${year}`}>
+              <a className="ll_btnPrimary" href={`/api/properties/${propertyId}/annual/export?year=${year}`}>
                 Export CSV
               </a>
 
               <a
-                className="ll_btn"
+                className="ll_btnPrimary"
                 href={`/api/properties/${propertyId}/annual/export?mode=all`}
                 title="Exports all annual rows for this property across all years"
               >
@@ -332,7 +332,7 @@ export default async function PropertyAnnualPage(props: PageProps) {
                             <input type="hidden" name="year" value={year} />
                             <input type="hidden" name="id" value={r.id} />
                             <IconButton
-                              className="ll_btn ll_btnLink"
+                              className="ll_btn ll_btnGhost"
                               type="submit"
                               ariaLabel={`Delete ${r.category.name} (${year})`}
                               title="Delete"

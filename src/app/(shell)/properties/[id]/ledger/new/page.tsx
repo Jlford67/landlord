@@ -39,7 +39,7 @@ export default async function NewTransactionPage({
           <div className="ll_muted">Create a new ledger entry.</div>
         </div>
 
-        <Link className="ll_btnSecondary" href={returnTo}>
+        <Link className="ll_btn" href={returnTo}>
           Back
         </Link>
       </div>

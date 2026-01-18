@@ -92,10 +92,10 @@ export default async function PropertyLeasesPage({
           </div>
 
           <div className="ll_topbarRight">
-            <Link className="ll_btnSecondary" href={`/properties/${property.id}`}>
+            <Link className="ll_btn" href={`/properties/${property.id}`}>
               Back
             </Link>
-            <Link className="ll_btn" href={`/properties/${property.id}/leases/new`}>
+            <Link className="ll_btn ll_btnWarning" href={`/properties/${property.id}/leases/new`}>
               New lease
             </Link>
           </div>
@@ -150,7 +150,7 @@ export default async function PropertyLeasesPage({
                           >
                             <input type="hidden" name="_action" value="end" />
                           <ConfirmSubmitButton
-                            className="ll_btnSecondary"
+                            className="ll_btnDanger"
                             message="End this lease now? You can still edit it later."
                           >
                             End

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { fmtMoney, propertyLabel } from "@/lib/format";
 import { getRecurringExpensesOverviewReport } from "@/lib/reports/recurringExpensesOverview";
+import Button from "@/components/ui/Button";
+import { ArrowLeft, Download } from "lucide-react";
 import LinkButton from "@/components/ui/LinkButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -130,8 +132,10 @@ export default async function RecurringExpensesOverviewPage({
   return (
     <div className="ll_page">
       <div className="ll_panel ll_stack" style={{ gap: 24 }}>
-        <div className="ll_rowBetween">
-          <div className="ll_stack" style={{ gap: 4 }}>
+      {/* Page header */}
+      <div className="ll_card">
+        <div className="ll_topbar">
+          <div className="min-w-0">
             <div className="ll_breadcrumbs">
               <Link href="/reports" className="ll_link">
                 Reports
@@ -139,15 +143,40 @@ export default async function RecurringExpensesOverviewPage({
               <span className="ll_muted">/</span>
               <span className="ll_muted">Recurring Expenses Overview</span>
             </div>
+
             <h1>Recurring Expenses Overview</h1>
-            <p className="ll_muted">
+
+            <p className="ll_muted break-words">
               Expected vs posted recurring expenses for the range, plus other expenses for context.
             </p>
           </div>
-          <LinkButton href={exportHref} variant="outline" size="md">
-            Export Excel
-          </LinkButton>
+
+          <div className="flex shrink-0 items-start gap-2">
+            <LinkButton
+              href="/reports"
+              variant="outline"
+              size="md"
+              leftIcon={<ArrowLeft className="h-4 w-4" />}
+              suppressHydrationWarning
+            >
+              Back
+            </LinkButton>
+
+            <form action={exportHref} method="get">
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                leftIcon={<Download className="h-4 w-4" />}
+                suppressHydrationWarning
+              >
+                Export Excel
+              </Button>
+            </form>
+          </div>
         </div>
+      </div>
+
 
         <form className="ll_card ll_form" method="get">
           <div
@@ -255,10 +284,11 @@ export default async function RecurringExpensesOverviewPage({
           </div>
 
           <div className="ll_actions" style={{ marginTop: 14 }}>
-            <button type="submit" className="ll_btn ll_btnPrimary" suppressHydrationWarning>
+            <Button type="submit" variant="warning" size="md" suppressHydrationWarning>
               Apply filters
-            </button>
+            </Button>
           </div>
+
         </form>
 
         <div className="ll_card ll_stack" style={{ gap: 12 }}>

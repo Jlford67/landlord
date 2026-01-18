@@ -40,7 +40,7 @@ export default async function PropertyRecurringPage({ params, searchParams }: Pa
         <div className="card_header flex items-center justify-between">
           <h2 className="text-lg font-semibold">Recurring items</h2>
 
-          <LinkButton href={`/recurring/new?propertyId=${property.id}`} variant="primary" size="md">
+          <LinkButton href={`/recurring/new?propertyId=${property.id}`} variant="warning" size="md">
             Add recurring item
           </LinkButton>
         </div>

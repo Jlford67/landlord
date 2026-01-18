@@ -25,7 +25,7 @@ export default function TenantsSearchClient({ q }: { q: string }) {
           />
 
           <IconButton
-            className="ll_btn ll_btnPrimary"
+            className="ll_btn ll_btnGhost"
             type="submit"
             ariaLabel="Search"
             title="Search"
