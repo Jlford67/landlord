@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import ZillowLogo from "@/components/logos/ZillowLogo";
 import RedfinLogo from "@/components/logos/RedfinLogo";
 import PropertyThumb from "@/components/properties/PropertyThumb";
+import { ArrowLeft, Pencil, Plus } from "lucide-react";
+import LinkButton from "@/components/ui/LinkButton";
 
 const moneyFmt = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
@@ -113,33 +115,55 @@ export default async function PropertyDetailPage({
 
   return (
     <div className="ll_page" suppressHydrationWarning>
-      {/* HERO */}
-      <div className="ll_card">
-        <div className="flex items-start gap-4">
-          <PropertyThumb propertyId={property.id} />
+      {/* PAGE HEADER */}
+      <div className="ll_card" style={{ marginBottom: 14 }}>
+        <div className="ll_topbar" style={{ marginBottom: 0 }}>
+          <div className="flex items-center gap-4 min-w-0">
+            <PropertyThumb propertyId={property.id} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div style={{ fontSize: 18, fontWeight: 800 }} className="truncate">
+                  {title}
+                </div>
+                {property.status && property.status !== "active" ? (
+                  <span className="ll_pill">{property.status}</span>
+                ) : null}
+              </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="text-lg font-semibold text-gray-900 truncate">{title}</div>
-              {property.status && property.status !== "active" ? <span className="ll_pill">{property.status}</span> : null}
+              <div className="ll_muted truncate">
+                {property.street}, {property.city}, {property.state} {property.zip}
+              </div>
             </div>
+          </div>
 
-            <div className="ll_muted mt-1">
-              {property.street}, {property.city}, {property.state} {property.zip}
-            </div>
+          <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+            <LinkButton href="/properties" variant="outline" size="md" leftIcon={<ArrowLeft size={18} />}>
+              Back
+            </LinkButton>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link className="ll_btn ll_btnLink" href={`/properties/${property.id}/edit`}>
-                Edit
-              </Link>
+            <LinkButton
+              href={`/properties/${property.id}/edit`}
+              variant="outline"
+              size="md"
+              leftIcon={<Pencil size={18} />}
+            >
+              Edit
+            </LinkButton>
 
-              <Link className="ll_btn ll_btnWarning" href={`/properties/${property.id}/leases/new`}>
-                New lease
-              </Link>
-            </div>
+            <LinkButton
+              href={`/properties/${property.id}/leases/new`}
+              variant="warning"
+              size="md"
+              leftIcon={<Plus size={18} />}
+            >
+              New lease
+            </LinkButton>
           </div>
         </div>
       </div>
+
+
+
 
       {/* GRID */}
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">

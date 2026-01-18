@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { AmountCell } from "@/components/ui/AmountCell";
 
 type YearRowDisplay = {
   year: number;
@@ -237,14 +238,18 @@ export default function YearlySummaryClient({
                         <td>{formatDate(row.dateIso)}</td>
                         <td>{row.description}</td>
                         <td>{row.categoryName}</td>
-                        <td className="text-right">{formatMoney(row.amount)}</td>
+                        <td className="text-right">
+                          <AmountCell amount={row.amount} />
+                        </td>
                       </tr>
                     ))}
                     <tr className="border-t border-gray-200">
                       <td className="font-semibold" colSpan={3}>
                         Total
                       </td>
-                      <td className="text-right font-semibold">{formatMoney(drilldown.total)}</td>
+                      <td className="text-right font-semibold">
+                        <AmountCell amount={drilldown.total} />
+                      </td>
                     </tr>
                   </>
                 )}
