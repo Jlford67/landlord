@@ -122,7 +122,7 @@ function ReportRow({ item, hasDivider }: { item: ReportItem; hasDivider: boolean
         <div className="font-medium text-sm sm:text-base">{item.title}</div>
         <p className="ll_muted text-sm leading-5">{item.description}</p>
       </div>
-      <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 whitespace-nowrap">
+      <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 whitespace-nowrap dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
         {item.href ? item.badgeText : "Coming soon"}
       </span>
     </div>
@@ -130,9 +130,9 @@ function ReportRow({ item, hasDivider }: { item: ReportItem; hasDivider: boolean
 
   const baseClasses = [
     "p-4",
-    hasDivider ? "border-t border-slate-100" : "",
+    hasDivider ? "border-t border-slate-100 dark:border-slate-800" : "",
     item.href
-      ? "hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 rounded-md transition-colors"
+      ? "hover:bg-gray-50 dark:hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 rounded-md transition-colors"
       : "opacity-60 cursor-not-allowed",
   ]
     .filter(Boolean)
@@ -172,7 +172,9 @@ export default async function ReportsIndexPage() {
             .filter((section) => section.items.length > 0)
             .map((section) => (
               <div key={section.title} className="ll_card ll_stack" style={{ gap: 4 }}>
-                <h2 className="text-sm font-semibold text-slate-900">{section.title}</h2>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {section.title}
+              </h2>
                 <div className="mt-1">
                   {section.items.map((item, idx) => (
                     <ReportRow key={item.title} item={item} hasDivider={idx > 0} />

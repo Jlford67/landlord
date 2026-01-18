@@ -360,7 +360,7 @@ export default async function PropertyLedgerPage({
               </>
             )}
 
-            <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1">
+            <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
               <Link
                 className={`ll_btnSecondary ${annualView ? "" : "ll_btn_primary"}`}
                 href={`/properties/${propertyId}/ledger?view=monthly&month=${month}`}

@@ -107,10 +107,10 @@ export default async function RecurringPage({
             <Link
               key={p.id}
               href={`/properties/${p.id}/ledger`}
-              className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md"
+              className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
             >
               {/* Thumbnail */}
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/property-photo/${p.id}`}
@@ -121,10 +121,10 @@ export default async function RecurringPage({
 
               {/* Content */}
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-slate-900">
+                <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {propertyLabel(p)}
                 </div>
-                <div className="mt-1 truncate text-xs text-slate-600">
+                <div className="mt-1 truncate text-xs text-slate-600 dark:text-slate-400">
                   {p.street}, {p.city}, {p.state} {p.zip}
                 </div>
               </div>
@@ -132,7 +132,7 @@ export default async function RecurringPage({
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
           No properties found.
         </div>
       )}

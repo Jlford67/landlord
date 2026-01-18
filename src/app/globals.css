@@ -20,6 +20,12 @@
   --sidebar-bg: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 45%, #e5e7eb 100%);
   --shell-main-bg: #f1f3f6;
 
+  /* Table surfaces */
+  --table-head-bg: #fafafa;
+  --table-row-alt: rgba(0,0,0,0.03);
+  --table-row-hover: rgba(0,0,0,0.05);
+  --list-head-bg: #fafafa;
+
   /* Radius */
   --r-md: 12px;
   --r-lg: 16px;
@@ -56,6 +62,11 @@
 
   --sidebar-bg: #0b1220;
   --shell-main-bg: #0b1220;
+
+  --table-head-bg: #0f172a;
+  --table-row-alt: #111827;
+  --table-row-hover: #1f2937;
+  --list-head-bg: #0f172a;
 }
 
 *{ box-sizing: border-box; }
@@ -312,7 +323,7 @@ a:hover{ text-decoration: underline; }
    ========================= */
 
 .ll_card{
-  background: #fff;
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
@@ -662,7 +673,7 @@ a.ll_btn.ll_btnDanger:visited{
 }
 
 .ll_table thead th{
-  background: #fafafa;
+  background: var(--table-head-bg);
   color: var(--muted);
   border-bottom: 1px solid var(--border);
   padding: 10px 12px;
@@ -684,11 +695,11 @@ a.ll_btn.ll_btnDanger:visited{
 }
 
 .ll_table tbody tr:nth-child(even) td{
-  background: rgba(0,0,0,0.03);
+  background: var(--table-row-alt);
 }
 
 .ll_table tbody tr:hover td{
-  background: rgba(0,0,0,0.05);
+  background: var(--table-row-hover);
 }
 
 .ll_tRight{ text-align: right; white-space: nowrap; }
@@ -739,7 +750,7 @@ a.ll_btn.ll_btnDanger:visited{
 }
 
 .ll_listHeader{
-  background: #fafafa;
+  background: var(--list-head-bg);
   border-bottom: 1px solid var(--border);
   font-weight: 800;
   color: var(--muted);
@@ -750,11 +761,11 @@ a.ll_btn.ll_btnDanger:visited{
 }
 
 .ll_listRow:nth-child(even){
-  background: rgba(0,0,0,0.03);
+  background: var(--table-row-alt);
 }
 
 .ll_listRow:hover{
-  background: rgba(0,0,0,0.05);
+  background: var(--table-row-hover);
 }
 
 .ll_rowActions{
@@ -1233,25 +1244,25 @@ a.ll_btn.ll_btnDanger:visited{
 @layer components {
   .ll_stack { @apply flex flex-col gap-4; }
 
-  .ll_card { @apply rounded-2xl bg-white border border-gray-200 shadow-sm p-4; }
+  .ll_card { @apply rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm p-4; }
   .ll_card_title { @apply text-base font-semibold; }
-  .ll_muted { @apply text-sm text-gray-500; }
+  .ll_muted { @apply text-sm text-gray-500 dark:text-slate-400; }
 
   .ll_row { @apply flex; }
   .ll_gap_sm { @apply gap-2; }
   .ll_gap_md { @apply gap-4; }
   .ll_spacer { @apply flex-1; }
 
-  .ll_label { @apply text-sm font-medium text-gray-600; }
+  .ll_label { @apply text-sm font-medium text-gray-600 dark:text-slate-300; }
 
   .ll_input {
-    @apply h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none
-    focus:ring-2 focus:ring-blue-200;
+    @apply h-10 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100 outline-none
+    focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/40;
   }
 
   .ll_btn {
-    @apply h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium
-    text-blue-600 no-underline hover:bg-gray-50 hover:text-blue-700;
+    @apply h-10 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm font-medium
+    text-blue-600 dark:text-blue-400 no-underline hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-blue-700;
   }
   
   /* Link-style button (table actions): always blue, never changes on :visited */
@@ -1276,49 +1287,49 @@ a.ll_btn.ll_btnDanger:visited{
 
   /* Header looks like a header, and stays visible while scrolling inside ll_table_wrap */
   .ll_table thead th {
-    @apply text-left font-semibold text-gray-600 border-b border-gray-200 px-3 py-2 bg-gray-50;
+    @apply text-left font-semibold text-gray-600 dark:text-slate-300 border-b border-gray-200 dark:border-slate-700 px-3 py-2 bg-gray-50 dark:bg-slate-900;
   }
   .ll_table_wrap .ll_table thead th {
     @apply sticky top-0 z-10;
   }
 
-  .ll_table td { @apply border-b border-gray-100 px-3 py-2; }
-  .ll_table_zebra tbody tr:nth-child(even) { @apply bg-gray-50; }
+  .ll_table td { @apply border-b border-gray-100 dark:border-slate-800 px-3 py-2; }
+  .ll_table_zebra tbody tr:nth-child(even) { @apply bg-gray-50 dark:bg-slate-900; }
 
   .ll_kpi { @apply text-right; }
   .ll_kpi_label { @apply text-sm text-gray-600; }
   .ll_kpi_value { @apply text-sm font-semibold; }
 
   .ll_table_wrap {
-    @apply overflow-x-auto rounded-xl border border-gray-200 bg-white;
+    @apply overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900;
   }
 
   .ll_table_total {
-    @apply bg-gray-50 font-semibold;
+    @apply bg-gray-50 dark:bg-slate-800 font-semibold;
   }
 
   .ll_pos { @apply text-green-600; }
   .ll_neg { @apply text-red-600; }
-  .ll_link { @apply text-gray-900 hover:underline; }
+  .ll_link { @apply text-gray-900 dark:text-slate-100 hover:underline; }
 
   /* ---------- Property header (shared) ---------- */
 
   .ll_header_link { @apply no-underline; }
 
   .ll_property_header { @apply flex items-center gap-4; }
-  .ll_property_photo { @apply h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gray-100; }
+  .ll_property_photo { @apply h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gray-100 dark:bg-slate-800; }
   .ll_property_photo_img { @apply h-full w-full object-cover; }
   .ll_property_photo_fallback { @apply h-full w-full; }
 
   .ll_property_meta { @apply min-w-0; }
   .ll_property_title_row { @apply flex items-center gap-2; }
-  .ll_property_title { @apply text-lg font-semibold text-gray-900 truncate; }
-  .ll_property_subtitle { @apply text-sm text-gray-500 truncate; }
+  .ll_property_title { @apply text-lg font-semibold text-gray-900 dark:text-slate-100 truncate; }
+  .ll_property_subtitle { @apply text-sm text-gray-500 dark:text-slate-400 truncate; }
 
-  .ll_pill { @apply rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700; }
+  .ll_pill { @apply rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-gray-700 dark:text-slate-200; }
 
   .ll_kpi_row { @apply mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3; }
-  .ll_kpi_card { @apply rounded-2xl bg-gray-50 px-3 py-2; }
+  .ll_kpi_card { @apply rounded-2xl bg-gray-50 dark:bg-slate-900 px-3 py-2; }
   .ll_kpi_card .ll_kpi { @apply text-left; }
 
   /* ---------- Property picker (recurring landing) ---------- */
@@ -1328,37 +1339,29 @@ a.ll_btn.ll_btnDanger:visited{
   }
 
   .ll_pickCard {
-    @apply flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3
-           hover:bg-gray-50 hover:border-gray-300 transition;
+    @apply flex items-center gap-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3
+           hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600 transition;
   }
 
   .ll_pickThumb {
-    @apply relative h-12 w-12 overflow-hidden rounded-lg border border-gray-200 bg-gray-100 flex-none;
+    @apply relative h-12 w-12 overflow-hidden rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 flex-none;
   }
 
   .ll_pickThumbImg {
     @apply object-cover;
   }
 
-  .ll_pickThumbFallback {
-    @apply h-full w-full bg-gray-100;
-  }
+  .ll_pickThumbFallback { @apply h-full w-full bg-gray-100 dark:bg-slate-800; }
 
   .ll_pickMain {
     @apply min-w-0 flex-1;
   }
 
-  .ll_pickTitle {
-    @apply font-medium text-gray-900 truncate;
-  }
+  .ll_pickTitle { @apply font-medium text-gray-900 dark:text-slate-100 truncate; }
 
-  .ll_pickSub {
-    @apply text-sm text-gray-500 truncate;
-  }
+  .ll_pickSub { @apply text-sm text-gray-500 dark:text-slate-400 truncate; }
 
-  .ll_pickChevron {
-    @apply text-2xl leading-none text-gray-300 flex-none;
-  }
+  .ll_pickChevron { @apply text-2xl leading-none text-gray-300 dark:text-slate-600 flex-none; }
 
   /* ---------- Properties list rows ---------- */
 

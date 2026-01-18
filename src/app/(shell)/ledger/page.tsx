@@ -110,10 +110,10 @@ export default async function LedgerPickerPage({
             <Link
               key={p.id}
               href={`/ledger/${p.id}`}
-              className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md"
+              className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
             >
               {/* Thumbnail */}
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/property-photo/${p.id}`}
@@ -125,18 +125,18 @@ export default async function LedgerPickerPage({
               {/* Content */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <div className="truncate text-sm font-semibold text-slate-900">
+                  <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {p.nickname?.trim() || "(no nickname)"}
                   </div>
 
                   {p.status && p.status !== "active" ? (
-                    <span className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    <span className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                       {p.status}
                     </span>
                   ) : null}
                 </div>
 
-                <div className="mt-1 truncate text-xs text-slate-600">
+                <div className="mt-1 truncate text-xs text-slate-600 dark:text-slate-400">
                   {p.street}, {p.city}, {p.state} {p.zip}
                 </div>
               </div>
@@ -144,7 +144,7 @@ export default async function LedgerPickerPage({
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
           No properties found.
         </div>
       )}
