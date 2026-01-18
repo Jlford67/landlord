@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import IconButton from "@/components/ui/IconButton";
 import { BookOpen, Building2, Search, Trash2 } from "lucide-react";
+import LinkButton from "@/components/ui/LinkButton";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -91,9 +92,14 @@ export default async function PropertiesPage({
           </PageTitleIcon>
           <div className="text-lg font-semibold">Properties</div>
           <div className="ll_spacer" />
-          <Link className="ll_btn ll_btnWarning" href="/properties/new">
+          <LinkButton
+            href="/properties/new"
+            variant="warning"
+            size="md"
+          >
             Add property
-          </Link>
+          </LinkButton>
+
         </div>
 
         {notice ? (

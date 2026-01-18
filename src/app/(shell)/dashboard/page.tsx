@@ -13,6 +13,8 @@ import LeaseLinkMount from "./LeaseLinkMount";
 import YearlySummaryClient from "./YearlySummaryClient";
 import NotificationsToastClient from "@/components/notifications/NotificationsToastClient";
 import { generateNotificationsIfNeeded, getTodayInAppNotifications } from "../settings/actions";
+import LinkButton from "@/components/ui/LinkButton";
+
 
 /* ---------------- date helpers ---------------- */
 
@@ -483,12 +485,13 @@ export default async function DashboardPage({
         <div className="ll_dash_topRight">
           <PropertyPicker properties={pickerOptions} selectedId={selectedPropertyId} />
 
-          <Link
+          <LinkButton
             href={`/properties/${selectedPropertyId}`}
-            className="ll_btnPrimary"
+            variant="warning"
+            size="md"
           >
             Property details
-          </Link>
+          </LinkButton>
 
         </div>
       </div>

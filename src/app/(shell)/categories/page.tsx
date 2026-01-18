@@ -4,6 +4,9 @@ import { requireUser } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import { Tags, Trash2 } from "lucide-react";
 import { AddCategoryForm, CategoryInlineEditor } from "./CategoryClient";
+import { ArrowLeft } from "lucide-react";
+import LinkButton from "@/components/ui/LinkButton";
+import SafeButton from "@/components/ui/SafeButton";
 
 type CatType = "income" | "expense" | "transfer";
 
@@ -25,7 +28,7 @@ export default async function CategoriesPage(props: {
 }) {
   await requireUser();
   const sp = (await props.searchParams) ?? {};
-  const msg = sp.msg ?? "";
+  const msg = typeof sp.msg === "string" ? sp.msg : "";
 
   const categories = await prisma.category.findMany({
     orderBy: [{ type: "asc" }, { name: "asc" }],
@@ -76,27 +79,35 @@ export default async function CategoriesPage(props: {
   return (
     <div className="ll_page">
       <div className="ll_panel">
-        <div className="ll_rowBetween">
-          <div className="flex items-center gap-3">
-            <PageTitleIcon className="bg-amber-100 text-amber-700">
-              <Tags size={18} />
-            </PageTitleIcon>
-            <div>
-              <h1>Categories</h1>
-              <div className="ll_muted">
-                Used for your ledger. Enabled:{" "}
-                <span className="ll_code">{enabledCount}</span> • Total:{" "}
-                <span className="ll_code">{categories.length}</span>
+        <div className="ll_card" style={{ marginBottom: 14 }}>
+          <div className="ll_topbar" style={{ marginBottom: 0 }}>
+            <div className="ll_topbarLeft flex items-center gap-3">
+              <PageTitleIcon className="bg-amber-100 text-amber-700">
+                <Tags size={18} />
+              </PageTitleIcon>
+              <div>
+                <h1>Categories</h1>
+                <div className="ll_muted">
+                  Used for your ledger. Enabled:{" "}
+                  <span className="ll_code">{enabledCount}</span> • Total:{" "}
+                  <span className="ll_code">{categories.length}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="ll_topbarRight">
-            <Link className="ll_btn" href="/properties">
-              Back to properties
-            </Link>
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+              <LinkButton
+                href="/properties"
+                variant="outline"
+                size="md"
+                leftIcon={<ArrowLeft size={18} />}
+              >
+                Back
+              </LinkButton>
+            </div>
           </div>
         </div>
+
 
         {msg === "created" && <div className="ll_notice">Category created.</div>}
         {msg === "exists" && <div className="ll_notice">That category already exists.</div>}
@@ -104,6 +115,12 @@ export default async function CategoriesPage(props: {
         {msg === "deactivated" && (
           <div className="ll_notice">Category was disabled.</div>
         )}
+        {msg === "disable_children_first" && (
+          <div className="ll_notice">
+            Disable all child categories first.
+          </div>
+        )}
+
         {msg === "notfound" && <div className="ll_notice">Category not found.</div>}
         {msg === "updated" && <div className="ll_notice">Category updated.</div>}
 
@@ -155,7 +172,9 @@ export default async function CategoriesPage(props: {
         .ll_badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: #fafafa; color: var(--muted); font-weight: 800; }
         .ll_bullet { opacity: 0.55; font-size: 14px; width: 18px; text-align: center; }
 
-        .ll_dim { opacity: 0.55; }
+        <div className={node.active ? "" : "ll_dim"}>
+          ...all three columns...
+        </div>
 
         .ll_actionsCell { display:flex; justify-content:flex-end; }
         .ll_actionStack { display:inline-flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
@@ -165,6 +184,11 @@ export default async function CategoriesPage(props: {
         .ll_inlineEditorFields .ll_input { min-width: 160px; }
         .ll_inlineEditorActions { display:flex; gap:8px; align-items:center; }
         .ll_error { color: var(--danger, #dc2626); font-size: 12px; }
+
+        .ll_actionStack .ll_btnLink,
+        .ll_inlineEditorActions .ll_btnLink{
+          color: var(--secondary);
+        }
 
         .ll_btnDisabled {
           display: inline-flex;
@@ -246,7 +270,9 @@ function Section({
         </div>
 
         {/* Column 2: Status */}
-        <div className="ll_muted">{node.active ? "Enabled" : "Disabled"}</div>
+        <div className="ll_muted">
+          {node.active ? "Enabled" : "Disabled"}
+        </div>
 
         {/* Column 3: Actions */}
         <div className="ll_actionsCell">
@@ -266,14 +292,11 @@ function Section({
             {/* Enable/Disable always available */}
             <form method="post" action={`/api/categories/${node.id}/toggle`} style={{ margin: 0 }}>
               <input type="hidden" name="returnTo" value="/categories" />
-              <button
-                type="submit"
-                className={`ll_btn ${node.active ? "ll_btnGhost" : "ll_btnSecondary"}`}
-                suppressHydrationWarning
-              >
+              <SafeButton type="submit" className="ll_btnLink">
                 {node.active ? "Disable" : "Enable"}
-              </button>
+              </SafeButton>
             </form>
+
 
             {/* Delete only when safe */}
             {deletable ? (

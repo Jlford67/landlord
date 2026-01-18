@@ -95,10 +95,11 @@ export function AddCategoryForm({ categories }: { categories: CategoryOption[] }
       </div>
 
       <div className="ll_actions">
-        <SafeButton type="submit" className="ll_btn ll_btnWarning">
+        <SafeButton type="submit" variant="warning" size="md">
           Add category
         </SafeButton>
       </div>
+
     </form>
   );
 }

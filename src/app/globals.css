@@ -258,19 +258,21 @@ a:hover{ text-decoration: underline; }
    Buttons (single source of truth)
    ========================= */
 
-/* Base button styling (applies to buttons AND links with these classes) */
+/* Base button styling (buttons + anchor-buttons) */
 .ll_btn,
 .ll_btnPrimary,
 .ll_btnSecondary,
 .ll_btnGhost,
 .ll_btnDanger,
 .ll_btnWarning,
+.ll_btnLink,
 a.ll_btn,
 a.ll_btnPrimary,
 a.ll_btnSecondary,
 a.ll_btnGhost,
 a.ll_btnDanger,
-a.ll_btnWarning{
+a.ll_btnWarning,
+a.ll_btnLink{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -294,220 +296,159 @@ a.ll_btnWarning{
     box-shadow 120ms ease, color 120ms ease, filter 120ms ease;
 }
 
+/* Press */
 .ll_btn:active,
 .ll_btnPrimary:active,
 .ll_btnSecondary:active,
 .ll_btnGhost:active,
 .ll_btnDanger:active,
-.ll_btnWarning:active{
+.ll_btnWarning:active,
+.ll_btnLink:active{
   transform: translateY(1px);
   box-shadow: 0 0 0 rgba(17, 24, 39, 0);
 }
 
-/* IMPORTANT: Link-buttons should behave like buttons (including visited state) */
+/* Prevent anchor weirdness */
 a.ll_btn,
 a.ll_btnPrimary,
 a.ll_btnSecondary,
 a.ll_btnGhost,
 a.ll_btnDanger,
-a.ll_btnWarning{
-  text-decoration: none;
-}
-
-a.ll_btn:hover,
-a.ll_btnPrimary:hover,
-a.ll_btnSecondary:hover,
-a.ll_btnGhost:hover,
-a.ll_btnDanger:hover,
-a.ll_btnWarning:hover{
-  text-decoration: none;
-}
-
-/* Do NOT allow visited links to change button colors */
-a.ll_btn:visited{ color: inherit; }
-
-a.ll_btnPrimary,
-a.ll_btnPrimary:visited{
-  color: var(--primary-ink);
-}
-
-a.ll_btnSecondary,
-a.ll_btnSecondary:visited{
-  color: var(--secondary-ink);
-}
-
-a.ll_btnGhost,
-a.ll_btnGhost:visited{
-  color: var(--text);
-}
-
-a.ll_btnDanger,
-a.ll_btnDanger:visited{
-  color: #ffd6d6;
-}
-
 a.ll_btnWarning,
-a.ll_btnWarning:visited{
-  color: #000;
-  font-weight: 600;
+a.ll_btnLink{
+  text-decoration: none;
 }
 
+a.ll_btn:visited,
+a.ll_btnPrimary:visited,
+a.ll_btnSecondary:visited,
+a.ll_btnGhost:visited,
+a.ll_btnDanger:visited,
+a.ll_btnWarning:visited,
+a.ll_btnLink:visited{
+  color: inherit;
+}
 
-/* Yellow primary */
-.ll_btnPrimary,
-.ll_btn.ll_btnPrimary{
+/* =========================
+   Variants
+   ========================= */
+
+/* Primary (yellow) */
+.ll_btnPrimary{
   background: var(--primary);
   color: var(--primary-ink);
   border-color: rgba(0, 0, 0, 0.08);
 }
-a.ll_btnPrimary,
-a.ll_btn.ll_btnPrimary{
-  color: var(--primary-ink);
-}
-a.ll_btnPrimary:visited,
-a.ll_btn.ll_btnPrimary:visited{
-  color: var(--primary-ink);
-}
+.ll_btnPrimary:hover{ filter: brightness(0.98); }
 
-.ll_btnPrimary:hover,
-.ll_btn.ll_btnPrimary:hover{
-  filter: brightness(0.98);
-}
-
-/* Blue secondary (polished) */
-.ll_btnSecondary,
-.ll_btn.ll_btnSecondary{
+/* Secondary (blue filled) */
+.ll_btnSecondary{
   background: var(--secondary);
   color: var(--secondary-ink);
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow: 0 1px 2px rgba(17, 24, 39, 0.10), 0 6px 18px rgba(37, 99, 235, 0.18);
 }
-a.ll_btnSecondary,
-a.ll_btn.ll_btnSecondary{
-  color: var(--secondary-ink);
-}
-a.ll_btnSecondary:visited,
-a.ll_btn.ll_btnSecondary:visited{
-  color: var(--secondary-ink);
-}
-
-.ll_btnSecondary:hover,
-.ll_btn.ll_btnSecondary:hover{
+.ll_btnSecondary:hover{
   filter: brightness(1.03);
   box-shadow: 0 2px 4px rgba(17, 24, 39, 0.12), 0 10px 24px rgba(37, 99, 235, 0.22);
 }
 
 /* Ghost */
-.ll_btnGhost,
-.ll_btn.ll_btnGhost{
+.ll_btnGhost{
   background: #fff;
   color: var(--text);
   border-color: var(--border);
   box-shadow: none;
 }
-a.ll_btnGhost,
-a.ll_btn.ll_btnGhost{
-  color: var(--text);
+.ll_btnGhost:hover{ background: #f9fafb; }
+
+/* Warning (Add / Create) */
+.ll_btnWarning{
+  background: var(--primary);
+  color: #000;
+  font-weight: 600;
 }
-a.ll_btnGhost:visited,
-a.ll_btn.ll_btnGhost:visited{
-  color: var(--text);
+.ll_btnWarning:hover{
+  color: #000;
 }
 
-.ll_btnGhost:hover,
-.ll_btn.ll_btnGhost:hover{
-  background: #f9fafb;
-}
-
-/* Danger-filled: blue fill + red outline + red text (still classy) */
-.ll_btnDanger,
-.ll_btn.ll_btnDanger{
+/* Danger */
+.ll_btnDanger{
   background: var(--secondary);
   color: #ffd6d6;
   border-color: rgba(180, 35, 24, 0.65);
-  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.10);
 }
-a.ll_btnDanger,
-a.ll_btn.ll_btnDanger{
-  color: #ffd6d6;
-}
-a.ll_btnDanger:visited,
-a.ll_btn.ll_btnDanger:visited{
-  color: #ffd6d6;
-}
-
-.ll_btnDanger:hover,
-.ll_btn.ll_btnDanger:hover{
+.ll_btnDanger:hover{
   filter: brightness(1.02);
   border-color: rgba(180, 35, 24, 0.85);
 }
 
-.ll_btnDanger:active,
-.ll_btn.ll_btnDanger:active{
-  filter: brightness(0.98);
-}
+/* =========================
+   LINK ACTION (Disable / Enable)
+   ========================= */
 
-/* If you still use ll_btnDeactivate anywhere, keep it as an alias */
-.ll_btnDeactivate{
+.ll_btnLink{
   background: #fff;
-  color: var(--text);
-  border: 1px solid var(--border);
+  color: var(--secondary);
+  border-color: var(--border);
   box-shadow: none;
+  font-weight: 700;
 }
 
-/* Focus */
+.ll_btnLink:hover{
+  background: #f9fafb;
+  color: var(--secondary);
+  text-decoration: none;
+}
+
+/* =========================
+   Focus
+   ========================= */
+
 .ll_btn:focus-visible,
 .ll_btnPrimary:focus-visible,
 .ll_btnSecondary:focus-visible,
 .ll_btnGhost:focus-visible,
-.ll_btnDanger:focus-visible{
+.ll_btnDanger:focus-visible,
+.ll_btnWarning:focus-visible,
+.ll_btnLink:focus-visible{
   outline: 2px solid rgba(37, 99, 235, 0.35);
   outline-offset: 2px;
 }
 
-/* Smaller buttons inside tables/lists vs header buttons */
+/* =========================
+   Table / list sizing
+   ========================= */
+
 .ll_table .ll_btn,
 .ll_table .ll_btnPrimary,
 .ll_table .ll_btnSecondary,
 .ll_table .ll_btnGhost,
 .ll_table .ll_btnDanger,
+.ll_table .ll_btnWarning,
+.ll_table .ll_btnLink,
 .ll_list .ll_btn,
 .ll_list .ll_btnPrimary,
 .ll_list .ll_btnSecondary,
 .ll_list .ll_btnGhost,
-.ll_list .ll_btnDanger{
+.ll_list .ll_btnDanger,
+.ll_list .ll_btnWarning,
+.ll_list .ll_btnLink{
   height: 30px;
   padding: 0 10px;
   border-radius: 10px;
   font-size: 12.5px;
 }
 
-/* Compact vertical button group for action columns */
+/* Action column grouping */
 .ll_btnGroup{
   display: inline-flex;
   flex-direction: column;
   gap: 6px;
   align-items: stretch;
-  justify-content: flex-start;
 }
 
-.ll_btnGroup .ll_btn,
-.ll_btnGroup .ll_btnPrimary,
-.ll_btnGroup .ll_btnSecondary,
-.ll_btnGroup .ll_btnGhost,
-.ll_btnGroup .ll_btnDanger{
-  width: 100%;
-  min-width: 92px;
-}
 
-/* Make <summary> behave like a button */
-.ll_btnGroup details > summary.ll_btnSecondary{
-  list-style: none;
-}
-.ll_btnGroup details > summary.ll_btnSecondary::-webkit-details-marker{
-  display: none;
-}
-.ll_btnGroup details{ margin: 0; }
 
 /* =========================
    Amount + Pills

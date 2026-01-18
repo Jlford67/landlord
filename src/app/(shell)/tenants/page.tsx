@@ -4,10 +4,12 @@ import { prisma } from "@/lib/db";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
 import IconButton from "@/components/ui/IconButton";
-import LinkButton from "@/components/ui/LinkButton";
 import { Search, Users } from "lucide-react";
 import { deleteTenant } from "./actions";
 import TenantsSearchMount from "./TenantsSearchMount";
+import { ArrowLeft, Download, Plus } from "lucide-react";
+import LinkButton from "@/components/ui/LinkButton";
+import Button from "@/components/ui/Button";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -50,30 +52,37 @@ export default async function TenantsPage({
   return (
     <div className="ll_page">
       <div className="ll_panel">
-        <div className="ll_topbar">
-          <div className="flex items-center gap-3">
-            <PageTitleIcon className="bg-amber-100 text-amber-700">
-              <Users size={18} />
-            </PageTitleIcon>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>Tenants</div>
-              <div className="ll_muted">All tenants across all properties.</div>
+        {/* Page header */}
+        <div className="ll_card" style={{ marginBottom: 14 }}>
+          <div className="ll_topbar" style={{ marginBottom: 0 }}>
+            <div className="flex items-center gap-3">
+              <PageTitleIcon className="bg-amber-100 text-amber-700">
+                <Users size={18} />
+              </PageTitleIcon>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800 }}>Tenants</div>
+                <div className="ll_muted">All tenants across all properties.</div>
+              </div>
             </div>
-          </div>
 
-          <div className="ll_topbarRight">
-            <Link className="ll_btn" href="/dashboard">
-              Back
-            </Link>
-            <LinkButton href={exportHref} variant="primary">
-              Export Excel
-            </LinkButton>
-            <Link className="ll_btn ll_btnWarning" href="/tenants/new">
-              Add tenant
-            </Link>
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2">
+              <LinkButton href="/dashboard" variant="outline" size="md" leftIcon={<ArrowLeft size={18} />}>
+                Back
+              </LinkButton>
+
+              <form action={exportHref} method="get">
+                <Button type="submit" variant="primary" size="md" leftIcon={<Download size={18} />}>
+                  Export Excel
+                </Button>
+              </form>
+
+              <LinkButton href="/tenants/new" variant="warning" size="md" leftIcon={<Plus size={18} />}>
+                Add tenant
+              </LinkButton>
+            </div>
+
           </div>
         </div>
-
         {msg === "deleted" && <div className="ll_notice">Tenant deleted.</div>}
         {msg === "blocked" && <div className="ll_notice">Tenant is linked to leases and cannot be deleted.</div>}
 

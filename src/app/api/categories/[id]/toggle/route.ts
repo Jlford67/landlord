@@ -22,12 +22,24 @@ export async function POST(
     return NextResponse.redirect(new URL(`${returnTo}?msg=notfound`, req.url));
   }
 
+  // If trying to disable, block when there are active children
+  if (cat.active) {
+    const activeChildCount = await prisma.category.count({
+      where: { parentId: id, active: true },
+    });
+
+    if (activeChildCount > 0) {
+      return NextResponse.redirect(
+        new URL(`${returnTo}?msg=disable_children_first`, req.url)
+      );
+    }
+  }
+
   await prisma.category.update({
     where: { id },
     data: { active: !cat.active },
   });
 
-  // optional: reuse existing msg param so you see a toast/notice
   const msg = !cat.active ? "activated" : "deactivated";
   return NextResponse.redirect(new URL(`${returnTo}?msg=${msg}`, req.url));
 }
