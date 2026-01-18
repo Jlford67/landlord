@@ -1244,7 +1244,7 @@ a.ll_btn.ll_btnDanger:visited{
 @layer components {
   .ll_stack { @apply flex flex-col gap-4; }
 
-  .ll_card { @apply rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm p-4; }
+  .ll_card { @apply rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm p-4 dark:text-slate-100; }
   .ll_card_title { @apply text-base font-semibold; }
   .ll_muted { @apply text-sm text-gray-500 dark:text-slate-400; }
 
@@ -1256,8 +1256,8 @@ a.ll_btn.ll_btnDanger:visited{
   .ll_label { @apply text-sm font-medium text-gray-600 dark:text-slate-300; }
 
   .ll_input {
-    @apply h-10 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100 outline-none
-    focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/40;
+    @apply h-10 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-400
+    focus:ring-2 focus:ring-blue-200 dark:focus:ring-slate-500/60;
   }
 
   .ll_btn {
@@ -1287,7 +1287,7 @@ a.ll_btn.ll_btnDanger:visited{
 
   /* Header looks like a header, and stays visible while scrolling inside ll_table_wrap */
   .ll_table thead th {
-    @apply text-left font-semibold text-gray-600 dark:text-slate-300 border-b border-gray-200 dark:border-slate-700 px-3 py-2 bg-gray-50 dark:bg-slate-900;
+    @apply text-left font-semibold text-gray-600 dark:text-slate-300 border-b border-gray-200 dark:border-slate-700 px-3 py-2 bg-gray-50 dark:bg-slate-800;
   }
   .ll_table_wrap .ll_table thead th {
     @apply sticky top-0 z-10;
@@ -1297,8 +1297,8 @@ a.ll_btn.ll_btnDanger:visited{
   .ll_table_zebra tbody tr:nth-child(even) { @apply bg-gray-50 dark:bg-slate-900; }
 
   .ll_kpi { @apply text-right; }
-  .ll_kpi_label { @apply text-sm text-gray-600; }
-  .ll_kpi_value { @apply text-sm font-semibold; }
+  .ll_kpi_label { @apply text-sm text-gray-600 dark:text-slate-400; }
+  .ll_kpi_value { @apply text-sm font-semibold dark:text-slate-100; }
 
   .ll_table_wrap {
     @apply overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900;
@@ -1365,15 +1365,15 @@ a.ll_btn.ll_btnDanger:visited{
 
   /* ---------- Properties list rows ---------- */
 
-  .ll_list { @apply divide-y divide-gray-100; }
+  .ll_list { @apply divide-y divide-gray-100 dark:divide-slate-800; }
 
   .ll_list_row {
-    @apply flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-gray-50;
+    @apply flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800;
   }
 
   .ll_list_main { @apply min-w-0 flex-1; }
-  .ll_list_title { @apply font-medium text-gray-900; }
-  .ll_list_sub { @apply text-sm text-gray-500 truncate; }
+  .ll_list_title { @apply font-medium text-gray-900 dark:text-slate-100; }
+  .ll_list_sub { @apply text-sm text-gray-500 dark:text-slate-400 truncate; }
 
   .ll_actions { @apply flex items-center gap-2; }
   .ll_field { @apply flex flex-col gap-1; }
