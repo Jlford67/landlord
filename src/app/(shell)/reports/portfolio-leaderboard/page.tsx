@@ -514,7 +514,9 @@ export default async function PortfolioLeaderboardPage({
             <tbody>
               {report.rows.map((row) => (
                 <tr key={`${row.propertyId}-annual`}>
-                  <td className="font-medium text-slate-900">{row.propertyLabel}</td>
+                  <td className="font-medium text-slate-900 dark:text-slate-100">
+                    {row.propertyLabel}
+                  </td>
                   <td className={amountClass(row.transactionalNetCents)}>
                     {moneyFromCents(row.transactionalNetCents)}
                   </td>
@@ -557,7 +559,9 @@ export default async function PortfolioLeaderboardPage({
                 <tr key={row.propertyId}>
                   <td>{row.rankValue == null ? "—" : index + 1}</td>
                   <td>
-                    <div className="font-medium text-slate-900">{row.propertyLabel}</div>
+                    <div className="font-medium text-slate-900 dark:text-slate-100">
+                      {row.propertyLabel}
+                    </div>
                   </td>
                   <td className="capitalize">{row.status}</td>
                   <td className={amountClass(row.netCashFlowCents)}>

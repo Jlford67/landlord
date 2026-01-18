@@ -319,15 +319,25 @@ export default async function ReturnOnEquityPage({
                           </Link>
                         </td>
                         <td className="text-right">
-                          <span className={valueDisplay.className}>{valueDisplay.text}</span>
+                          <span
+                            className={`${valueDisplay.className} text-slate-700 dark:text-slate-200`}
+                          >
+                            {valueDisplay.text}
+                          </span>
                         </td>
                         <td className="text-right">
-                          <span className={loanBalanceDisplay.className}>
+                          <span
+                            className={`${loanBalanceDisplay.className} text-slate-700 dark:text-slate-200`}
+                          >
                             {loanBalanceDisplay.text}
                           </span>
                         </td>
                         <td className="text-right">
-                          <span className={equityDisplay.className}>{equityDisplay.text}</span>
+                          <span
+                            className={`${equityDisplay.className} text-slate-700 dark:text-slate-200`}
+                          >
+                            {equityDisplay.text}
+                          </span>
                         </td>
                         <td className="text-right">
                           <span className={amountClass(row.netCashFlow)}>
