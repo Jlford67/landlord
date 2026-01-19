@@ -27,6 +27,14 @@ function asActionError(error: unknown, fallback: string) {
   return fallback;
 }
 
+function signedAmountForType(type: "income" | "expense", amountRaw: number) {
+  if (type === "expense") {
+    if (amountRaw < 0) return Math.abs(amountRaw);
+    return -Math.abs(amountRaw);
+  }
+  return amountRaw;
+}
+
 export async function saveAnnualLine(formData: FormData): Promise<AnnualLineResult> {
   await requireUser();
 
@@ -35,7 +43,7 @@ export async function saveAnnualLine(formData: FormData): Promise<AnnualLineResu
   const categoryId = String(formData.get("categoryId") ?? "");
   const propertyOwnershipIdRaw = String(formData.get("propertyOwnershipId") ?? "").trim();
   const propertyOwnershipId = propertyOwnershipIdRaw ? propertyOwnershipIdRaw : null;
-  const amountAbs = Math.abs(toFloat(formData.get("amountAbs")));
+  const amountRaw = toFloat(formData.get("amountAbs"));
   const note = (formData.get("note") ?? "").toString().trim() || null;
 
   if (!propertyId || !categoryId || !year) {
@@ -59,20 +67,20 @@ export async function saveAnnualLine(formData: FormData): Promise<AnnualLineResu
     if (!ownership) return { error: "Ownership not found." };
   }
 
-  const signedAmount = cat.type === "expense" ? -amountAbs : amountAbs;
+  const existing = await prisma.annualCategoryAmount.findFirst({
+    where: { propertyId, year, categoryId, propertyOwnershipId },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return { error: "That category and ownership already has a line for this year." };
+  }
+
+  const signedAmount = signedAmountForType(cat.type, amountRaw);
 
   try {
-    await prisma.annualCategoryAmount.upsert({
-      where: {
-        propertyId_year_categoryId_propertyOwnershipId: {
-          propertyId,
-          year,
-          categoryId,
-          propertyOwnershipId,
-        },
-      },
-      update: { amount: signedAmount, note, propertyOwnershipId },
-      create: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
+    await prisma.annualCategoryAmount.create({
+      data: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -94,7 +102,7 @@ export async function upsertAnnualEntry(formData: FormData) {
   const categoryId = String(formData.get("categoryId") ?? "");
   const propertyOwnershipIdRaw = String(formData.get("propertyOwnershipId") ?? "").trim();
   const propertyOwnershipId = propertyOwnershipIdRaw ? propertyOwnershipIdRaw : null;
-  const amountAbs = Math.abs(toFloat(formData.get("amountAbs")));
+  const amountRaw = toFloat(formData.get("amountAbs"));
   const note = (formData.get("note") ?? "").toString().trim() || null;
 
   if (!propertyId || !categoryId || !year) throw new Error("Missing required fields");
@@ -114,31 +122,38 @@ export async function upsertAnnualEntry(formData: FormData) {
     if (!ownership) throw new Error("Ownership not found");
   }
 
-  const signedAmount = cat.type === "expense" ? -amountAbs : amountAbs;
+  const signedAmount = signedAmountForType(cat.type, amountRaw);
 
-  const [existing] = await Promise.all([
+  const [existing, matching] = await Promise.all([
     entryId
       ? prisma.annualCategoryAmount.findFirst({
           where: { id: entryId, propertyId },
           select: { id: true },
         })
       : Promise.resolve(null),
+    prisma.annualCategoryAmount.findFirst({
+      where: { propertyId, year, categoryId, propertyOwnershipId },
+      select: { id: true },
+    }),
   ]);
 
-  const upserted = await prisma.annualCategoryAmount.upsert({
-    where: {
-      propertyId_year_categoryId_propertyOwnershipId: {
-        propertyId,
-        year,
-        categoryId,
-        propertyOwnershipId,
-      },
-    },
-    update: { amount: signedAmount, note, propertyOwnershipId },
-    create: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
-  });
+  if (matching && matching.id !== entryId) {
+    await prisma.annualCategoryAmount.update({
+      where: { id: matching.id },
+      data: { amount: signedAmount, note, propertyOwnershipId },
+    });
+  } else if (entryId) {
+    await prisma.annualCategoryAmount.update({
+      where: { id: entryId },
+      data: { categoryId, amount: signedAmount, note, propertyOwnershipId },
+    });
+  } else {
+    await prisma.annualCategoryAmount.create({
+      data: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
+    });
+  }
 
-  if (existing && existing.id !== upserted.id) {
+  if (existing && matching && existing.id !== matching.id) {
     await prisma.annualCategoryAmount.delete({ where: { id: existing.id } });
   }
 
@@ -155,7 +170,7 @@ export async function updateAnnualLine(formData: FormData): Promise<AnnualLineRe
   const categoryId = String(formData.get("categoryId") ?? "");
   const propertyOwnershipIdRaw = String(formData.get("propertyOwnershipId") ?? "").trim();
   const propertyOwnershipId = propertyOwnershipIdRaw ? propertyOwnershipIdRaw : null;
-  const amountAbs = Math.abs(toFloat(formData.get("amountAbs")));
+  const amountRaw = toFloat(formData.get("amountAbs"));
   const note = (formData.get("note") ?? "").toString().trim() || null;
 
   if (!propertyId || !entryId || !categoryId || !year) {
@@ -200,7 +215,7 @@ export async function updateAnnualLine(formData: FormData): Promise<AnnualLineRe
     return { error: "That category and ownership already has a line for this year." };
   }
 
-  const signedAmount = cat.type === "expense" ? -amountAbs : amountAbs;
+  const signedAmount = signedAmountForType(cat.type, amountRaw);
 
   try {
     await prisma.annualCategoryAmount.update({
