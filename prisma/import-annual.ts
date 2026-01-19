@@ -45,6 +45,7 @@ function mustNumber(v: string, label: string) {
 async function main() {
   const csvPath = path.resolve(process.cwd(), "prisma", "annual-import.csv");
   if (!fs.existsSync(csvPath)) throw new Error(`Missing CSV file: ${csvPath}`);
+
   const sourceFileName = path.basename(csvPath);
 
   const raw = fs.readFileSync(csvPath, "utf8");
@@ -70,18 +71,24 @@ async function main() {
 
   const rows: Row[] = lines.slice(1).map((line, n) => {
     const cols = parseCsvLine(line);
+
     const property = (cols[iProperty] ?? "").trim();
     const year = Math.trunc(mustNumber(cols[iYear] ?? "", "year"));
     const category = (cols[iCategory] ?? "").trim();
+
+    // Keep raw amount magnitude; we'll apply sign based on category type later.
     const amount = Math.abs(mustNumber(cols[iAmount] ?? "", "amount"));
+
     const note = iNote >= 0 ? (cols[iNote] ?? "").trim() : "";
-    const importKey = `${sourceFileName}:${n + 1}`;
 
     if (!property) throw new Error(`Row ${n + 2}: property is blank`);
     if (!category) throw new Error(`Row ${n + 2}: category is blank`);
     if (!Number.isFinite(year) || year < 1900 || year > 3000) {
       throw new Error(`Row ${n + 2}: invalid year "${cols[iYear]}"`);
     }
+
+    // Stable per file + row index (1-based data row index, excluding header)
+    const importKey = `${sourceFileName}:${n + 1}`;
 
     return { property, year, category, amount, note: note || undefined, importKey };
   });
@@ -106,7 +113,7 @@ async function main() {
     },
     orderBy: [{ propertyId: "asc" }, { id: "desc" }],
   });
-  
+
   const ownershipByProperty = new Map<string, string>();
   for (const o of ownerships) {
     // Because we ordered desc by id, first we see for each property is "latest"
@@ -114,7 +121,7 @@ async function main() {
       ownershipByProperty.set(o.propertyId, o.id);
     }
   }
-  
+
   // Categories lookup
   const categories = await prisma.category.findMany({
     select: { id: true, name: true, type: true },
@@ -131,7 +138,9 @@ async function main() {
   for (const r of rows) {
     const propertyId = propertyByLabel.get(r.property.toLowerCase());
     if (!propertyId) {
-      throw new Error(`Property not found for "${r.property}". Fix CSV to match property nickname/street.`);
+      throw new Error(
+        `Property not found for "${r.property}". Fix CSV to match property nickname/street.`
+      );
     }
 
     const propertyOwnershipId = ownershipByProperty.get(propertyId);

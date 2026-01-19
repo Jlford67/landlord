@@ -212,29 +212,28 @@ export default async function ExpensesByPropertyPage({
       },
     });
 
-    const annualDetailRows: DrilldownRow[] = annualRows
-      .map((row) => {
-        const prorated = calculateProratedAnnualExpense({
-          amount: Number(row.amount ?? 0),
-          year: row.year,
-          startDate,
-          endDate,
-        });
-        if (prorated === 0) return null;
-        annualSubtotal += prorated;
-        return {
-          id: row.id,
-          type: "annual",
-          period: `${row.year} (Annual)`,
-          sortKey: `${row.year}-00`,
-          date: null,
-          dateLabel: "—",
-          category: row.category.name,
-          description: row.note?.trim() || "Annual amount (prorated)",
-          amount: prorated,
-        };
-      })
-      .filter((row): row is DrilldownRow => Boolean(row));
+    const annualDetailRows: DrilldownRow[] = annualRows.map((row) => {
+      const prorated = calculateProratedAnnualExpense({
+        amount: Number(row.amount ?? 0),
+        year: row.year,
+        startDate,
+        endDate,
+      });
+
+      annualSubtotal += prorated;
+
+      return {
+        id: row.id,
+        type: "annual",
+        period: `${row.year} (Annual)`,
+        sortKey: `${row.year}-00`,
+        date: null,
+        dateLabel: "—",
+        category: row.category.name,
+        description: row.note?.trim() || "Annual amount (prorated)",
+        amount: prorated,
+      };
+    });
 
     drilldownRows = [...annualDetailRows, ...ledgerRows];
     drilldownRows.sort((a, b) => {
