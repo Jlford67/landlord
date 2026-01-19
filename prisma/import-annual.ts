@@ -8,6 +8,7 @@ type Row = {
   category: string;
   amount: number;
   note?: string;
+  importKey: string;
 };
 
 function parseCsvLine(line: string): string[] {
@@ -44,6 +45,7 @@ function mustNumber(v: string, label: string) {
 async function main() {
   const csvPath = path.resolve(process.cwd(), "prisma", "annual-import.csv");
   if (!fs.existsSync(csvPath)) throw new Error(`Missing CSV file: ${csvPath}`);
+  const sourceFileName = path.basename(csvPath);
 
   const raw = fs.readFileSync(csvPath, "utf8");
   const lines = raw
@@ -73,6 +75,7 @@ async function main() {
     const category = (cols[iCategory] ?? "").trim();
     const amount = Math.abs(mustNumber(cols[iAmount] ?? "", "amount"));
     const note = iNote >= 0 ? (cols[iNote] ?? "").trim() : "";
+    const importKey = `${sourceFileName}:${n + 1}`;
 
     if (!property) throw new Error(`Row ${n + 2}: property is blank`);
     if (!category) throw new Error(`Row ${n + 2}: category is blank`);
@@ -80,7 +83,7 @@ async function main() {
       throw new Error(`Row ${n + 2}: invalid year "${cols[iYear]}"`);
     }
 
-    return { property, year, category, amount, note: note || undefined };
+    return { property, year, category, amount, note: note || undefined, importKey };
   });
 
   // Properties lookup
@@ -150,11 +153,12 @@ async function main() {
 
     const existing = await prisma.annualCategoryAmount.findUnique({
       where: {
-        propertyId_year_categoryId_propertyOwnershipId: {
+        propertyId_year_categoryId_propertyOwnershipId_importKey: {
           propertyId,
           year: r.year,
           categoryId: cat.id,
           propertyOwnershipId,
+          importKey: r.importKey,
         },
       },
       select: { id: true },
@@ -162,17 +166,19 @@ async function main() {
 
     await prisma.annualCategoryAmount.upsert({
       where: {
-        propertyId_year_categoryId_propertyOwnershipId: {
+        propertyId_year_categoryId_propertyOwnershipId_importKey: {
           propertyId,
           year: r.year,
           categoryId: cat.id,
           propertyOwnershipId,
+          importKey: r.importKey,
         },
       },
       update: {
         amount: signedAmount,
         note: r.note ?? null,
         propertyOwnershipId,
+        importKey: r.importKey,
       },
       create: {
         propertyId,
@@ -181,6 +187,7 @@ async function main() {
         amount: signedAmount,
         note: r.note ?? null,
         propertyOwnershipId,
+        importKey: r.importKey,
       },
     });
 

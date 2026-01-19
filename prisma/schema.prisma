@@ -234,13 +234,17 @@ model AnnualCategoryAmount {
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  importKey String?
 
   property            Property           @relation(fields: [propertyId], references: [id])
   category            Category           @relation(fields: [categoryId], references: [id])
   propertyOwnership   PropertyOwnership? @relation(fields: [propertyOwnershipId], references: [id])
   propertyOwnershipId String?
 
-  @@unique([propertyId, year, categoryId, propertyOwnershipId])
+  @@unique(
+    [propertyId, year, categoryId, propertyOwnershipId, importKey],
+    name: "propertyId_year_categoryId_propertyOwnershipId_importKey"
+  )
   @@index([propertyId, year])
   @@index([categoryId])
 }

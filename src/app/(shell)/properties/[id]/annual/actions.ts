@@ -49,17 +49,8 @@ export async function saveAnnualLine(formData: FormData) {
 
   const signedAmount = cat.type === "expense" ? -amountAbs : amountAbs;
 
-  await prisma.annualCategoryAmount.upsert({
-    where: {
-      propertyId_year_categoryId_propertyOwnershipId: {
-        propertyId,
-        year,
-        categoryId,
-        propertyOwnershipId,
-      },
-    },
-    update: { amount: signedAmount, note, propertyOwnershipId },
-    create: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
+  await prisma.annualCategoryAmount.create({
+    data: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
   });
 
   revalidatePath(`/properties/${propertyId}/annual`);
@@ -97,30 +88,22 @@ export async function upsertAnnualEntry(formData: FormData) {
 
   const signedAmount = cat.type === "expense" ? -amountAbs : amountAbs;
 
-  const [existing] = await Promise.all([
-    entryId
-      ? prisma.annualCategoryAmount.findFirst({
-          where: { id: entryId, propertyId },
-          select: { id: true },
-        })
-      : Promise.resolve(null),
-  ]);
+  if (entryId) {
+    const existing = await prisma.annualCategoryAmount.findFirst({
+      where: { id: entryId, propertyId },
+      select: { id: true },
+    });
 
-  const upserted = await prisma.annualCategoryAmount.upsert({
-    where: {
-      propertyId_year_categoryId_propertyOwnershipId: {
-        propertyId,
-        year,
-        categoryId,
-        propertyOwnershipId,
-      },
-    },
-    update: { amount: signedAmount, note, propertyOwnershipId },
-    create: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
-  });
+    if (!existing) throw new Error("Annual entry not found");
 
-  if (existing && existing.id !== upserted.id) {
-    await prisma.annualCategoryAmount.delete({ where: { id: existing.id } });
+    await prisma.annualCategoryAmount.update({
+      where: { id: existing.id },
+      data: { amount: signedAmount, note, propertyOwnershipId, year, categoryId },
+    });
+  } else {
+    await prisma.annualCategoryAmount.create({
+      data: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
+    });
   }
 
   revalidatePath(`/properties/${propertyId}/ledger`);
