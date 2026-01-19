@@ -89,18 +89,40 @@ export default function RecurringPanel(props: RecurringPanelProps) {
           </div>
         </div>
 
-        {props.recurringTablesReady ? (
-          <Button
-            type="button"
-            variant="warning"
-            size="md"
-            disabled={postPending}
-            onClick={postForMonth}
-            suppressHydrationWarning
-          >
-            {postPending ? "Posting..." : "Post Recurring"}
-          </Button>
-        ) : null}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="m-0 mb-1.5 text-base font-semibold">Recurring</h2>
+            <div className="ll_muted mb-2.5">
+              Set up monthly items like HOA. Post them into the ledger when ready.
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="submit"
+              form="add-recurring-form"
+              variant="warning"
+              size="md"
+              suppressHydrationWarning
+            >
+              <span className="inline-flex items-center gap-2">
+                <Plus size={16} />
+                Add recurring
+              </span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="warning"
+              size="md"
+              disabled={postPending}
+              onClick={postForMonth}
+              suppressHydrationWarning
+            >
+              {postPending ? "Posting..." : "Post Recurring"}
+            </Button>
+          </div>
+        </div>
 
       </div>
 
@@ -468,17 +490,6 @@ export default function RecurringPanel(props: RecurringPanelProps) {
                 <label className="ll_checkbox">
                   <input type="checkbox" name="isActive" defaultChecked /> Active
                 </label>
-
-                <div className="mt-4 mb-4 flex items-center justify-end">
-                  <div className="inline-flex">
-                    <Button type="submit" variant="warning" size="md" suppressHydrationWarning>
-                      <span className="inline-flex items-center gap-2">
-                        <Plus size={16} />
-                        <span>Add recurring</span>
-                      </span>
-                    </Button>
-                  </div>
-                </div>
 
               </form>
             </div>
