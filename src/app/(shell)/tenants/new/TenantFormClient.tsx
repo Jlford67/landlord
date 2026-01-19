@@ -9,6 +9,7 @@ export default function TenantFormClient({
 }) {
   return (
     <form
+      id="tenant-new-form"
       className="ll_form"
       action="/api/tenants"
       method="post"
@@ -76,16 +77,6 @@ export default function TenantFormClient({
           Notes (optional)
         </label>
         <input id="notes" className="ll_input" name="notes" />
-      </div>
-
-      <div className="ll_row ll_gap_sm" style={{ marginTop: 10 }}>
-        <button className="ll_btnPrimary" type="submit">
-          Save tenant
-        </button>
-
-        <Link className="ll_btn" href={returnTo}>
-          Cancel
-        </Link>
       </div>
     </form>
   );

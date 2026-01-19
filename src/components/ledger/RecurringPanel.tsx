@@ -3,6 +3,9 @@
 import React, { useTransition } from "react";
 import { fmtMoney } from "@/lib/format";
 import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
+import { Plus } from "lucide-react";
+
 import {
   createRecurringTransaction,
   updateRecurringTransaction,
@@ -87,16 +90,18 @@ export default function RecurringPanel(props: RecurringPanelProps) {
         </div>
 
         {props.recurringTablesReady ? (
-          <button
+          <Button
             type="button"
-            className="ll_btnPrimary"
+            variant="warning"
+            size="md"
             disabled={postPending}
             onClick={postForMonth}
             suppressHydrationWarning
           >
             {postPending ? "Posting..." : "Post Recurring"}
-          </button>
+          </Button>
         ) : null}
+
       </div>
 
       <div className="ll_notice bg-gray-100 text-gray-800">
@@ -464,17 +469,17 @@ export default function RecurringPanel(props: RecurringPanelProps) {
                   <input type="checkbox" name="isActive" defaultChecked /> Active
                 </label>
 
-                <div className="mt-2.5 flex gap-2">
-                  <button
-                    className="ll_btnWarning"
-                    type="submit"
-                    suppressHydrationWarning
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                  >
-                    Add recurring
-                  </button>
+                <div className="mt-4 mb-4 flex items-center justify-end">
+                  <div className="inline-flex">
+                    <Button type="submit" variant="warning" size="md" suppressHydrationWarning>
+                      <span className="inline-flex items-center gap-2">
+                        <Plus size={16} />
+                        <span>Add recurring</span>
+                      </span>
+                    </Button>
+                  </div>
                 </div>
+
               </form>
             </div>
           </div>

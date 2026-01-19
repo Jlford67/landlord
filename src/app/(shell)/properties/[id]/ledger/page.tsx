@@ -12,6 +12,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import { deleteAnnualEntry } from "./actions";
 import { normalizeMonth, normalizeYear, monthToYear } from "@/lib/dateSelectors";
+import LedgerHeaderActions from "./LedgerHeaderActions";
+import LinkButton from "@/components/ui/LinkButton";
 
 /* ---------------- helpers ---------------- */
 
@@ -284,120 +286,105 @@ export default async function PropertyLedgerPage({
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[32px] m-0 mb-1.5">Ledger</h1>
+          <h1 className="text-[32px] m-0 mb-0.5">Ledger</h1>
+          <div className="ll_muted mb-2">Monthly and annual transaction activity.</div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {annualView ? (
-              <>
-                <Link
-                  className="ll_btnSecondary"
-                  href={`/properties/${propertyId}/ledger?view=annual&year=${year - 1}&month=${month}`}
-                >
-                  Prev year
-                </Link>
+          <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-slate-200">
 
-                <form method="get" className="flex items-center gap-2">
-                  <input type="hidden" name="view" value="annual" />
-                  <input type="hidden" name="month" value={month} />
-                  <input
-                    className="ll_input w-[120px]"
-                    name="year"
-                    type="number"
-                    defaultValue={year ?? ""}
-                    suppressHydrationWarning
-                    data-lpignore="true"
-                  />
-                  <button
-                    className="ll_btnSecondary"
-                    type="submit"
-                    suppressHydrationWarning
-                    data-lpignore="true"
+            {/* Period controls */}
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+              {annualView ? (
+                <>
+                  <Link
+                    className="ll_btnGhost"
+                    href={`/properties/${propertyId}/ledger?view=annual&year=${year - 1}&month=${month}`}
                   >
-                    Go
-                  </button>
-                </form>
+                    Prev year
+                  </Link>
 
-                <Link
-                  className="ll_btnSecondary"
-                  href={`/properties/${propertyId}/ledger?view=annual&year=${year + 1}&month=${month}`}
-                >
-                  Next year
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  className="ll_btnSecondary"
-                  href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, -1)}`}
-                >
-                  Prev
-                </Link>
+                  <form method="get" className="flex items-center gap-2">
+                    <input type="hidden" name="view" value="annual" />
+                    <input type="hidden" name="month" value={month} />
+                    <input
+                      className="ll_input w-[120px]"
+                      name="year"
+                      type="number"
+                      defaultValue={year ?? ""}
+                      suppressHydrationWarning
+                      data-lpignore="true"
+                    />
+                    <button className="ll_btnPrimary" type="submit" suppressHydrationWarning data-lpignore="true">
+                      Go
+                    </button>
+                  </form>
 
-                <form method="get" className="flex items-center gap-2">
-                  <input type="hidden" name="view" value="monthly" />
-                  <MonthInputClient
-                    name="month"
-                    initialValue={monthValue}
-                    className="ll_input w-[160px]"
-                  />
-
-                  <button
-                    className="ll_btnSecondary"
-                    type="submit"
-                    suppressHydrationWarning
-                    data-lpignore="true"
+                  <Link
+                    className="ll_btnGhost"
+                    href={`/properties/${propertyId}/ledger?view=annual&year=${year + 1}&month=${month}`}
                   >
-                    Go
-                  </button>
-                </form>
+                    Next year
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    className="ll_btnGhost text-slate-600"
+                    href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, -1)}`}
+                    aria-label="Previous month"
+                    title="Previous month"
+                  >
+                    ‹
+                  </Link>
 
-                <Link
-                  className="ll_btnSecondary"
-                  href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, 1)}`}
-                >
-                  Next
-                </Link>
-              </>
-            )}
+                  <form method="get" className="flex items-center gap-2">
+                    <input type="hidden" name="view" value="monthly" />
+                    <MonthInputClient name="month" initialValue={monthValue} className="ll_input w-[160px]" />
 
-            <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1">
+                    <button className="ll_btnPrimary" type="submit" suppressHydrationWarning data-lpignore="true">
+                      Go
+                    </button>
+                  </form>
+
+                  <Link
+                    className="ll_btnGhost text-slate-600"
+                    href={`/properties/${propertyId}/ledger?month=${shiftMonth(month, 1)}`}
+                    aria-label="Next month"
+                    title="Next month"
+                  >
+                    ›
+                  </Link>
+
+                </>
+              )}
+            </div>
+
+            {/* View toggle */}
+            <div className="flex items-center rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
               <Link
-                className={`ll_btnSecondary ${annualView ? "" : "ll_btn_primary"}`}
+                className={`ll_btnGhost ${annualView ? "" : "ll_btnSecondary"}`}
                 href={`/properties/${propertyId}/ledger?view=monthly&month=${month}`}
               >
                 Monthly
               </Link>
               <Link
-                className={`ll_btnSecondary ${annualView ? "ll_btn_primary" : ""}`}
+                className={`ll_btnGhost ${annualView ? "ll_btnSecondary" : ""}`}
                 href={`/properties/${propertyId}/ledger?view=annual&year=${year}&month=${month}`}
               >
                 Annual
               </Link>
             </div>
           </div>
+
         </div>
 
-        <div className="flex gap-2.5 items-center">
-          <Link className="ll_btn" href="/properties">
-            Back
-          </Link>
+        <LedgerHeaderActions
+          backHref="/properties"
+          addTxHref={`/properties/${propertyId}/ledger/new?returnTo=${encodeURIComponent(
+            `/properties/${propertyId}/ledger?month=${month}`
+          )}`}
+          addAnnualHref={`/properties/${propertyId}/annual/new?year=${year}&view=annual`}
+        />
 
-          <Link
-            className="ll_btnWarning"
-            href={`/properties/${propertyId}/ledger/new?returnTo=${encodeURIComponent(
-              `/properties/${propertyId}/ledger?month=${month}`
-            )}`}
-          >
-            Add transaction
-          </Link>
-
-          <Link
-            className="ll_btnWarning"
-            href={`/properties/${propertyId}/annual/new?year=${year}&view=annual`}
-          >
-            Add annual entry
-          </Link>
-        </div>
       </div>
 
       {/* Property header */}
@@ -427,13 +414,6 @@ export default async function PropertyLedgerPage({
                 <div className="ll_h2">Annual Summary – {year}</div>
                 <div className="ll_muted">Annual entries for this property and year.</div>
               </div>
-
-              <Link
-                className="ll_btn ll_btnWarning"
-                href={`/properties/${propertyId}/annual/new?year=${year}&view=annual`}
-              >
-                Add annual entry
-              </Link>
             </div>
 
             <div className="ll_cardPad">
@@ -535,12 +515,14 @@ export default async function PropertyLedgerPage({
                 <div className="ll_muted">{monthLabel(month)}</div>
               </div>
 
-              <Link
-                className="ll_btn ll_btnSecondary"
+              <LinkButton
                 href={`/properties/${propertyId}/ledger?month=${month}`}
+                variant="outline"
+                size="md"
               >
                 Refresh
-              </Link>
+              </LinkButton>
+
             </div>
 
             <div className="ll_cardPad">

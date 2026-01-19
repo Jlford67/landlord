@@ -362,16 +362,6 @@ a.ll_btnLink:visited{
 }
 .ll_btnGhost:hover{ background: #f9fafb; }
 
-/* Warning (Add / Create) */
-.ll_btnWarning{
-  background: var(--primary);
-  color: #000;
-  font-weight: 600;
-}
-.ll_btnWarning:hover{
-  color: #000;
-}
-
 /* Danger */
 .ll_btnDanger{
   background: var(--secondary);
@@ -1103,7 +1093,6 @@ a.ll_btnLink:visited{
   .ll_card_title { @apply text-base font-semibold; }
   .ll_muted { @apply text-sm text-gray-500; }
 
-  .ll_row { @apply flex; }
   .ll_gap_sm { @apply gap-2; }
   .ll_gap_md { @apply gap-4; }
   .ll_spacer { @apply flex-1; }
