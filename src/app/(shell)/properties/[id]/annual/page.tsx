@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
-import { saveAnnualLine, deleteAnnualLine } from "./actions";
 import { promises as fs } from "fs";
 import path from "path";
 import PropertyHeader from "@/components/properties/PropertyHeader";
-import IconButton from "@/components/ui/IconButton";
-import { Save, Trash2 } from "lucide-react";
 import { normalizeYear } from "@/lib/dateSelectors";
+import AnnualCategoryAmountsClient from "./AnnualCategoryAmountsClient";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -19,13 +17,6 @@ const money = (n: number) =>
     maximumFractionDigits: 2,
   }).format(n);
 
-const financeMoney = (n: number) => {
-  const abs = Math.abs(n);
-  const formatted = money(abs);
-
-  if (n < 0) return <span className="ll_neg font-semibold">({formatted})</span>;
-  return <span className="ll_pos font-semibold">{formatted}</span>;
-};
 
 function currentYearUtc() {
   return new Date().getUTCFullYear();
@@ -93,9 +84,20 @@ export default async function PropertyAnnualPage(props: PageProps) {
 
   const rows = await prisma.annualCategoryAmount.findMany({
     where: { propertyId, year },
-    include: {
+    select: {
+      id: true,
+      amount: true,
+      note: true,
+      categoryId: true,
+      propertyOwnershipId: true,
       category: { select: { name: true, type: true } },
-      propertyOwnership: { include: { entity: { select: { name: true } } } },
+      propertyOwnership: {
+        select: {
+          id: true,
+          ownershipPct: true,
+          entity: { select: { name: true } },
+        },
+      },
     },
     orderBy: [
       { category: { type: "asc" } },
@@ -106,15 +108,13 @@ export default async function PropertyAnnualPage(props: PageProps) {
 
   const ownerships = await prisma.propertyOwnership.findMany({
     where: { propertyId },
-    include: { entity: { select: { name: true } } },
+    select: {
+      id: true,
+      ownershipPct: true,
+      entity: { select: { name: true } },
+    },
     orderBy: [{ startDate: "asc" }, { entity: { name: "asc" } }],
   });
-
-  const ownershipLabel = (ownership: (typeof ownerships)[number] | null) => {
-    if (!ownership) return "None";
-    const pct = Number.isFinite(ownership.ownershipPct) ? ownership.ownershipPct : null;
-    return pct ? `${ownership.entity.name} (${pct}%)` : ownership.entity.name;
-  };
 
   // ---- totals (amount is stored signed: income positive, expense negative) ----
   const incomeTotal = rows.filter((r) => r.amount > 0).reduce((s, r) => s + r.amount, 0);
@@ -203,180 +203,14 @@ export default async function PropertyAnnualPage(props: PageProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 mt-4 items-start w-full">
-        <div className="ll_card">
-          <div className="ll_card_title">Add or update a line</div>
-
-          <form action={saveAnnualLine} className="ll_row ll_gap_sm flex-wrap">
-            <input type="hidden" name="propertyId" value={propertyId} />
-            <input type="hidden" name="year" value={year} />
-
-            <select
-              name="categoryId"
-              className="ll_input"
-              required
-              defaultValue=""
-              suppressHydrationWarning
-              data-lpignore="true"
-            >
-              <option value="" disabled>
-                Select category…
-              </option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.type === "expense" ? "Expense" : "Income"} • {c.name}
-                </option>
-              ))}
-            </select>
-
-            <input
-              name="amountAbs"
-              className="ll_input"
-              placeholder="Amount (enter positive)"
-              inputMode="decimal"
-              required
-              suppressHydrationWarning
-              data-lpignore="true"
-            />
-
-            {ownerships.length > 0 ? (
-              <select
-                name="propertyOwnershipId"
-                className="ll_input"
-                defaultValue={ownerships.length === 1 ? ownerships[0]?.id ?? "" : ""}
-                suppressHydrationWarning
-                data-lpignore="true"
-              >
-                <option value="">Ownership: None</option>
-                {ownerships.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {ownershipLabel(o)}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input type="hidden" name="propertyOwnershipId" value="" />
-            )}
-
-            <input
-              name="note"
-              className="ll_input"
-              placeholder="Note (optional)"
-              suppressHydrationWarning
-              data-lpignore="true"
-            />
-
-            <IconButton
-              className="ll_btn ll_btnGhost"
-              type="submit"
-              ariaLabel="Save"
-              title="Save"
-              icon={<Save size={18} />}
-            />
-          </form>
-
-          <div className="ll_muted mt-2">
-            Expense categories are stored as negative amounts automatically (same convention as
-            transactions).
-          </div>
-        </div>
-
-        <div className="ll_card">
-          <div className="flex items-center justify-between">
-            <div className="ll_card_title">Lines for {year}</div>
-
-            <div className="flex items-center gap-2">
-              <a className="ll_btnPrimary" href={`/api/properties/${propertyId}/annual/export?year=${year}`}>
-                Export CSV
-              </a>
-
-              <a
-                className="ll_btnPrimary"
-                href={`/api/properties/${propertyId}/annual/export?mode=all`}
-                title="Exports all annual rows for this property across all years"
-              >
-                Export All
-              </a>
-            </div>
-          </div>
-
-          {rows.length === 0 ? (
-            <div className="ll_muted mt-2">No annual lines yet for this year.</div>
-          ) : (
-            <div className="ll_table_wrap mt-3">
-              <table className="ll_table ll_table_zebra">
-                <thead>
-                  <tr>
-                    <th className="w-[40%]">Category</th>
-                    <th className="w-[15%]">Type</th>
-                    <th className="w-[15%]">Amount</th>
-                    <th className="w-[15%]">Ownership</th>
-                    <th>Note</th>
-                    <th className="w-px" />
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {rows.map((r) => {
-                    const amt = r.amount; // signed: income +, expense -
-                    return (
-                      <tr key={r.id}>
-                        <td>{r.category.name}</td>
-                        <td>{r.category.type}</td>
-                        <td className="tabular-nums text-right">{financeMoney(amt)}</td>
-                        <td>{ownershipLabel(r.propertyOwnership)}</td>
-                        <td>{r.note ?? ""}</td>
-                        <td>
-                          <form action={deleteAnnualLine}>
-                            <input type="hidden" name="propertyId" value={propertyId} />
-                            <input type="hidden" name="year" value={year} />
-                            <input type="hidden" name="id" value={r.id} />
-                            <IconButton
-                              className="ll_btn ll_btnGhost"
-                              type="submit"
-                              ariaLabel={`Delete ${r.category.name} (${year})`}
-                              title="Delete"
-                              icon={<Trash2 size={18} className="text-red-600" />}
-                            />
-                          </form>
-                        </td>
-                      </tr>
-                    );
-                  })}
-
-                  <tr className="ll_table_total">
-                    <td className="font-semibold">Total Income</td>
-                    <td />
-                    <td className="tabular-nums text-right font-semibold">
-                      {financeMoney(incomeTotal)}
-                    </td>
-                    <td />
-                    <td />
-                  </tr>
-
-                  <tr className="ll_table_total">
-                    <td className="font-semibold">Total Expenses</td>
-                    <td />
-                    <td className="tabular-nums text-right font-semibold">
-                      {financeMoney(-expenseTotalAbs)}
-                    </td>
-                    <td />
-                    <td />
-                  </tr>
-
-                  <tr className="ll_table_total">
-                    <td className="font-semibold">Net</td>
-                    <td />
-                    <td className="tabular-nums text-right font-semibold">{financeMoney(net)}</td>
-                    <td className="ll_muted">Matches the KPI totals above</td>
-                    <td />
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
+      <AnnualCategoryAmountsClient
+        propertyId={propertyId}
+        year={year}
+        categories={categories}
+        ownerships={ownerships}
+        rows={rows}
+        totals={{ incomeTotal, expenseTotalAbs, net }}
+      />
     </div>
   );
 }
