@@ -29,7 +29,7 @@ type AnnualRow = {
 
 type Totals = {
   incomeTotal: number;
-  expenseTotalAbs: number;
+  expenseTotalSigned: number;
   net: number;
 };
 
@@ -363,7 +363,7 @@ export default function AnnualCategoryAmountsClient({
                   <td className="font-semibold">Total Expenses</td>
                   <td />
                   <td className="tabular-nums text-right font-semibold">
-                    {financeMoney(-totals.expenseTotalAbs)}
+                    {financeMoney(totals.expenseTotalSigned)}
                   </td>
                   <td />
                   <td />

@@ -118,10 +118,10 @@ export default async function PropertyAnnualPage(props: PageProps) {
 
   // ---- totals (amount is stored signed: income positive, expense negative) ----
   const incomeTotal = rows.filter((r) => r.amount > 0).reduce((s, r) => s + r.amount, 0);
-  const expenseTotalAbs = rows
-    .filter((r) => r.amount < 0)
-    .reduce((s, r) => s + Math.abs(r.amount), 0);
-  const net = incomeTotal - expenseTotalAbs;
+  const expenseTotalSigned = rows
+    .filter((r) => r.category.type === "expense")
+    .reduce((s, r) => s + r.amount, 0);
+  const net = incomeTotal + expenseTotalSigned;
 
   return (
     <div className="ll_page w-full max-w-none mx-0">
@@ -197,7 +197,11 @@ export default async function PropertyAnnualPage(props: PageProps) {
           subtitle="Annual"
           kpis={[
             { label: "Income", value: money(incomeTotal) },
-            { label: "Expenses", value: money(expenseTotalAbs), className: "ll_neg" },
+            {
+              label: "Expenses",
+              value: money(Math.abs(expenseTotalSigned)),
+              className: expenseTotalSigned >= 0 ? "ll_pos" : "ll_neg",
+            },
             { label: "Net", value: money(net), className: net >= 0 ? "ll_pos" : "ll_neg" },
           ]}
         />
@@ -209,7 +213,7 @@ export default async function PropertyAnnualPage(props: PageProps) {
         categories={categories}
         ownerships={ownerships}
         rows={rows}
-        totals={{ incomeTotal, expenseTotalAbs, net }}
+        totals={{ incomeTotal, expenseTotalSigned, net }}
       />
     </div>
   );
