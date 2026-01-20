@@ -231,6 +231,9 @@ model AnnualCategoryAmount {
   // Match Transaction style: +income, -expense
   amount Float
 
+  // Exists in DB and is part of the unique constraint
+  importKey String @default("")
+
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -240,10 +243,11 @@ model AnnualCategoryAmount {
   propertyOwnership   PropertyOwnership? @relation(fields: [propertyOwnershipId], references: [id])
   propertyOwnershipId String?
 
-  @@unique([propertyId, year, categoryId, propertyOwnershipId])
+  @@unique([propertyId, year, categoryId, propertyOwnershipId, importKey])
   @@index([propertyId, year])
   @@index([categoryId])
 }
+
 
 model Loan {
   id         String    @id @default(cuid())
