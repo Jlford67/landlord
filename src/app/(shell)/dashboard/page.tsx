@@ -96,7 +96,7 @@ type YearRow = {
   net: number;
 };
 
-type DrilldownParams = {
+ type DrilldownParams = {
   propertyId: string | null;
   year: number;
   kind: "income" | "expense";
@@ -104,12 +104,12 @@ type DrilldownParams = {
 
 async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
   "use server";
-
   const start = new Date(Date.UTC(year, 0, 1));
   const end = new Date(Date.UTC(year + 1, 0, 1));
 
   const whereProperty = propertyId ? { propertyId } : {};
-  const amountFilter = kind === "income" ? { gt: 0 } : { lt: 0 };
+  const txnAmountFilter = kind === "income" ? { gt: 0 } : { lt: 0 };
+  const annualCategoryType = kind; // income or expense
 
   // 1) Transactions (ledger lines)
   const txRows = await prisma.transaction.findMany({
@@ -117,7 +117,7 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
       deletedAt: null,
       ...whereProperty,
       date: { gte: start, lt: end },
-      amount: amountFilter,
+      amount: txnAmountFilter,
       category: { type: { not: "transfer" } },
     },
     orderBy: [{ date: "desc" }, { id: "desc" }],
@@ -131,14 +131,13 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
     },
   });
 
-  // 2) AnnualCategoryAmount (annual lines included in totals)
-  // These do not have deletedAt, and they’re already property-scoped.
+  // 2) AnnualCategoryAmount (annual lines)
+  // Filter annual by category type (not amount sign) so expense refunds (+) are included.
   const annualRows = await prisma.annualCategoryAmount.findMany({
     where: {
       ...whereProperty,
       year,
-      amount: amountFilter,
-      category: { type: { not: "transfer" } },
+      category: { type: annualCategoryType },
     },
     orderBy: [{ category: { name: "asc" } }, { id: "asc" }],
     select: {
@@ -157,8 +156,6 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
     amount: row.amount,
   }));
 
-  // Annual rows do not have a natural date, so pick a stable one (Jan 1 of the year).
-  // This is deterministic and keeps sorting stable.
   const annualDateIso = start.toISOString();
 
   const mappedAnnual = annualRows.map((row) => ({
@@ -166,10 +163,12 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
     dateIso: annualDateIso,
     description: row.note ? `Annual: ${row.note}` : "Annual amount",
     categoryName: row.category.name,
-    amount: row.amount,
+    // Drilldown semantics:
+    // - income: show txn-style (positive)
+    // - expense: show expense-effect (+expense, -refund)
+    amount: kind === "expense" ? -Number(row.amount ?? 0) : Number(row.amount ?? 0),
   }));
 
-  // Combine and sort by date desc, then id desc for stability
   const combined = [...mappedTx, ...mappedAnnual].sort((a, b) => {
     if (a.dateIso === b.dateIso) return a.id < b.id ? 1 : -1;
     return a.dateIso < b.dateIso ? 1 : -1;
@@ -180,7 +179,7 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
   return { rows: combined, total };
 }
 
-/* ---------------- chart ---------------- */
+  /* ---------------- chart ---------------- */
 
 function MiniIncomeExpenseBars({ points }: { points: MonthPoint[] }) {
   const max = Math.max(1, ...points.map((p) => Math.max(p.income, p.expenses)));
@@ -318,7 +317,8 @@ export default async function DashboardPage({
         },
         select: {
           year: true,
-          amount: true, // +income, -expense
+          amount: true, // txn-style: +refund/income, -expense
+          category: { select: { type: true } },
         },
       })
     : [];
@@ -328,10 +328,10 @@ export default async function DashboardPage({
   for (const r of annualRows) {
     const cur = yearlyFromAnnual.get(r.year) ?? { income: 0, expenses: 0, net: 0 };
 
-    if (r.amount >= 0) cur.income += r.amount;
-    else cur.expenses += r.amount; // keep negative
+    if (r.category.type === "income") cur.income += Number(r.amount ?? 0);
+    else cur.expenses += Number(r.amount ?? 0); // expense category: includes refunds (+) and expenses (-)
 
-    cur.net += r.amount;
+    cur.net += Number(r.amount ?? 0);
     yearlyFromAnnual.set(r.year, cur);
   }
 

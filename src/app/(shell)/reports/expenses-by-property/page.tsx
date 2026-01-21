@@ -46,10 +46,12 @@ function moneyPositive(n: number) {
 }
 
 function amountClass(n: number) {
-  if (n < 0) return "text-red-600";
-  if (n > 0) return "text-emerald-600";
+  // expenses report: +expense = red, -refund = green
+  if (n < 0) return "text-emerald-600";
+  if (n > 0) return "text-red-600";
   return "text-gray-700";
 }
+
 
 function buildReportQuery(params: {
   propertyId: string | null;
@@ -213,14 +215,14 @@ export default async function ExpensesByPropertyPage({
     });
 
     const annualDetailRows: DrilldownRow[] = annualRows.map((row) => {
-      const prorated = calculateProratedAnnualExpense({
-        amount: Number(row.amount ?? 0),
-        year: row.year,
-        startDate,
-        endDate,
-      });
+    const expenseEffect = calculateProratedAnnualExpense({
+      amount: Number(row.amount ?? 0),
+      year: row.year,
+      startDate,
+      endDate,
+    });
 
-      annualSubtotal += prorated;
+      annualSubtotal += expenseEffect;
 
       return {
         id: row.id,
@@ -231,7 +233,7 @@ export default async function ExpensesByPropertyPage({
         dateLabel: "—",
         category: row.category.name,
         description: row.note?.trim() || "Annual amount (prorated)",
-        amount: prorated,
+        amount: expenseEffect,
       };
     });
 
@@ -444,8 +446,8 @@ export default async function ExpensesByPropertyPage({
                   <tr className="ll_table_total">
                     <td>Total</td>
                     <td className="text-right">
-                      <span className={amountClass(report.totals.annualExpense)}>
-                        {moneyPositive(report.totals.annualExpense)}
+                      <span className={annualSubtotal < 0 ? "text-emerald-700" : "text-rose-600"}>
+                        {moneyPositive(Math.abs(annualSubtotal))}
                       </span>
                     </td>
                     <td className="text-right">
@@ -510,8 +512,8 @@ export default async function ExpensesByPropertyPage({
                         <td>{row.category}</td>
                         <td className="truncate">{row.description}</td>
                         <td className="text-right">
-                          <span className={amountClass(row.amount)}>
-                            {moneyPositive(row.amount)}
+                          <span className={row.amount < 0 ? "text-emerald-700" : "text-rose-600"}>
+                            {moneyPositive(Math.abs(row.amount))}
                           </span>
                         </td>
                       </tr>
@@ -522,18 +524,12 @@ export default async function ExpensesByPropertyPage({
                   <tr className="ll_table_total">
                     <td colSpan={4}>Total (drill-down)</td>
                     <td className="text-right">
-                      <span className={amountClass(drillTarget.annualExpense)}>
-                        {moneyPositive(drillTarget.annualExpense)}
+                      <span className={annualSubtotal < 0 ? "text-emerald-700" : "text-rose-600"}>
+                        {moneyPositive(Math.abs(annualSubtotal))}
                       </span>
                     </td>
                   </tr>
-                  {Math.abs(annualSubtotal - drillTarget.annualExpense) > 0.01 ? (
-                    <tr>
-                      <td colSpan={5} className="text-right text-xs text-slate-500">
-                        Rounding difference: {moneyPositive(annualSubtotal - drillTarget.annualExpense)}
-                      </td>
-                    </tr>
-                  ) : null}
+                  {Math.abs(annualSubtotal) > 0.01 ? null :  null}
                 </tfoot>
               </table>
             </div>

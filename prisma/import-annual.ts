@@ -76,8 +76,9 @@ async function main() {
     const year = Math.trunc(mustNumber(cols[iYear] ?? "", "year"));
     const category = (cols[iCategory] ?? "").trim();
 
-    // Keep raw amount magnitude; we'll apply sign based on category type later.
-    const amount = Math.abs(mustNumber(cols[iAmount] ?? "", "amount"));
+    // Keep CSV sign. Your CSV uses: expenses = positive, refunds = negative (for expense categories).
+    // We convert to transaction-style later: +income, -expense (and refund becomes + for expense categories).
+    const amount = mustNumber(cols[iAmount] ?? "", "amount");
 
     const note = iNote >= 0 ? (cols[iNote] ?? "").trim() : "";
 
@@ -159,52 +160,25 @@ async function main() {
     }
 
     const signedAmount = cat.type === "expense" ? -r.amount : r.amount;
-
-    const importKey = ""; // keep consistent with the upsert
+ 
+    const whereKey = {
+      propertyId,
+      year: r.year,
+      categoryId: cat.id,
+      propertyOwnershipId,
+      importKey: r.importKey,
+    };
 
     const existing = await prisma.annualCategoryAmount.findUnique({
-      where: {
-        propertyId_year_categoryId_propertyOwnershipId_importKey: {
-          propertyId,
-          year: r.year,
-          categoryId: cat.id,
-<<<<<<< HEAD
-          propertyOwnershipId,
-          importKey: r.importKey,
-=======
-          propertyOwnershipId: propertyOwnershipId ?? null,
-          importKey,
->>>>>>> codex/add-edit-functionality-to-annual-amounts
-        },
-      },
+      where: { propertyId_year_categoryId_propertyOwnershipId_importKey: whereKey },
       select: { id: true },
     });
 
     await prisma.annualCategoryAmount.upsert({
-      where: {
-        propertyId_year_categoryId_propertyOwnershipId_importKey: {
-          propertyId,
-          year: r.year,
-          categoryId: cat.id,
-<<<<<<< HEAD
-          propertyOwnershipId,
-          importKey: r.importKey,
-=======
-          propertyOwnershipId: propertyOwnershipId ?? null,
-          importKey,
->>>>>>> codex/add-edit-functionality-to-annual-amounts
-        },
-      },
+      where: { propertyId_year_categoryId_propertyOwnershipId_importKey: whereKey },
       update: {
         amount: signedAmount,
         note: r.note ?? null,
-<<<<<<< HEAD
-        propertyOwnershipId,
-        importKey: r.importKey,
-=======
-        propertyOwnershipId: propertyOwnershipId ?? null,
-        importKey,
->>>>>>> codex/add-edit-functionality-to-annual-amounts
       },
       create: {
         propertyId,
@@ -212,17 +186,12 @@ async function main() {
         categoryId: cat.id,
         amount: signedAmount,
         note: r.note ?? null,
-<<<<<<< HEAD
         propertyOwnershipId,
         importKey: r.importKey,
-=======
-        propertyOwnershipId: propertyOwnershipId ?? null,
-        importKey,
->>>>>>> codex/add-edit-functionality-to-annual-amounts
       },
     });
 
-    if (existing) updated++;
+  if (existing) updated++;
     else created++;
   }
 

@@ -187,14 +187,19 @@ function overlapDaysInYear(rangeStart: Date, rangeEnd: Date, year: number) {
 }
 
 export function calculateProratedAnnualExpense(params: {
-  amount: number;
+  amount: number; // txn-style: +income/refund, -expense
   year: number;
   startDate: Date;
   endDate: Date;
 }) {
   const overlapDays = overlapDaysInYear(params.startDate, params.endDate, params.year);
   if (overlapDays <= 0) return 0;
+
   const fraction = overlapDays / daysInYear(params.year);
-  const expenseAmount = params.amount > 0 ? -params.amount : params.amount;
-  return expenseAmount * fraction;
+
+  // expenses report wants: +expense, -refund
+  const expenseEffect = -params.amount;
+
+  return expenseEffect * fraction;
 }
+
