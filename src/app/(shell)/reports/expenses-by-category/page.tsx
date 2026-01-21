@@ -71,20 +71,6 @@ function buildReportQuery(params: {
   return query.toString();
 }
 
-function moneyAccounting(n: number) {
-  const abs = Math.abs(n).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return n < 0 ? `($${abs})` : `$${abs}`;
-}
-
-function amountClass(n: number) {
-  if (n < 0) return "text-red-600";
-  if (n > 0) return "text-emerald-600";
-  return "text-gray-700";
-}
-
 export default async function ExpensesByCategoryPage({
   searchParams,
 }: {
