@@ -520,11 +520,11 @@ export default async function ExpensesByCategoryPage({
                               includeTransfers,
                               drillCategoryId: row.id,
                             })}`}
-                            className={`cursor-pointer inline-flex justify-end hover:underline underline-offset-2 ${amountClass(
-                              row.amount
-                            )}`}
+                            className="cursor-pointer inline-flex justify-end hover:underline underline-offset-2"
                           >
-                            {moneyAccounting(row.amount)}
+                            <span className={amountClass(row.amount)}>
+                              {moneyAccounting(row.amount)}
+                            </span>
                           </Link>
                         </td>
                       </tr>
@@ -631,7 +631,10 @@ export default async function ExpensesByCategoryPage({
                         colSpan={propertyId ? 5 : 6}
                         className="text-right text-xs text-slate-500"
                       >
-                        Rounding difference: {moneyAccounting(drilldownDifference)}
+                        Rounding difference:{" "}
+                        <span className={amountClass(drilldownDifference)}>
+                          {moneyAccounting(drilldownDifference)}
+                        </span>
                       </td>
                     </tr>
                   ) : null}
