@@ -349,11 +349,7 @@ export async function getCashVsAccrualPLReport(
 
     const baseAmount = Number(row.amount ?? 0);
     const normalizedAmount =
-      category.type === "income" && baseAmount < 0
-        ? Math.abs(baseAmount)
-        : category.type === "expense" && baseAmount > 0
-          ? -Math.abs(baseAmount)
-          : baseAmount;
+      category.type === "income" && baseAmount < 0 ? Math.abs(baseAmount) : baseAmount;
 
     const prorated = prorateAnnualForRange(
       row.year,
@@ -362,7 +358,18 @@ export async function getCashVsAccrualPLReport(
       endDate
     );
 
-    const { incomeCentsDelta, expenseCentsDelta } = sumIncomeExpense(prorated, category.type);
+    let incomeCentsDelta = 0;
+    let expenseCentsDelta = 0;
+    if (category.type === "expense") {
+      // AnnualCategoryAmount for expense categories may be negative (expense) or positive (refund).
+      // Both must be included so refunds reduce expenses.
+      expenseCentsDelta = prorated;
+    } else {
+      ({ incomeCentsDelta, expenseCentsDelta } = sumIncomeExpense(
+        prorated,
+        category.type
+      ));
+    }
 
     cashBreakdown.annualIncomeCents += incomeCentsDelta;
     cashBreakdown.annualExpenseCents += expenseCentsDelta;
