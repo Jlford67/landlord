@@ -247,9 +247,9 @@ export async function getRecurringExpensesOverviewReport(input: {
       startDate,
       endDate
     );
-    // Expense amounts should be negative; flip if imported as positive.
-    const normalized = prorated > 0 ? -Math.abs(prorated) : prorated;
-    annualExpenseCents += normalized;
+    // Annual expense categories include negatives (expense) and positives (refunds).
+    // Include both so refunds reduce total expenses.
+    annualExpenseCents += prorated;
   }
 
   const allExpenseCents = totals.postedTotalCents + otherTransactionalExpenseCents + annualExpenseCents;
