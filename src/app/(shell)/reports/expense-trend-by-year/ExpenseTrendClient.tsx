@@ -257,7 +257,7 @@ export default function ExpenseTrendClient({
                 data={chartData}
                 margin={{ top: 10, right: 20, bottom: 10, left: 40 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                 <XAxis dataKey="year" tickLine={false} axisLine={false} />
                 <YAxis
                   width={90}
@@ -274,15 +274,16 @@ export default function ExpenseTrendClient({
                   formatter={(value) => propertyLabelMap.get(String(value)) ?? String(value)}
                 />
                 {report.properties.map((property) => (
-                  <Bar key={`bar-${property.id}`} dataKey={property.id} />
+                  <Bar key={`bar-${property.id}`} dataKey={property.id} fill="#dc2626" />
                 ))}
                 {report.properties.map((property) => (
                   <Line
                     key={`line-${property.id}`}
                     type="monotone"
                     dataKey={property.id}
-                    strokeWidth={2}
+                    strokeWidth={3}
                     dot={false}
+                    activeDot={{ r: 4 }}
                   />
                 ))}
               </ComposedChart>
