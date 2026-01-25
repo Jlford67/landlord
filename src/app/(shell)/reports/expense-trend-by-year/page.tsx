@@ -89,17 +89,17 @@ export default async function ExpenseTrendByYearPage({
                   transactions combined.
                 </p>
               </div>
+            </div>
 
-              <div className="ll_topbarRight flex flex-wrap items-center gap-2 shrink-0 justify-end">
-                <LinkButton
-                  href="/reports"
-                  variant="outline"
-                  size="md"
-                  leftIcon={<ArrowLeft className="h-4 w-4" />}
-                >
-                  Back
-                </LinkButton>
-              </div>
+            <div className="ll_topbarRight flex flex-wrap items-center gap-2 shrink-0 justify-end">
+              <LinkButton
+                href="/reports"
+                variant="outline"
+                size="md"
+                leftIcon={<ArrowLeft className="h-4 w-4" />}
+              >
+                Back
+              </LinkButton>
             </div>
           </div>
         </div>

@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
   Legend,
   Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -34,34 +36,29 @@ type TooltipProps = {
   propertyLabelMap: Map<string, string>;
 };
 
-const lineColors = [
-  "#2563eb",
-  "#16a34a",
-  "#f97316",
-  "#dc2626",
-  "#7c3aed",
-  "#0ea5e9",
-  "#14b8a6",
-  "#9333ea",
-];
-
 function TrendTooltip({ active, label, payload, rawByYear, propertyLabelMap }: TooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const yearLabel = Number(label);
   if (!Number.isFinite(yearLabel)) return null;
   const rawRow = rawByYear.get(yearLabel);
+  const uniqueEntries = new Map<string, { dataKey: string; value: number }>();
+  payload.forEach((entry) => {
+    const key = String(entry.dataKey ?? "");
+    if (!key || uniqueEntries.has(key)) return;
+    uniqueEntries.set(key, { dataKey: key, value: Number(entry.value ?? 0) });
+  });
+  const entries = Array.from(uniqueEntries.values());
 
   return (
     <div className="ll_card" style={{ padding: 12, minWidth: 200 }}>
       <div className="text-sm font-semibold text-slate-900">Year {yearLabel}</div>
       <div className="mt-2 space-y-2 text-sm">
-        {payload.map((entry) => {
-          const key = String(entry.dataKey ?? "");
-          const displayed = Number(entry.value ?? 0);
-          const raw = Number(rawRow?.[key] ?? 0);
-          const labelText = propertyLabelMap.get(key) ?? "Property";
+        {entries.map((entry) => {
+          const displayed = entry.value;
+          const raw = Number(rawRow?.[entry.dataKey] ?? 0);
+          const labelText = propertyLabelMap.get(entry.dataKey) ?? "Property";
           return (
-            <div key={key} className="space-y-1">
+            <div key={entry.dataKey} className="space-y-1">
               <div className="font-medium text-slate-900">{labelText}</div>
               <div className="text-xs text-slate-600">Displayed: {formatUsd(displayed)}</div>
               <div className="text-xs text-slate-500">Raw: {formatUsd(raw)}</div>
@@ -87,6 +84,11 @@ export default function ExpenseTrendClient({
   const [categoryId, setCategoryId] = useState(selectedCategoryId ?? "");
   const [propertyId, setPropertyId] = useState(selectedPropertyId ?? "");
   const [positive, setPositive] = useState(showPositive);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setCategoryId(selectedCategoryId ?? "");
@@ -139,40 +141,48 @@ export default function ExpenseTrendClient({
             <label className="ll_label" htmlFor="expenseCategory">
               Category (required)
             </label>
-            <select
-              id="expenseCategory"
-              className="ll_input"
-              value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
-              suppressHydrationWarning
-            >
-              <option value="">Select a category</option>
-              {categoryOptions.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.label}
-                </option>
-              ))}
-            </select>
+            {mounted ? (
+              <select
+                id="expenseCategory"
+                className="ll_input"
+                value={categoryId}
+                onChange={(event) => setCategoryId(event.target.value)}
+                suppressHydrationWarning
+              >
+                <option value="">Select a category</option>
+                {categoryOptions.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="ll_input" style={{ height: 40 }} aria-hidden="true" />
+            )}
           </div>
 
           <div>
             <label className="ll_label" htmlFor="expenseProperty">
               Property (optional)
             </label>
-            <select
-              id="expenseProperty"
-              className="ll_input"
-              value={propertyId}
-              onChange={(event) => setPropertyId(event.target.value)}
-              suppressHydrationWarning
-            >
-              <option value="">All properties</option>
-              {propertyOptions.map((property) => (
-                <option key={property.id} value={property.id}>
-                  {property.label}
-                </option>
-              ))}
-            </select>
+            {mounted ? (
+              <select
+                id="expenseProperty"
+                className="ll_input"
+                value={propertyId}
+                onChange={(event) => setPropertyId(event.target.value)}
+                suppressHydrationWarning
+              >
+                <option value="">All properties</option>
+                {propertyOptions.map((property) => (
+                  <option key={property.id} value={property.id}>
+                    {property.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="ll_input" style={{ height: 40 }} aria-hidden="true" />
+            )}
           </div>
 
           <div>
@@ -180,29 +190,49 @@ export default function ExpenseTrendClient({
               Show expenses as positive
             </label>
             <div className="flex items-center gap-2 pt-2">
-              <input
-                id="positiveToggle"
-                type="checkbox"
-                className="h-4 w-4"
-                checked={positive}
-                onChange={(event) => setPositive(event.target.checked)}
-                suppressHydrationWarning
-              />
-              <span className="text-sm text-slate-700">{positive ? "On" : "Off"}</span>
+              {mounted ? (
+                <>
+                  <input
+                    id="positiveToggle"
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={positive}
+                    onChange={(event) => setPositive(event.target.checked)}
+                    suppressHydrationWarning
+                  />
+                  <span className="text-sm text-slate-700">{positive ? "On" : "Off"}</span>
+                </>
+              ) : (
+                <>
+                  <div
+                    className="h-4 w-4 rounded border border-slate-300 bg-slate-100"
+                    aria-hidden="true"
+                  />
+                  <span className="text-sm text-slate-400" aria-hidden="true">
+                    Loading
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         <div className="ll_actions" style={{ marginTop: 8 }}>
-          <Button
-            type="button"
-            variant="warning"
-            size="md"
-            onClick={handleApply}
-            disabled={!categoryId}
-          >
-            Apply filters
-          </Button>
+          {mounted ? (
+            <Button
+              type="button"
+              variant="warning"
+              size="md"
+              onClick={handleApply}
+              disabled={!categoryId}
+            >
+              Apply filters
+            </Button>
+          ) : (
+            <span className="ll_btnWarning opacity-50" aria-hidden="true">
+              Apply filters
+            </span>
+          )}
         </div>
       </div>
 
@@ -223,9 +253,14 @@ export default function ExpenseTrendClient({
         ) : (
           <div style={{ width: "100%", height: 320 }}>
             <ResponsiveContainer>
-              <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 10, right: 20, bottom: 10, left: 40 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="year" tickLine={false} axisLine={false} />
                 <YAxis
+                  width={90}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(value) => formatUsd(Number(value))}
@@ -238,17 +273,19 @@ export default function ExpenseTrendClient({
                 <Legend
                   formatter={(value) => propertyLabelMap.get(String(value)) ?? String(value)}
                 />
-                {report.properties.map((property, index) => (
+                {report.properties.map((property) => (
+                  <Bar key={`bar-${property.id}`} dataKey={property.id} />
+                ))}
+                {report.properties.map((property) => (
                   <Line
-                    key={property.id}
+                    key={`line-${property.id}`}
                     type="monotone"
                     dataKey={property.id}
-                    stroke={lineColors[index % lineColors.length]}
                     strokeWidth={2}
                     dot={false}
                   />
                 ))}
-              </LineChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         )}
