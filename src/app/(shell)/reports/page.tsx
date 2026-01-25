@@ -78,6 +78,12 @@ const sections: ReportSection[] = [
         badgeText: "Date range",
       },
       {
+        title: "Expense Trend by Year",
+        description: "Yearly expense totals by property with annual and ledger data combined.",
+        href: "/reports/expense-trend-by-year",
+        badgeText: "Annual",
+      },
+      {
         title: "Recurring Expenses Overview",
         description: "Upcoming and historical recurring spend.",
         href: "/reports/recurring-expenses-overview",
