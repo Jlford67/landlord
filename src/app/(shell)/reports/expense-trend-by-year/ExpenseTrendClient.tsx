@@ -36,6 +36,17 @@ type TooltipProps = {
   propertyLabelMap: Map<string, string>;
 };
 
+const PALETTE = [
+  "#dc2626",
+  "#2563eb",
+  "#16a34a",
+  "#7c3aed",
+  "#ea580c",
+  "#0891b2",
+  "#0f172a",
+  "#db2777",
+];
+
 function TrendTooltip({ active, label, payload, rawByYear, propertyLabelMap }: TooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const yearLabel = Number(label);
@@ -113,6 +124,25 @@ export default function ExpenseTrendClient({
   const propertyLabelMap = useMemo(() => {
     return new Map(report.properties.map((p) => [p.id, p.label]));
   }, [report.properties]);
+
+  const sortedProperties = useMemo(() => {
+    const props = [...report.properties];
+    props.sort((a, b) => a.label.localeCompare(b.label));
+    return props;
+  }, [report.properties]);
+
+  const isAllProperties = !selectedPropertyId;
+  const propertiesForChart = isAllProperties ? sortedProperties : report.properties;
+
+  const colorByPropertyId = useMemo<Record<string, string>>(() => {
+    if (!isAllProperties) return {};
+    return Object.fromEntries(
+      propertiesForChart.map((property, index) => [
+        property.id,
+        PALETTE[index % PALETTE.length],
+      ])
+    );
+  }, [isAllProperties, propertiesForChart]);
 
   const handleApply = () => {
     if (!categoryId) return;
@@ -273,14 +303,19 @@ export default function ExpenseTrendClient({
                 <Legend
                   formatter={(value) => propertyLabelMap.get(String(value)) ?? String(value)}
                 />
-                {report.properties.map((property) => (
-                  <Bar key={`bar-${property.id}`} dataKey={property.id} fill="#dc2626" />
+                {propertiesForChart.map((property) => (
+                  <Bar
+                    key={`bar-${property.id}`}
+                    dataKey={property.id}
+                    fill={isAllProperties ? colorByPropertyId[property.id] : "#dc2626"}
+                  />
                 ))}
-                {report.properties.map((property) => (
+                {propertiesForChart.map((property) => (
                   <Line
                     key={`line-${property.id}`}
                     type="monotone"
                     dataKey={property.id}
+                    stroke={isAllProperties ? colorByPropertyId[property.id] : "#dc2626"}
                     strokeWidth={3}
                     dot={false}
                     activeDot={{ r: 4 }}

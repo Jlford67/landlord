@@ -5,7 +5,8 @@ import { requireUser } from "@/lib/auth";
 import { getExpenseTrendByYear } from "@/lib/reports/expenseTrendByYear";
 import ExpenseTrendClient from "./ExpenseTrendClient";
 import LinkButton from "@/components/ui/LinkButton";
-import { ArrowLeft } from "lucide-react";
+import Button from "@/components/ui/Button";
+import { ArrowLeft, Download } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -28,6 +29,7 @@ export default async function ExpenseTrendByYearPage({
   const propertyId = getStr(sp, "propertyId");
   const positiveParam = getStr(sp, "positive");
   const showPositive = positiveParam !== "0";
+  const positiveValue = showPositive ? "1" : "0";
 
   const properties = await prisma.property.findMany({
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
@@ -100,6 +102,23 @@ export default async function ExpenseTrendByYearPage({
               >
                 Back
               </LinkButton>
+
+              <form action="/api/exports/reports/expense-trend-by-year" method="get">
+                <input type="hidden" name="categoryId" value={categoryId} />
+                {propertyId ? (
+                  <input type="hidden" name="propertyId" value={propertyId} />
+                ) : null}
+                <input type="hidden" name="positive" value={positiveValue} />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  leftIcon={<Download className="h-4 w-4" />}
+                  disabled={!categoryId}
+                >
+                  Export Excel
+                </Button>
+              </form>
             </div>
           </div>
         </div>
