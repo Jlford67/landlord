@@ -60,6 +60,12 @@ const sections: ReportSection[] = [
         href: "/reports/income-by-category",
         badgeText: "Date range",
       },
+      {
+        title: "Income Trend by Year",
+        description: "Yearly income totals by property with annual and ledger data combined.",
+        href: "/reports/income-trend-by-year",
+        badgeText: "Annual",
+      },
     ],
   },
   {
