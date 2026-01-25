@@ -38,6 +38,13 @@ const sections: ReportSection[] = [
         badgeText: "Annual",
       },
       {
+        title: "Income vs Expenses by Year",
+        description:
+          "Stacked annual view comparing income and expenses, with net results.",
+        href: "/reports/income-vs-expenses-by-year",
+        badgeText: "Annual",
+      },
+      {
         title: "Cash vs Accrual P&L",
         description: "Compare cash-based and accrual-based performance.",
         href: "/reports/cash-vs-accrual-pl",
