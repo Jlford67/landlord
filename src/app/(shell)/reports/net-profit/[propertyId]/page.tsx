@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { AmountCell } from "@/components/ui/AmountCell";
 import { formatUsd } from "@/lib/money";
 import {
+  getNetProfitByYearForProperty,
   getNetProfitForProperty,
   type NetProfitYears,
 } from "@/lib/reports/netProfit";
@@ -38,7 +39,10 @@ export default async function NetProfitDetailPage({
   const sp = (await searchParams) ?? {};
   const years = parseYears(getStr(sp, "years"));
 
-  const row = await getNetProfitForProperty({ propertyId, years });
+  const [row, annualRows] = await Promise.all([
+    getNetProfitForProperty({ propertyId, years }),
+    getNetProfitByYearForProperty({ propertyId, years }),
+  ]);
 
   return (
     <div className="ll_page">
@@ -95,6 +99,38 @@ export default async function NetProfitDetailPage({
               <AmountCell amount={row.expenses ?? 0} />
             </div>
           </div>
+        </div>
+
+        <div className="ll_card ll_table_wrap">
+          <div className="px-4 pt-4 text-sm font-semibold text-slate-900">
+            Annual net profit
+          </div>
+          <table className="ll_table ll_table_zebra w-full">
+            <thead>
+              <tr>
+                <th className="w-24">Year</th>
+                <th className="w-40 text-right">Net profit</th>
+                <th className="w-40 text-right">Income</th>
+                <th className="w-40 text-right">Expenses</th>
+              </tr>
+            </thead>
+            <tbody>
+              {annualRows.map((annual) => (
+                <tr key={annual.year}>
+                  <td className="font-medium text-slate-900">{annual.year}</td>
+                  <td className="text-right">
+                    <AmountCell amount={annual.netProfit} />
+                  </td>
+                  <td className="text-right">
+                    <AmountCell amount={annual.income ?? 0} />
+                  </td>
+                  <td className="text-right">
+                    <AmountCell amount={annual.expenses ?? 0} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

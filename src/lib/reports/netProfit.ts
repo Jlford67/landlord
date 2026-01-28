@@ -12,9 +12,32 @@ export type NetProfitRow = {
   expenses?: number;
 };
 
+export type YearNetProfitRow = {
+  year: number;
+  netProfit: number;
+  income?: number;
+  expenses?: number;
+};
+
 function todayUtc(): Date {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+function daysInYear(year: number) {
+  const start = Date.UTC(year, 0, 1);
+  const end = Date.UTC(year + 1, 0, 1);
+  return Math.round((end - start) / 86_400_000);
+}
+
+function overlapDaysInYear(rangeStart: Date, rangeEnd: Date, year: number) {
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const yearEnd = new Date(Date.UTC(year, 11, 31));
+  const start = rangeStart > yearStart ? rangeStart : yearStart;
+  const end = rangeEnd < yearEnd ? rangeEnd : yearEnd;
+  if (start > end) return 0;
+
+  return Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
 }
 
 function startForYears(years: NetProfitYears): Date {
@@ -54,6 +77,110 @@ export async function getNetProfitByProperty({
   });
 
   return rows;
+}
+
+export async function getNetProfitByYearForProperty({
+  propertyId,
+  years,
+}: {
+  propertyId: string;
+  years: NetProfitYears;
+}): Promise<YearNetProfitRow[]> {
+  const { startDate, endDate } = getNetProfitRange(years);
+  const endExclusive = new Date(
+    Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1)
+  );
+
+  const categories = await prisma.category.findMany({
+    where: { type: { in: ["income", "expense"] } },
+    select: { id: true, type: true },
+  });
+  const categoryTypeById = new Map(categories.map((category) => [category.id, category.type]));
+  const allowedCategoryIds = categories.map((category) => category.id);
+
+  const totalsByYear = new Map<number, { income: number; expenses: number }>();
+
+  const ensureYear = (year: number) => {
+    const existing = totalsByYear.get(year);
+    if (existing) return existing;
+    const next = { income: 0, expenses: 0 };
+    totalsByYear.set(year, next);
+    return next;
+  };
+
+  if (allowedCategoryIds.length > 0) {
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        propertyId,
+        categoryId: { in: allowedCategoryIds },
+        deletedAt: null,
+        date: {
+          gte: startDate,
+          lt: endExclusive,
+        },
+      },
+      select: {
+        amount: true,
+        date: true,
+        categoryId: true,
+      },
+    });
+
+    for (const tx of transactions) {
+      const year = tx.date.getUTCFullYear();
+      const bucket = ensureYear(year);
+      const amount = Number(tx.amount ?? 0);
+      const categoryType = categoryTypeById.get(tx.categoryId);
+      if (categoryType === "income") bucket.income += amount;
+      if (categoryType === "expense") bucket.expenses += amount;
+    }
+  }
+
+  const startYear = startDate.getUTCFullYear();
+  const endYear = endDate.getUTCFullYear();
+  const annualRows = await prisma.annualCategoryAmount.findMany({
+    where: {
+      propertyId,
+      year: { gte: startYear, lte: endYear },
+      category: { type: { in: ["income", "expense"] } },
+    },
+    select: {
+      amount: true,
+      year: true,
+      category: { select: { type: true } },
+    },
+  });
+
+  for (const row of annualRows) {
+    const overlapDays = overlapDaysInYear(startDate, endDate, row.year);
+    if (overlapDays <= 0) continue;
+    const fraction = overlapDays / daysInYear(row.year);
+    const amount = Number(row.amount ?? 0) * fraction;
+    const bucket = ensureYear(row.year);
+    if (row.category.type === "income") bucket.income += amount;
+    if (row.category.type === "expense") bucket.expenses += amount;
+  }
+
+  let yearsToInclude: number[] = [];
+  if (years === "all") {
+    yearsToInclude = Array.from(totalsByYear.keys());
+  } else {
+    for (let year = startYear; year <= endYear; year += 1) {
+      yearsToInclude.push(year);
+    }
+  }
+
+  yearsToInclude.sort((a, b) => b - a);
+
+  return yearsToInclude.map((year) => {
+    const bucket = totalsByYear.get(year) ?? { income: 0, expenses: 0 };
+    return {
+      year,
+      income: bucket.income,
+      expenses: bucket.expenses,
+      netProfit: bucket.income + bucket.expenses,
+    };
+  });
 }
 
 export async function getNetProfitForProperty({
