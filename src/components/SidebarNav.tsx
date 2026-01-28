@@ -21,6 +21,7 @@ const NAV = [
   { href: "/categories", label: "Categories", Icon: Tags },
   { href: "/ledger", label: "Ledger", Icon: BookOpen },
   { href: "/reports", label: "Reports", Icon: BarChart3 },
+  { href: "/reports/net-profit", label: "Net Profit", Icon: BarChart3 },
   { href: "/property-tax", label: "Property Tax", Icon: Receipt },
   { href: "/insurance", label: "Insurance", Icon: Shield },
   { href: "/property-managers", label: "Property manager", Icon: Users },

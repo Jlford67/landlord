@@ -26,6 +26,12 @@ const sections: ReportSection[] = [
         badgeText: "Date range",
       },
       {
+        title: "Net Profit Leaderboard",
+        description: "Rank properties by net profit over a selected time horizon.",
+        href: "/reports/net-profit",
+        badgeText: "Leaderboard",
+      },
+      {
         title: "Profit & Loss by Month (Trend)",
         description: "Monthly income, expenses, and net over time.",
         href: "/reports/profit-loss-by-month",
