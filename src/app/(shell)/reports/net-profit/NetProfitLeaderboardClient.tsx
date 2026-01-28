@@ -105,8 +105,8 @@ export default function NetProfitLeaderboardClient({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="ll_card" style={{ height: 440 }}>
+    <div className="grid gap-4">
+      <div className="ll_card" style={{ height: 460 }}>
         <div className="px-4 pt-4 text-sm font-semibold text-slate-900">Net profit by property</div>
         <div style={{ width: "100%", height: 380 }}>
           <ResponsiveContainer>
