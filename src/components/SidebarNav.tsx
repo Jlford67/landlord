@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -15,30 +14,13 @@ import {
   BarChart3,
 } from "lucide-react";
 
-type NavItem = {
-  href: string;
-  label: string;
-  Icon: typeof BarChart3;
-};
-
-type NavGroup = {
-  label: string;
-  Icon: typeof BarChart3;
-  children: NavItem[];
-};
-
-const REPORTS_CHILDREN: NavItem[] = [
-  { href: "/reports/net-profit", label: "Net Profit", Icon: BarChart3 },
-  { href: "/reports", label: "All Reports", Icon: BarChart3 },
-];
-
-const NAV: Array<NavItem | NavGroup> = [
+const NAV = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/properties", label: "Properties", Icon: Building2 },
   { href: "/tenants", label: "Tenants", Icon: Users },
   { href: "/categories", label: "Categories", Icon: Tags },
   { href: "/ledger", label: "Ledger", Icon: BookOpen },
-  { label: "Reports", Icon: BarChart3, children: REPORTS_CHILDREN },
+  { href: "/reports", label: "Reports", Icon: BarChart3 },
   { href: "/property-tax", label: "Property Tax", Icon: Receipt },
   { href: "/insurance", label: "Insurance", Icon: Shield },
   { href: "/property-managers", label: "Property manager", Icon: Users },
@@ -61,70 +43,22 @@ function isActivePath(pathname: string, href: string) {
 
 export default function SidebarNav() {
   const pathname = usePathname();
-  const isReportsRoute = pathname === "/reports" || pathname.startsWith("/reports/");
-  const [reportsExpanded, setReportsExpanded] = useState(isReportsRoute);
-
-  useEffect(() => {
-    if (isReportsRoute) {
-      setReportsExpanded(true);
-    }
-  }, [isReportsRoute]);
 
   return (
     <nav className="ll_side_nav">
-      {NAV.map((item) => {
-        if ("children" in item) {
-          const active = isReportsRoute;
-          return (
-            <div key={item.label}>
-              <button
-                type="button"
-                className={`ll_side_link w-full ${active ? "is-active" : ""}`}
-                onClick={() => setReportsExpanded((prev) => !prev)}
-                suppressHydrationWarning
-              >
-                <span className="ll_side_icon" aria-hidden="true">
-                  <item.Icon size={18} />
-                </span>
-                <span className="ll_side_label">{item.label}</span>
-              </button>
-              {reportsExpanded && (
-                <div className="mt-1 space-y-1">
-                  {item.children.map((child) => {
-                    const childActive = isActivePath(pathname, child.href);
-                    return (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={`ll_side_link pl-10 text-sm ${
-                          childActive ? "is-active" : ""
-                        }`}
-                      >
-                        <span className="ll_side_icon" aria-hidden="true">
-                          <child.Icon size={16} />
-                        </span>
-                        <span className="ll_side_label">{child.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        }
-
-        const active = isActivePath(pathname, item.href);
+      {NAV.map(({ href, label, Icon }) => {
+        const active = isActivePath(pathname, href);
 
         return (
           <Link
-            key={item.href}
-            href={item.href}
+            key={href}
+            href={href}
             className={`ll_side_link ${active ? "is-active" : ""}`}
           >
             <span className="ll_side_icon" aria-hidden="true">
-              <item.Icon size={18} />
+              <Icon size={18} />
             </span>
-            <span className="ll_side_label">{item.label}</span>
+            <span className="ll_side_label">{label}</span>
           </Link>
         );
       })}
