@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -14,20 +15,35 @@ import {
   BarChart3,
 } from "lucide-react";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  Icon: typeof BarChart3;
+};
+
+type NavGroup = {
+  label: string;
+  Icon: typeof BarChart3;
+  children: NavItem[];
+};
+
+const REPORTS_CHILDREN: NavItem[] = [
+  { href: "/reports/net-profit", label: "Net Profit", Icon: BarChart3 },
+  { href: "/reports", label: "All Reports", Icon: BarChart3 },
+];
+
+const NAV: Array<NavItem | NavGroup> = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/properties", label: "Properties", Icon: Building2 },
   { href: "/tenants", label: "Tenants", Icon: Users },
   { href: "/categories", label: "Categories", Icon: Tags },
   { href: "/ledger", label: "Ledger", Icon: BookOpen },
-  { href: "/reports", label: "Reports", Icon: BarChart3 },
+  { label: "Reports", Icon: BarChart3, children: REPORTS_CHILDREN },
   { href: "/property-tax", label: "Property Tax", Icon: Receipt },
   { href: "/insurance", label: "Insurance", Icon: Shield },
   { href: "/property-managers", label: "Property manager", Icon: Users },
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
-
-const REPORT_LINKS = [{ href: "/reports/net-profit", label: "Net Profit", Icon: BarChart3 }];
 
 function isActivePath(pathname: string, href: string) {
   // Ledger should stay active even when nested under /properties/[id]/ledger
@@ -45,42 +61,71 @@ function isActivePath(pathname: string, href: string) {
 
 export default function SidebarNav() {
   const pathname = usePathname();
+  const isReportsRoute = pathname === "/reports" || pathname.startsWith("/reports/");
+  const [reportsExpanded, setReportsExpanded] = useState(isReportsRoute);
+
+  useEffect(() => {
+    if (isReportsRoute) {
+      setReportsExpanded(true);
+    }
+  }, [isReportsRoute]);
 
   return (
     <nav className="ll_side_nav">
-      {NAV.map(({ href, label, Icon }) => {
-        const active = isActivePath(pathname, href);
+      {NAV.map((item) => {
+        if ("children" in item) {
+          const active = isReportsRoute;
+          return (
+            <div key={item.label}>
+              <button
+                type="button"
+                className={`ll_side_link w-full ${active ? "is-active" : ""}`}
+                onClick={() => setReportsExpanded((prev) => !prev)}
+                suppressHydrationWarning
+              >
+                <span className="ll_side_icon" aria-hidden="true">
+                  <item.Icon size={18} />
+                </span>
+                <span className="ll_side_label">{item.label}</span>
+              </button>
+              {reportsExpanded && (
+                <div className="mt-1 space-y-1">
+                  {item.children.map((child) => {
+                    const childActive = isActivePath(pathname, child.href);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className={`ll_side_link pl-10 text-sm ${
+                          childActive ? "is-active" : ""
+                        }`}
+                      >
+                        <span className="ll_side_icon" aria-hidden="true">
+                          <child.Icon size={16} />
+                        </span>
+                        <span className="ll_side_label">{child.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const active = isActivePath(pathname, item.href);
 
         return (
-          <div key={href}>
-            <Link href={href} className={`ll_side_link ${active ? "is-active" : ""}`}>
-              <span className="ll_side_icon" aria-hidden="true">
-                <Icon size={18} />
-              </span>
-              <span className="ll_side_label">{label}</span>
-            </Link>
-            {href === "/reports" && (
-              <div className="mt-1 space-y-1">
-                {REPORT_LINKS.map((report) => {
-                  const reportActive = isActivePath(pathname, report.href);
-                  return (
-                    <Link
-                      key={report.href}
-                      href={report.href}
-                      className={`ll_side_link pl-10 text-sm ${
-                        reportActive ? "is-active" : ""
-                      }`}
-                    >
-                      <span className="ll_side_icon" aria-hidden="true">
-                        <report.Icon size={16} />
-                      </span>
-                      <span className="ll_side_label">{report.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`ll_side_link ${active ? "is-active" : ""}`}
+          >
+            <span className="ll_side_icon" aria-hidden="true">
+              <item.Icon size={18} />
+            </span>
+            <span className="ll_side_label">{item.label}</span>
+          </Link>
         );
       })}
     </nav>
