@@ -21,12 +21,13 @@ const NAV = [
   { href: "/categories", label: "Categories", Icon: Tags },
   { href: "/ledger", label: "Ledger", Icon: BookOpen },
   { href: "/reports", label: "Reports", Icon: BarChart3 },
-  { href: "/reports/net-profit", label: "Net Profit", Icon: BarChart3 },
   { href: "/property-tax", label: "Property Tax", Icon: Receipt },
   { href: "/insurance", label: "Insurance", Icon: Shield },
   { href: "/property-managers", label: "Property manager", Icon: Users },
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
+
+const REPORT_LINKS = [{ href: "/reports/net-profit", label: "Net Profit", Icon: BarChart3 }];
 
 function isActivePath(pathname: string, href: string) {
   // Ledger should stay active even when nested under /properties/[id]/ledger
@@ -51,16 +52,35 @@ export default function SidebarNav() {
         const active = isActivePath(pathname, href);
 
         return (
-          <Link
-            key={href}
-            href={href}
-            className={`ll_side_link ${active ? "is-active" : ""}`}
-          >
-            <span className="ll_side_icon" aria-hidden="true">
-              <Icon size={18} />
-            </span>
-            <span className="ll_side_label">{label}</span>
-          </Link>
+          <div key={href}>
+            <Link href={href} className={`ll_side_link ${active ? "is-active" : ""}`}>
+              <span className="ll_side_icon" aria-hidden="true">
+                <Icon size={18} />
+              </span>
+              <span className="ll_side_label">{label}</span>
+            </Link>
+            {href === "/reports" && (
+              <div className="mt-1 space-y-1">
+                {REPORT_LINKS.map((report) => {
+                  const reportActive = isActivePath(pathname, report.href);
+                  return (
+                    <Link
+                      key={report.href}
+                      href={report.href}
+                      className={`ll_side_link pl-10 text-sm ${
+                        reportActive ? "is-active" : ""
+                      }`}
+                    >
+                      <span className="ll_side_icon" aria-hidden="true">
+                        <report.Icon size={16} />
+                      </span>
+                      <span className="ll_side_label">{report.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         );
       })}
     </nav>
