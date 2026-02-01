@@ -9,7 +9,6 @@ import { formatUsd } from "@/lib/money";
 import PropertyPicker from "@/components/dashboard/PropertyPicker";
 import PropertyPhoto from "@/components/properties/PropertyPhoto";
 import AnnualBarChartClient from "./AnnualBarChartClient";
-import LeaseLinkMount from "./LeaseLinkMount";
 import YearlySummaryClient from "./YearlySummaryClient";
 import NotificationsToastClient from "@/components/notifications/NotificationsToastClient";
 import { generateNotificationsIfNeeded, getTodayInAppNotifications } from "../settings/actions";
@@ -428,6 +427,13 @@ export default async function DashboardPage({
     activeLease && featuredPropertyId
       ? `/properties/${featuredPropertyId}/leases/${activeLease.id}/edit`
       : "";
+  const leaseSummaryHref = hasMultipleLeases
+    ? featuredPropertyId
+      ? `/properties/${featuredPropertyId}`
+      : ""
+    : activeLease
+      ? leaseHref
+      : "";
   const leaseSeverity = (() => {
     if (!activeLease?.endDate) return "ok";
     const todayStartUtc = new Date(
@@ -569,62 +575,74 @@ export default async function DashboardPage({
                   </div>
                 </div>
                 <div className="mt-3 space-y-2 text-sm text-gray-700">
-                  {hasMultipleLeases ? (
-                    <>
-                      <div className="flex items-baseline justify-between gap-4">
-                        <div className="text-gray-500">Total rent</div>
-                        <div className="font-medium text-gray-900">
-                          {formatUsd(totalRent)} / month
-                        </div>
-                      </div>
-                      <div className="space-y-1 text-xs text-gray-500">
-                        {activeLeases.map((lease, index) => {
-                          const unitLabel =
-                            lease.unitLabel?.trim() || `Unit ${index + 1}`;
-                          const leaseEnd =
-                            lease.endDate ? formatDateISODateUTC(lease.endDate) : "n/a";
-                          return (
-                            <div
-                              key={lease.id}
-                              className="flex items-baseline justify-between gap-4"
-                            >
-                              <div>{unitLabel}</div>
-                              <div className="text-gray-700">
-                                {formatUsd(lease.rentAmount)} (ends {leaseEnd})
-                              </div>
+                  {leaseSummaryHref ? (
+                    <Link href={leaseSummaryHref} className="block">
+                      {hasMultipleLeases ? (
+                        <>
+                          <div className="flex items-baseline justify-between gap-4">
+                            <div className="text-gray-500">Total rent</div>
+                            <div className="font-medium text-gray-900">
+                              {formatUsd(totalRent)} / month
                             </div>
-                          );
-                        })}
-                      </div>
-                    </>
+                          </div>
+                          <div className="space-y-1 text-xs text-gray-500">
+                            {activeLeases.map((lease, index) => {
+                              const unitLabel =
+                                lease.unitLabel?.trim() || `Unit ${index + 1}`;
+                              const leaseEnd = lease.endDate
+                                ? formatDateISODateUTC(lease.endDate)
+                                : "n/a";
+                              return (
+                                <div
+                                  key={lease.id}
+                                  className="flex items-baseline justify-between gap-4"
+                                >
+                                  <div>{unitLabel}</div>
+                                  <div className="text-gray-700">
+                                    {formatUsd(lease.rentAmount)} (ends {leaseEnd})
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-baseline justify-between gap-4">
+                            <div className="text-gray-500">Rent</div>
+                            <div className="font-medium text-gray-900">
+                              {activeLease ? (
+                                <span className={rentLinkClass}>{rentLabel}</span>
+                              ) : (
+                                rentLabel
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-baseline justify-between gap-4">
+                            <div className="text-gray-500">Lease ends</div>
+                            <div className="font-medium text-gray-900">
+                              {activeLease?.endDate ? (
+                                <span className={leaseEndClass}>{leaseEndLabel}</span>
+                              ) : (
+                                <span className="text-sm text-gray-900">
+                                  {leaseEndLabel}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </Link>
                   ) : (
                     <>
                       <div className="flex items-baseline justify-between gap-4">
                         <div className="text-gray-500">Rent</div>
-                        <div className="font-medium text-gray-900">
-                          {activeLease ? (
-                            <LeaseLinkMount
-                              label={rentLabel}
-                              href={leaseHref}
-                              className={rentLinkClass}
-                            />
-                          ) : (
-                            rentLabel
-                          )}
-                        </div>
+                        <div className="font-medium text-gray-900">{rentLabel}</div>
                       </div>
                       <div className="flex items-baseline justify-between gap-4">
                         <div className="text-gray-500">Lease ends</div>
                         <div className="font-medium text-gray-900">
-                          {activeLease?.endDate ? (
-                            <LeaseLinkMount
-                              label={leaseEndLabel}
-                              href={leaseHref}
-                              className={leaseEndClass}
-                            />
-                          ) : (
-                            <span className="text-sm text-gray-900">{leaseEndLabel}</span>
-                          )}
+                          <span className="text-sm text-gray-900">{leaseEndLabel}</span>
                         </div>
                       </div>
                     </>
