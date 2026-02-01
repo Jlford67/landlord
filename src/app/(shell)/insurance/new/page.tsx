@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import MountedInsuranceForm from "@/components/insurance/MountedInsuranceForm";
+import PremiumMoneyInput from "@/components/insurance/PremiumMoneyInput";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -101,122 +103,120 @@ export default async function NewInsurancePage({
           </div>
         ) : null}
 
-        <form className="ll_form" method="post" action="/api/insurance" style={{ marginTop: 14 }}>
-          <label className="ll_label" htmlFor="propertyId">
-            Property
-          </label>
-          <select
-            id="propertyId"
-            name="propertyId"
-            className="ll_input"
-            required
-            defaultValue={propertyId || ""}
-            suppressHydrationWarning
-          >
-            <option value="">Select a property...</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {propertyLabel(p)}
-              </option>
-            ))}
-          </select>
+        <MountedInsuranceForm placeholderHeight={320}>
+          <form className="ll_form" method="post" action="/api/insurance" style={{ marginTop: 14 }}>
+            <label className="ll_label" htmlFor="propertyId">
+              Property
+            </label>
+            <select
+              id="propertyId"
+              name="propertyId"
+              className="ll_input"
+              required
+              defaultValue={propertyId || ""}
+              suppressHydrationWarning
+            >
+              <option value="">Select a property...</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {propertyLabel(p)}
+                </option>
+              ))}
+            </select>
 
-          <label className="ll_label" htmlFor="insurer">
-            Insurer
-          </label>
-          <input id="insurer" name="insurer" className="ll_input" placeholder="Company" suppressHydrationWarning />
+            <label className="ll_label" htmlFor="insurer">
+              Insurer
+            </label>
+            <input id="insurer" name="insurer" className="ll_input" placeholder="Company" suppressHydrationWarning />
 
-          <label className="ll_label" htmlFor="policyNum">
-            Policy #
-          </label>
-          <input id="policyNum" name="policyNum" className="ll_input" placeholder="12345" suppressHydrationWarning />
+            <label className="ll_label" htmlFor="policyNum">
+              Policy #
+            </label>
+            <input id="policyNum" name="policyNum" className="ll_input" placeholder="12345" suppressHydrationWarning />
 
-          <label className="ll_label" htmlFor="agentName">
-            Agent Name
-          </label>
-          <input
-            id="agentName"
-            name="agentName"
-            className="ll_input"
-            placeholder="Person or contact"
-            suppressHydrationWarning
-          />
-
-          <label className="ll_label" htmlFor="phone">
-            Phone
-          </label>
-          <input id="phone" name="phone" className="ll_input" placeholder="555-123-4567" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="premium">
-            Premium
-          </label>
-          <input
-            id="premium"
-            name="premium"
-            type="number"
-            step="0.01"
-            className="ll_input"
-            placeholder="0.00"
-            suppressHydrationWarning
-          />
-
-          <label className="ll_label" htmlFor="dueDate">
-            Due Date
-          </label>
-          <input id="dueDate" name="dueDate" type="date" className="ll_input" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="paidDate">
-            Paid Date
-          </label>
-          <input id="paidDate" name="paidDate" type="date" className="ll_input" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="webPortal">
-            Web Portal URL
-          </label>
-          <input id="webPortal" name="webPortal" className="ll_input" placeholder="https://" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="allPolicies">
-            All Policies URL
-          </label>
-          <input id="allPolicies" name="allPolicies" className="ll_input" placeholder="https://" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="bank">
-            Bank
-          </label>
-          <input id="bank" name="bank" className="ll_input" placeholder="Bank name" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="bankNumber">
-            Bank Number
-          </label>
-          <input id="bankNumber" name="bankNumber" className="ll_input" placeholder="Account number" suppressHydrationWarning />
-
-          <label className="ll_label" htmlFor="loanRef">
-            Loan Ref
-          </label>
-          <input id="loanRef" name="loanRef" className="ll_input" placeholder="Reference" suppressHydrationWarning />
-
-          <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <label className="ll_label" htmlFor="agentName">
+              Agent Name
+            </label>
             <input
-              id="autoPayMonthly"
-              name="autoPayMonthly"
-              type="checkbox"
+              id="agentName"
+              name="agentName"
+              className="ll_input"
+              placeholder="Person or contact"
               suppressHydrationWarning
             />
-            AutoPay Monthly
-          </label>
-          <div className="ll_muted" style={{ marginTop: -6, marginBottom: 10 }}>
-            AutoPay Monthly policies are excluded from reminders.
-          </div>
 
-          <div className="ll_actions">
-            <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
-              Save policy
-            </button>
-            <Link className="ll_btn" href={cancelHref}>
-              Cancel
-            </Link>
-          </div>
-        </form>
+            <label className="ll_label" htmlFor="phone">
+              Phone
+            </label>
+            <input id="phone" name="phone" className="ll_input" placeholder="555-123-4567" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="premium">
+              Premium
+            </label>
+            <PremiumMoneyInput
+              id="premium"
+              name="premium"
+              className="ll_input"
+              defaultValue={null}
+            />
+            <label className="ll_label" htmlFor="dueDate">
+              Due Date
+            </label>
+            <input id="dueDate" name="dueDate" type="date" className="ll_input" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="paidDate">
+              Paid Date
+            </label>
+            <input id="paidDate" name="paidDate" type="date" className="ll_input" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="webPortal">
+              Web Portal URL
+            </label>
+            <input id="webPortal" name="webPortal" className="ll_input" placeholder="https://" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="allPolicies">
+              All Policies URL
+            </label>
+            <input id="allPolicies" name="allPolicies" className="ll_input" placeholder="https://" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="bank">
+              Bank
+            </label>
+            <input id="bank" name="bank" className="ll_input" placeholder="Bank name" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="bankNumber">
+              Bank Number
+            </label>
+            <input id="bankNumber" name="bankNumber" className="ll_input" placeholder="Account number" suppressHydrationWarning />
+
+            <label className="ll_label" htmlFor="loanRef">
+              Loan Ref
+            </label>
+            <input id="loanRef" name="loanRef" className="ll_input" placeholder="Reference" suppressHydrationWarning />
+
+            <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <input
+                id="autoPayMonthly"
+                name="autoPayMonthly"
+                type="checkbox"
+                suppressHydrationWarning
+              />
+              AutoPay Monthly
+            </label>
+            <div className="ll_muted" style={{ marginTop: -6, marginBottom: 10 }}>
+              AutoPay Monthly policies are excluded from reminders.
+            </div>
+
+            <div className="ll_actions">
+              <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
+                Save policy
+              </button>
+              <Link className="ll_btn" href={cancelHref}>
+                Cancel
+              </Link>
+            </div>
+          </form>
+        </MountedInsuranceForm>
       </div>
     </div>
   );
