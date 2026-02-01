@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { toDate } from "../route";
 
 function toFloat(value: FormDataEntryValue | null) {
-  const str = String(value ?? "").replace(/,/g, "").trim();
+  const str = String(value ?? "").replace(/[$,]/g, "").trim();
   if (!str) return null;
   const n = parseFloat(str);
   return Number.isFinite(n) ? n : null;

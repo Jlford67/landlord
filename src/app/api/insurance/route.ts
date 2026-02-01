@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 type DateParseResult = { value: Date | null } | { error: string };
 
 function toFloat(value: FormDataEntryValue | null) {
-  const str = String(value ?? "").replace(/,/g, "").trim();
+  const str = String(value ?? "").replace(/[$,]/g, "").trim();
   if (!str) return null;
   const n = parseFloat(str);
   return Number.isFinite(n) ? n : null;

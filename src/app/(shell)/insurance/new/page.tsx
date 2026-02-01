@@ -153,12 +153,25 @@ export default async function NewInsurancePage({
           <input
             id="premium"
             name="premium"
-            type="number"
-            step="0.01"
+            type="text"
             className="ll_input"
-            placeholder="0.00"
+            inputMode="decimal"
+            placeholder="$0.00"
             suppressHydrationWarning
           />
+
+          <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <input
+              id="autoPayMonthly"
+              name="autoPayMonthly"
+              type="checkbox"
+              suppressHydrationWarning
+            />
+            AutoPay Monthly
+          </label>
+          <div className="ll_muted" style={{ marginTop: -6, marginBottom: 10 }}>
+            AutoPay Monthly policies are excluded from reminders.
+          </div>
 
           <label className="ll_label" htmlFor="dueDate">
             Due Date
@@ -194,19 +207,6 @@ export default async function NewInsurancePage({
             Loan Ref
           </label>
           <input id="loanRef" name="loanRef" className="ll_input" placeholder="Reference" suppressHydrationWarning />
-
-          <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input
-              id="autoPayMonthly"
-              name="autoPayMonthly"
-              type="checkbox"
-              suppressHydrationWarning
-            />
-            AutoPay Monthly
-          </label>
-          <div className="ll_muted" style={{ marginTop: -6, marginBottom: 10 }}>
-            AutoPay Monthly policies are excluded from reminders.
-          </div>
 
           <div className="ll_actions">
             <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>

@@ -23,6 +23,16 @@ function inputDate(d?: Date | null) {
   return iso.slice(0, 10);
 }
 
+function formatCurrency(value?: number | null) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
 async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
   // Files live in /public/property-photos; URLs are /property-photos/<file>
   const dir = path.join(process.cwd(), "public", "property-photos");
@@ -147,12 +157,26 @@ export default async function EditInsurancePage({
           <input
             id="premium"
             name="premium"
-            type="number"
-            step="0.01"
+            type="text"
             className="ll_input"
-            defaultValue={policy.premium ?? ""}
+            inputMode="decimal"
+            defaultValue={formatCurrency(policy.premium)}
             suppressHydrationWarning
           />
+
+          <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <input
+              id="autoPayMonthly"
+              name="autoPayMonthly"
+              type="checkbox"
+              defaultChecked={policy.autoPayMonthly ?? false}
+              suppressHydrationWarning
+            />
+            AutoPay Monthly
+          </label>
+          <div className="ll_muted" style={{ marginTop: -6, marginBottom: 10 }}>
+            AutoPay Monthly policies are excluded from reminders.
+          </div>
 
           <label className="ll_label" htmlFor="dueDate">
             Due Date
@@ -202,20 +226,6 @@ export default async function EditInsurancePage({
             Loan Ref
           </label>
           <input id="loanRef" name="loanRef" className="ll_input" defaultValue={policy.loanRef ?? ""} suppressHydrationWarning />
-
-          <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input
-              id="autoPayMonthly"
-              name="autoPayMonthly"
-              type="checkbox"
-              defaultChecked={policy.autoPayMonthly ?? false}
-              suppressHydrationWarning
-            />
-            AutoPay Monthly
-          </label>
-          <div className="ll_muted" style={{ marginTop: -6, marginBottom: 10 }}>
-            AutoPay Monthly policies are excluded from reminders.
-          </div>
 
           <div className="ll_actions">
             <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
