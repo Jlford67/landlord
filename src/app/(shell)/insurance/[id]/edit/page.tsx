@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
+import InsuranceEditControls from "@/components/insurance/InsuranceEditControls.client";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -21,16 +22,6 @@ function inputDate(d?: Date | null) {
   if (!d) return "";
   const iso = new Date(d).toISOString();
   return iso.slice(0, 10);
-}
-
-function formatCurrency(value?: number | null) {
-  if (value === null || value === undefined || Number.isNaN(value)) return "";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
 }
 
 async function findPropertyPhotoSrc(propertyId: string): Promise<string | null> {
@@ -151,32 +142,10 @@ export default async function EditInsurancePage({
           </label>
           <input id="phone" name="phone" className="ll_input" defaultValue={policy.phone ?? ""} suppressHydrationWarning />
 
-          <label className="ll_label" htmlFor="premium">
-            Premium
-          </label>
-          <input
-            id="premium"
-            name="premium"
-            type="text"
-            className="ll_input"
-            inputMode="decimal"
-            defaultValue={formatCurrency(policy.premium)}
-            suppressHydrationWarning
+          <InsuranceEditControls
+            premiumValue={policy.premium}
+            autoPayMonthly={policy.autoPayMonthly ?? false}
           />
-
-          <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input
-              id="autoPayMonthly"
-              name="autoPayMonthly"
-              type="checkbox"
-              defaultChecked={policy.autoPayMonthly ?? false}
-              suppressHydrationWarning
-            />
-            AutoPay Monthly
-          </label>
-          <div className="ll_muted" style={{ marginTop: -6, marginBottom: 10 }}>
-            AutoPay Monthly policies are excluded from reminders.
-          </div>
 
           <label className="ll_label" htmlFor="dueDate">
             Due Date
