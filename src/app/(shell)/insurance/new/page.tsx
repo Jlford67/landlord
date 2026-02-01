@@ -195,6 +195,19 @@ export default async function NewInsurancePage({
           </label>
           <input id="loanRef" name="loanRef" className="ll_input" placeholder="Reference" suppressHydrationWarning />
 
+          <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <input
+              id="autoPayMonthly"
+              name="autoPayMonthly"
+              type="checkbox"
+              suppressHydrationWarning
+            />
+            AutoPay Monthly
+          </label>
+          <div className="ll_muted" style={{ marginTop: -6, marginBottom: 10 }}>
+            AutoPay Monthly policies are excluded from reminders.
+          </div>
+
           <div className="ll_actions">
             <button className="ll_btnPrimary" type="submit" suppressHydrationWarning>
               Save policy

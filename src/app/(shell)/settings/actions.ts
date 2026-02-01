@@ -275,7 +275,7 @@ export async function generateNotificationsIfNeeded() {
   const [insurancePolicies, taxAccounts] = await Promise.all([
     settings.insuranceEnabled
       ? prisma.insurancePolicy.findMany({
-          where: { dueDate: { not: null }, paidDate: null },
+          where: { dueDate: { not: null }, paidDate: null, autoPayMonthly: false },
           include: { property: { select: { nickname: true, street: true } } },
         })
       : Promise.resolve([]),

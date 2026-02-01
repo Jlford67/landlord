@@ -52,7 +52,7 @@ export default async function SettingsPage() {
 
   const [insurancePolicies, taxAccounts, recentEvents, inboxEvents, todayInApp] = await Promise.all([
     prisma.insurancePolicy.findMany({
-      where: { dueDate: { not: null }, paidDate: null },
+      where: { dueDate: { not: null }, paidDate: null, autoPayMonthly: false },
       include: { property: { select: { nickname: true, street: true } } },
       orderBy: { dueDate: "asc" },
       take: 5,

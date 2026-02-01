@@ -317,6 +317,7 @@ model InsurancePolicy {
   bank        String?
   bankNumber  String?
   loanRef     String?
+  autoPayMonthly Boolean @default(false)
 
   property Property @relation(fields: [propertyId], references: [id])
 

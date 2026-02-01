@@ -66,6 +66,7 @@ export async function POST(req: Request) {
 
   const paidDate = toDate(form.get("paidDate"), "paidDate");
   if ("error" in paidDate) return new Response(paidDate.error, { status: 400 });
+  const autoPayMonthly = form.get("autoPayMonthly") === "on";
 
   await prisma.insurancePolicy.create({
     data: {
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
       bank: toStr(form.get("bank")),
       bankNumber: toStr(form.get("bankNumber")),
       loanRef: toStr(form.get("loanRef")),
+      autoPayMonthly,
     },
   });
 

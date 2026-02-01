@@ -28,6 +28,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   const paidDate = toDate(form.get("paidDate"), "paidDate");
   if ("error" in paidDate) return new Response(paidDate.error, { status: 400 });
+  const autoPayMonthly = form.get("autoPayMonthly") === "on";
 
   const existing = await prisma.insurancePolicy.findUnique({ select: { id: true }, where: { id } });
   if (!existing) return NextResponse.redirect(new URL("/insurance?msg=notfound", req.url));
@@ -48,6 +49,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       bank: toStr(form.get("bank")),
       bankNumber: toStr(form.get("bankNumber")),
       loanRef: toStr(form.get("loanRef")),
+      autoPayMonthly,
     },
   });
 
