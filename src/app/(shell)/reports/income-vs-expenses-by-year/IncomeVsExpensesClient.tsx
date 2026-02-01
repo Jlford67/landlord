@@ -33,13 +33,31 @@ const EXPENSE_BASE_COLOR = "#dc2626";
 const EXPENSE_OVERAGE_COLOR = "#991b1b";
 const INCOME_ABOVE_COLOR = "#16a34a";
 
+function moneyAccounting(amount: number) {
+  const abs = Math.abs(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return amount < 0 ? `($${abs})` : `$${abs}`;
+}
+
+function amountClass(amount: number) {
+  if (amount < 0) return "text-red-600";
+  if (amount > 0) return "text-emerald-600";
+  return "text-gray-700";
+}
+
+function expenseDisplayAmount(expenses: number) {
+  return expenses > 0 ? -expenses : expenses;
+}
+
 function IncomeVsExpenseTooltip({ active, label, payload }: TooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0]?.payload;
   if (!row) return null;
 
   const yearLabel = Number(label);
-  const expenseMagnitude = Math.abs(row.expenses);
+  const expensesForDisplay = expenseDisplayAmount(row.expenses);
 
   return (
     <div className="ll_card" style={{ padding: 12, minWidth: 200 }}>
@@ -47,17 +65,21 @@ function IncomeVsExpenseTooltip({ active, label, payload }: TooltipProps) {
       <div className="mt-2 space-y-1 text-sm">
         <div className="flex items-center justify-between gap-4">
           <span className="text-slate-600">Income</span>
-          <span className="font-medium text-slate-900">{formatUsd(row.income)}</span>
+          <span className="font-medium text-emerald-600">
+            {moneyAccounting(row.income)}
+          </span>
         </div>
         <div className="flex items-center justify-between gap-4">
           <span className="text-slate-600">Expenses</span>
-          <span className="font-medium text-slate-900">
-            {formatUsd(expenseMagnitude)}
+          <span className="font-medium text-red-600">
+            {moneyAccounting(expensesForDisplay)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-4">
           <span className="text-slate-600">Net</span>
-          <span className="font-medium text-slate-900">{formatUsd(row.net)}</span>
+          <span className={`font-medium ${amountClass(row.net)}`}>
+            {moneyAccounting(row.net)}
+          </span>
         </div>
       </div>
     </div>
@@ -203,15 +225,23 @@ export default function IncomeVsExpensesClient({
                   {chartData.map((row) => (
                     <tr key={row.year}>
                       <td>{row.year}</td>
-                      <td className="text-right">{formatUsd(row.income)}</td>
-                      <td className="text-right">{formatUsd(Math.abs(row.expenses))}</td>
-                      <td className="text-right">{formatUsd(row.net)}</td>
+                      <td className="text-right text-emerald-600">
+                        {moneyAccounting(row.income)}
+                      </td>
+                      <td className="text-right text-red-600">
+                        {moneyAccounting(expenseDisplayAmount(row.expenses))}
+                      </td>
+                      <td className={`text-right ${amountClass(row.net)}`}>
+                        {moneyAccounting(row.net)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-slate-500">Expenses shown as positive spend.</p>
+            <p className="text-xs text-slate-500">
+              Expenses shown in accounting format (parentheses).
+            </p>
           </>
         )}
       </div>
