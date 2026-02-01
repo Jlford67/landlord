@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import MountedInsuranceForm from "@/components/insurance/MountedInsuranceForm";
+import PremiumMoneyInput from "@/components/insurance/PremiumMoneyInput";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -146,18 +147,11 @@ export default async function EditInsurancePage({
             <label className="ll_label" htmlFor="premium">
               Premium
             </label>
-            <input
+            <PremiumMoneyInput
               id="premium"
               name="premium"
-              type="text"
-              inputMode="decimal"
               className="ll_input"
-              defaultValue={
-                policy.premium == null
-                  ? ""
-                  : `$${Number(policy.premium).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`
-              }
-              suppressHydrationWarning
+              defaultValue={policy.premium ?? null}
             />
 
             <label className="ll_label" style={{ display: "flex", gap: 10, alignItems: "center" }}>

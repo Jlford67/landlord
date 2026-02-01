@@ -4,6 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import TenantPicker, { TenantLite } from "@/components/TenantPicker";
 import AddTenantButton from "@/components/AddTenantButton";
+import PremiumMoneyInput from "@/components/insurance/PremiumMoneyInput";
+import MountedLeaseForm from "@/components/leases/MountedLeaseForm";
 
 type Params = { id: string; leaseId: string };
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -127,128 +129,130 @@ export default async function EditLeasePage({
           </div>
         </div>
 
-        <form
-          id="leaseForm"
-          className="ll_form"
-          action={`/api/properties/${propertyId}/leases/${leaseId}`}
-          method="post"
-          autoComplete="off"
-        >
-          <input type="hidden" name="_action" value="update" />
+        <MountedLeaseForm placeholderHeight={520}>
+          <form
+            id="leaseForm"
+            className="ll_form"
+            action={`/api/properties/${propertyId}/leases/${leaseId}`}
+            method="post"
+            autoComplete="off"
+          >
+            <input type="hidden" name="_action" value="update" />
 
-          <label>
-            Start date
-            <input className="ll_input" type="date" name="startDate" defaultValue={defaultStartDate} required />
-          </label>
-
-          <label>
-            End date (optional)
-            <input className="ll_input" type="date" name="endDate" defaultValue={defaultEndDate} />
-          </label>
-
-          <label>
-            Unit / Room (optional)
-            <input
-              className="ll_input"
-              type="text"
-              name="unitLabel"
-              defaultValue={defaultUnitLabel}
-              placeholder="Unit A"
-            />
-          </label>
-
-          <label>
-            Rent amount
-            <input
-              className="ll_input"
-              type="number"
-              step="0.01"
-              name="rentAmount"
-              defaultValue={defaultRentAmount}
-              required
-            />
-          </label>
-
-          <label>
-            Due day (1-28)
-            <input
-              className="ll_input"
-              type="number"
-              min={1}
-              max={28}
-              name="dueDay"
-              defaultValue={Number(defaultDueDay)}
-              required
-            />
-          </label>
-
-          <label>
-            Deposit (optional)
-            <input className="ll_input" type="number" step="0.01" name="deposit" defaultValue={defaultDeposit} />
-          </label>
-
-          <label>
-            Status
-            <select className="ll_input" name="status" defaultValue={defaultStatus}>
-              <option value="upcoming">upcoming</option>
-              <option value="active">active</option>
-              <option value="ended">ended</option>
-            </select>
-          </label>
-
-          <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input type="checkbox" name="managedByPm" defaultChecked={defaultManagedByPm} />
-            Managed by PM
-          </label>
-
-          <label>
-            Notes (optional)
-            <input className="ll_input" name="notes" defaultValue={defaultNotes} />
-          </label>
-
-          <div style={{ marginTop: 6 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontWeight: 700 }}>Tenants</div>
-
-              <AddTenantButton
-                tenantsNewBaseHref="/tenants/new?returnTo="
-                returnToBasePath={returnToBasePath}
-                formId="leaseForm"
-              />
-            </div>
-
-            <TenantPicker initialSelected={initialSelectedTenants} />
-          </div>
-
-          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <button className="ll_btnPrimary" type="submit">
-              Save changes
-            </button>
-
-            <Link className="ll_btn" href={`/properties/${propertyId}/leases`}>
-              Cancel
-            </Link>
-          </div>
-        </form>
-
-        <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-          <div style={{ fontWeight: 700, marginBottom: 8 }}>End lease</div>
-          <div style={{ opacity: 0.8, fontSize: 13, marginBottom: 10 }}>
-            Marks the lease as ended. You can set an end date (defaults to today).
-          </div>
-
-          <form className="ll_form" action={`/api/properties/${propertyId}/leases/${leaseId}`} method="post">
-            <input type="hidden" name="_action" value="end" />
             <label>
-              End date
-              <input className="ll_input" type="date" name="endDate" defaultValue="" />
+              Start date
+              <input className="ll_input" type="date" name="startDate" defaultValue={defaultStartDate} required />
             </label>
 
-            <button className="ll_btnDanger" type="submit">
-              End lease
-            </button>
+            <label>
+              End date (optional)
+              <input className="ll_input" type="date" name="endDate" defaultValue={defaultEndDate} />
+            </label>
+
+            <label>
+              Unit / Room (optional)
+              <input
+                className="ll_input"
+                type="text"
+                name="unitLabel"
+                defaultValue={defaultUnitLabel}
+                placeholder="Unit A"
+              />
+            </label>
+
+            <label>
+              Rent amount
+              <PremiumMoneyInput
+                id="rentAmount"
+                name="rentAmount"
+                className="ll_input"
+                defaultValue={lease.rentAmount ?? null}
+              />
+            </label>
+
+            <label>
+              Due day (1-28)
+              <input
+                className="ll_input"
+                type="number"
+                min={1}
+                max={28}
+                name="dueDay"
+                defaultValue={Number(defaultDueDay)}
+                required
+              />
+            </label>
+
+            <label>
+              Deposit (optional)
+              <input className="ll_input" type="number" step="0.01" name="deposit" defaultValue={defaultDeposit} />
+            </label>
+
+            <label>
+              Status
+              <select className="ll_input" name="status" defaultValue={defaultStatus}>
+                <option value="upcoming">upcoming</option>
+                <option value="active">active</option>
+                <option value="ended">ended</option>
+              </select>
+            </label>
+
+            <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <input type="checkbox" name="managedByPm" defaultChecked={defaultManagedByPm} />
+              Managed by PM
+            </label>
+
+            <label>
+              Notes (optional)
+              <input className="ll_input" name="notes" defaultValue={defaultNotes} />
+            </label>
+
+            <div style={{ marginTop: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontWeight: 700 }}>Tenants</div>
+
+                <AddTenantButton
+                  tenantsNewBaseHref="/tenants/new?returnTo="
+                  returnToBasePath={returnToBasePath}
+                  formId="leaseForm"
+                />
+              </div>
+
+              <TenantPicker initialSelected={initialSelectedTenants} />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+              <button className="ll_btnPrimary" type="submit">
+                Save changes
+              </button>
+
+              <Link className="ll_btn" href={`/properties/${propertyId}/leases`}>
+                Cancel
+              </Link>
+            </div>
           </form>
-        </div>
+        </MountedLeaseForm>
+        <MountedLeaseForm placeholderHeight={180}>
+          <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>End lease</div>
+            <div style={{ opacity: 0.8, fontSize: 13, marginBottom: 10 }}>
+              Marks the lease as ended. You can set an end date (defaults to today).
+            </div>
+
+            <form className="ll_form" action={`/api/properties/${propertyId}/leases/${leaseId}`} method="post">
+              <input type="hidden" name="_action" value="end" />
+              <label>
+                End date
+                <input className="ll_input" type="date" name="endDate" defaultValue="" suppressHydrationWarning />
+              </label>
+
+              <button className="ll_btnDanger" type="submit" suppressHydrationWarning>
+                End lease
+              </button>
+            </form>
+          </div>
+        </MountedLeaseForm>
+
       </div>
     </div>
   );
