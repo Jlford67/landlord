@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Button from "@/components/ui/Button";
 import SafeInput from "@/components/ui/SafeInput";
-import { changePassword } from "@/app/(shell)/settings/actions";
+import { changePassword } from "../../app/(shell)/settings/actions";
 
 type MessageState = { tone: "success" | "error"; text: string };
 
