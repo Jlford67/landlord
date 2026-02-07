@@ -271,7 +271,7 @@ export async function sendTestEmail(emailAddress: string | null) {
 
 export async function acknowledgeNotification(id: string) {
   await requireUser();
-  await prisma.notificationEvent.update({
+  await prisma.notificationEvent.updateMany({
     where: { id },
     data: { acknowledgedAt: new Date() },
   });
