@@ -1,5 +1,5 @@
-import LoginFormClient from "./LoginFormClient";
+import LoginCard from "@/components/auth/LoginCard";
 
 export default function LoginPage() {
-  return <LoginFormClient />;
+  return <LoginCard />;
 }
