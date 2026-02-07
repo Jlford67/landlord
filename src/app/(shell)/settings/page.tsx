@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth";
 import NotificationsSettingsClient from "./NotificationsSettingsClient";
 import NotificationsToastClient from "@/components/notifications/NotificationsToastClient";
 import { generateNotificationsIfNeeded, getSettings, getTodayInAppNotifications } from "./actions";
+import ChangePasswordCard from "@/components/settings/ChangePasswordCard";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -148,7 +149,10 @@ export default async function SettingsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <NotificationsSettingsClient settings={settingsProps} inbox={inboxRows} />
+        <div className="space-y-6">
+          <ChangePasswordCard />
+          <NotificationsSettingsClient settings={settingsProps} inbox={inboxRows} />
+        </div>
 
         <aside className="space-y-6">
           <section className="ll_card">

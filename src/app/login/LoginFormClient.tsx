@@ -9,13 +9,20 @@ export default function LoginFormClient() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <div aria-hidden="true" className="space-y-4">
+        <div className="h-4 w-20 rounded bg-gray-100" />
+        <div className="h-11 w-full rounded-lg bg-gray-100" />
+        <div className="h-4 w-24 rounded bg-gray-100" />
+        <div className="h-11 w-full rounded-lg bg-gray-100" />
+        <div className="h-11 w-full rounded-lg bg-gray-100" />
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h1 className="text-[28px] font-extrabold m-0 mb-2">Sign in</h1>
-      <div className="ll_muted mb-6">Use your email and password.</div>
-
       <form action="/api/auth/login" method="post" className="ll_form">
         <label className="ll_label" htmlFor="email">
           Email
