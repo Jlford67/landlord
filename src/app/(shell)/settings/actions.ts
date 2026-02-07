@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import bcrypt from "bcryptjs";
 import {
   NotificationChannel,
   NotificationDeliveryStatus,
@@ -208,6 +209,51 @@ export async function saveSettings(input: NotificationSettingsInput) {
 
   revalidatePath("/settings");
   return updated;
+}
+
+export async function changePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}) {
+  const user = await requireUser();
+  const currentPassword = input.currentPassword ?? "";
+  const newPassword = input.newPassword ?? "";
+  const confirmPassword = input.confirmPassword ?? "";
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { id: true, passwordHash: true },
+  });
+
+  if (!dbUser) {
+    return { ok: false, message: "Unable to update password." };
+  }
+
+  const currentMatches = await bcrypt.compare(currentPassword, dbUser.passwordHash);
+  if (!currentMatches) {
+    return { ok: false, message: "Current password is incorrect." };
+  }
+
+  if (newPassword.length < 12) {
+    return { ok: false, message: "New password must be at least 12 characters." };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { ok: false, message: "New password and confirmation do not match." };
+  }
+
+  if (newPassword === currentPassword) {
+    return { ok: false, message: "New password must be different from current password." };
+  }
+
+  const nextHash = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({
+    where: { id: dbUser.id },
+    data: { passwordHash: nextHash },
+  });
+
+  return { ok: true, message: "Password updated." };
 }
 
 export async function sendTestEmail(emailAddress: string | null) {
