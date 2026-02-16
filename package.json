@@ -12,7 +12,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prepare": "prisma generate"
+    "prepare": "prisma generate",
+    "db:backfill-account": "tsx prisma/backfill-account.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.2.0",
