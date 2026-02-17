@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
 import { getProfitLossByProperty } from "@/lib/reports/profitLossByProperty";
+import { requireAccountId } from "@/lib/auth";
 
 export type NetProfitYears = "1" | "3" | "5" | "10" | "15" | "all";
 
@@ -86,13 +87,14 @@ export async function getNetProfitByYearForProperty({
   propertyId: string;
   years: NetProfitYears;
 }): Promise<YearNetProfitRow[]> {
+  const accountId = requireAccountId();
   const { startDate, endDate } = getNetProfitRange(years);
   const endExclusive = new Date(
     Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1)
   );
 
   const categories = await prisma.category.findMany({
-    where: { type: { in: ["income", "expense"] } },
+    where: { accountId, type: { in: ["income", "expense"] } },
     select: { id: true, type: true },
   });
   const categoryTypeById = new Map(categories.map((category) => [category.id, category.type]));
@@ -112,6 +114,7 @@ export async function getNetProfitByYearForProperty({
     const transactions = await prisma.transaction.findMany({
       where: {
         propertyId,
+        property: { accountId },
         categoryId: { in: allowedCategoryIds },
         deletedAt: null,
         date: {
@@ -141,6 +144,7 @@ export async function getNetProfitByYearForProperty({
   const annualRows = await prisma.annualCategoryAmount.findMany({
     where: {
       propertyId,
+      property: { accountId },
       year: { gte: startYear, lte: endYear },
       category: { type: { in: ["income", "expense"] } },
     },
@@ -190,6 +194,7 @@ export async function getNetProfitForProperty({
   propertyId: string;
   years: NetProfitYears;
 }): Promise<NetProfitRow> {
+  const accountId = requireAccountId();
   const { startDate, endDate } = getNetProfitRange(years);
   const report = await getProfitLossByProperty({
     startDate,
@@ -210,8 +215,8 @@ export async function getNetProfitForProperty({
     };
   }
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
     select: {
       id: true,
       nickname: true,
