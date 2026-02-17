@@ -1,6 +1,7 @@
 import { CategoryType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
+import { requireAccountId } from "@/lib/auth";
 
 export type RecurringRow = {
   recurringTransactionId: string;
@@ -52,6 +53,7 @@ export async function getRecurringExpensesOverviewReport(input: {
   }
 
   const includeTransfers = Boolean(input.includeTransfers);
+  const accountId = requireAccountId();
   const includeInactive = Boolean(input.includeInactive);
   const propertyId = input.propertyId && input.propertyId !== "all" ? input.propertyId : undefined;
   const monthsInRange = monthRangeInclusive(startDate, endDate);
@@ -60,6 +62,7 @@ export async function getRecurringExpensesOverviewReport(input: {
   const recurring = await prisma.recurringTransaction.findMany({
     where: {
       propertyId: propertyId || undefined,
+      property: { accountId },
       ...(includeInactive ? {} : { isActive: true }),
       category: { type: "expense" },
     },
@@ -112,6 +115,7 @@ export async function getRecurringExpensesOverviewReport(input: {
           where: {
             id: { in: ledgerTransactionIds },
             propertyId: propertyId || undefined,
+            property: { accountId },
             deletedAt: null,
             ...(includeTransfers ? {} : { category: { type: { not: "transfer" } } }),
           },
@@ -208,6 +212,7 @@ export async function getRecurringExpensesOverviewReport(input: {
   const otherTransactions = await prisma.transaction.findMany({
     where: {
       propertyId: propertyId || undefined,
+      property: { accountId },
       category: { type: { in: allowedExpenseTypes } },
       deletedAt: null,
       id: recurringLedgerIdsInRange.size ? { notIn: Array.from(recurringLedgerIdsInRange) } : undefined,
@@ -230,6 +235,7 @@ export async function getRecurringExpensesOverviewReport(input: {
   const annualRows = await prisma.annualCategoryAmount.findMany({
     where: {
       propertyId: propertyId || undefined,
+      property: { accountId },
       year: { gte: startYear, lte: endYear },
       category: { type: "expense" },
     },
