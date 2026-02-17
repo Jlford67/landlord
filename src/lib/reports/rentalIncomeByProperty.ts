@@ -167,6 +167,7 @@ export async function getRentalIncomeByPropertyReport(
   const propertyLabelMap = new Map(
     properties.map((p) => [p.id, propertyLabel(p)])
   );
+  const scopedPropertyIds = properties.map((p) => p.id);
 
   const endDateExclusive = endExclusive(endDate);
   const transactionalByProperty = new Map<string, number>();
@@ -175,8 +176,7 @@ export async function getRentalIncomeByPropertyReport(
     const allowedCategoryIds = categories.map((c) => c.id);
     const transactions = await prisma.transaction.findMany({
       where: {
-        propertyId: propertyFilter,
-        property: { accountId },
+        propertyId: { in: scopedPropertyIds },
         categoryId: { in: allowedCategoryIds },
         deletedAt: null,
         date: {
@@ -222,8 +222,7 @@ export async function getRentalIncomeByPropertyReport(
   if (years.length > 0) {
     const annualRows = await prisma.annualCategoryAmount.findMany({
       where: {
-        propertyId: propertyFilter,
-        property: { accountId },
+        propertyId: { in: scopedPropertyIds },
         year: { in: years },
         category: { type: { in: allowedCategoryTypes } },
       },
