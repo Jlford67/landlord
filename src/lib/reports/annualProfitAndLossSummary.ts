@@ -1,4 +1,5 @@
 import { CategoryType } from "@prisma/client";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type AnnualProfitAndLossSummaryFilters = {
@@ -61,6 +62,7 @@ function startOfFollowingYearUTC(year: number) {
 export async function getAnnualProfitAndLossSummary(
   filters: AnnualProfitAndLossSummaryFilters
 ): Promise<AnnualProfitAndLossSummaryResult> {
+  const accountId = requireAccountId();
   const includeTransfers = Boolean(filters.includeTransfers);
 
   const years = buildYearRange(filters.startYear, filters.endYear);
@@ -73,6 +75,7 @@ export async function getAnnualProfitAndLossSummary(
 
   const [categories] = await Promise.all([
     prisma.category.findMany({
+      where: { accountId },
       select: { id: true, name: true, type: true, parentId: true },
     }),
   ]);
@@ -112,10 +115,26 @@ export async function getAnnualProfitAndLossSummary(
   const startDate = startOfYearUTC(years[0]);
   const endExclusive = startOfFollowingYearUTC(years[years.length - 1]);
 
+  const scopedProperties = await prisma.property.findMany({
+    where: {
+      accountId,
+      id: filters.propertyId || undefined,
+    },
+    select: { id: true },
+  });
+  const scopedPropertyIds = scopedProperties.map((property) => property.id);
+
+  if (scopedPropertyIds.length === 0) {
+    return {
+      years: [],
+      totals: { incomeTotal: 0, expenseTotal: 0, transferTotal: 0, netTotal: 0 },
+    };
+  }
+
   const [transactions, annualAmounts] = await Promise.all([
     prisma.transaction.findMany({
       where: {
-        propertyId: filters.propertyId || undefined,
+        propertyId: { in: scopedPropertyIds },
         categoryId: { in: allowedCategoryIds },
         deletedAt: null,
         date: {
@@ -131,7 +150,7 @@ export async function getAnnualProfitAndLossSummary(
     }),
     prisma.annualCategoryAmount.findMany({
       where: {
-        propertyId: filters.propertyId || undefined,
+        propertyId: { in: scopedPropertyIds },
         categoryId: { in: allowedCategoryIds },
         year: { in: years },
       },
