@@ -1,6 +1,7 @@
 import { CategoryType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
+import { requireAccountId } from "@/lib/auth";
 
 export type RentalIncomeByPropertyInput = {
   start?: string | null;
@@ -134,6 +135,7 @@ export async function getRentalIncomeByPropertyReport(
   }
 
   const includeTransfers = Boolean(input.includeTransfers);
+  const accountId = requireAccountId();
   const includeOtherIncome = Boolean(input.includeOtherIncome);
   const propertyFilter = input.propertyId || undefined;
 
@@ -143,7 +145,10 @@ export async function getRentalIncomeByPropertyReport(
 
   const [properties, categories] = await Promise.all([
     prisma.property.findMany({
-      where: propertyFilter ? { id: propertyFilter } : undefined,
+      where: {
+        accountId,
+        id: propertyFilter,
+      },
       select: {
         id: true,
         nickname: true,
@@ -154,7 +159,7 @@ export async function getRentalIncomeByPropertyReport(
       },
     }),
     prisma.category.findMany({
-      where: { type: { in: allowedCategoryTypes } },
+      where: { accountId, type: { in: allowedCategoryTypes } },
       select: { id: true, name: true, type: true },
     }),
   ]);
@@ -171,6 +176,7 @@ export async function getRentalIncomeByPropertyReport(
     const transactions = await prisma.transaction.findMany({
       where: {
         propertyId: propertyFilter,
+        property: { accountId },
         categoryId: { in: allowedCategoryIds },
         deletedAt: null,
         date: {
@@ -217,6 +223,7 @@ export async function getRentalIncomeByPropertyReport(
     const annualRows = await prisma.annualCategoryAmount.findMany({
       where: {
         propertyId: propertyFilter,
+        property: { accountId },
         year: { in: years },
         category: { type: { in: allowedCategoryTypes } },
       },
