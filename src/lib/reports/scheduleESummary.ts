@@ -309,19 +309,22 @@ export async function getScheduleESummaryReport(
   }
 
   const includeByProperty = !input.propertyId;
-  const properties = includeByProperty
-    ? await prisma.property.findMany({
-        where: { accountId },
-        select: {
-          id: true,
-          nickname: true,
-          street: true,
-          city: true,
-          state: true,
-          zip: true,
-        },
-      })
-    : [];
+  const scopedProperties = await prisma.property.findMany({
+    where: {
+      accountId,
+      id: input.propertyId || undefined,
+    },
+    select: {
+      id: true,
+      nickname: true,
+      street: true,
+      city: true,
+      state: true,
+      zip: true,
+    },
+  });
+  const properties = includeByProperty ? scopedProperties : [];
+  const scopedPropertyIds = scopedProperties.map((p) => p.id);
 
   const propertyMap = new Map(
     properties.map((p) => [
@@ -431,8 +434,7 @@ export async function getScheduleESummaryReport(
   if (mode !== "annualOnly") {
     const transactional = await prisma.transaction.findMany({
       where: {
-        propertyId: input.propertyId || undefined,
-        property: { accountId },
+        propertyId: { in: scopedPropertyIds },
         deletedAt: null,
         date: {
           gte: rangeStart,
@@ -474,8 +476,7 @@ export async function getScheduleESummaryReport(
     if (years.length > 0) {
       const annualRows = await prisma.annualCategoryAmount.findMany({
         where: {
-          propertyId: input.propertyId || undefined,
-          property: { accountId },
+          propertyId: { in: scopedPropertyIds },
           year: { in: years },
           category: {
             type: { in: ["income", "expense"] },
