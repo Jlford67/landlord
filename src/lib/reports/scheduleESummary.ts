@@ -1,5 +1,6 @@
 import { CategoryType } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { requireAccountId } from "@/lib/auth";
 import { propertyLabel } from "@/lib/format";
 
 export type BucketKey =
@@ -280,6 +281,7 @@ function centsFromAmount(amount: number): number {
 export async function getScheduleESummaryReport(
   input: ScheduleESummaryInput
 ): Promise<ScheduleESummaryReport> {
+  const accountId = requireAccountId();
   const includeTransfers = Boolean(input.includeTransfers);
   const mode = input.mode ?? "combined";
 
@@ -309,6 +311,7 @@ export async function getScheduleESummaryReport(
   const includeByProperty = !input.propertyId;
   const properties = includeByProperty
     ? await prisma.property.findMany({
+        where: { accountId },
         select: {
           id: true,
           nickname: true,
@@ -429,6 +432,7 @@ export async function getScheduleESummaryReport(
     const transactional = await prisma.transaction.findMany({
       where: {
         propertyId: input.propertyId || undefined,
+        property: { accountId },
         deletedAt: null,
         date: {
           gte: rangeStart,
@@ -471,6 +475,7 @@ export async function getScheduleESummaryReport(
       const annualRows = await prisma.annualCategoryAmount.findMany({
         where: {
           propertyId: input.propertyId || undefined,
+          property: { accountId },
           year: { in: years },
           category: {
             type: { in: ["income", "expense"] },
