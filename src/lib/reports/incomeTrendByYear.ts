@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
 
@@ -8,10 +9,14 @@ export type IncomeTrendResult = {
   series: { year: number; [propertyId: string]: number }[];
 };
 
-async function getDescendantIncomeCategoryIds(categoryId: string): Promise<string[]> {
+async function getDescendantIncomeCategoryIds(accountId: string, categoryId: string): Promise<string[]> {
   const categories = await prisma.category.findMany({
+    where: { accountId },
     select: { id: true, parentId: true, type: true },
   });
+
+  const categoryIds = new Set(categories.map((category) => category.id));
+  if (!categoryIds.has(categoryId)) return [];
 
   const childrenByParent = new Map<string | null, string[]>();
   const typeById = new Map<string, string>();
@@ -41,10 +46,14 @@ export async function getIncomeTrendByYear(args: {
   categoryId: string;
   propertyId?: string;
 }): Promise<IncomeTrendResult> {
-  const categoryIdsToInclude = await getDescendantIncomeCategoryIds(args.categoryId);
+  const accountId = requireAccountId();
+  const categoryIdsToInclude = await getDescendantIncomeCategoryIds(accountId, args.categoryId);
 
   const properties = await prisma.property.findMany({
-    where: args.propertyId ? { id: args.propertyId } : undefined,
+    where: {
+      accountId,
+      id: args.propertyId || undefined,
+    },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
