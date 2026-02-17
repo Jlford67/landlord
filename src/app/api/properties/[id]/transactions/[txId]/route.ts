@@ -1,64 +1,62 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { requireAccountId } from "@/lib/auth";
 
-function toNumber(v: FormDataEntryValue | null) {
-  if (v == null) return NaN;
-  const s = String(v).trim();
-  const n = Number(s);
-  return n;
-}
+type RouteParams = {
+  params: Promise<{ id: string; txId: string }>;
+};
 
-export async function POST(
-  req: Request,
-  ctx: { params: Promise<{ id: string; txId: string }> | { id: string; txId: string } }
-) {
-  await requireUser();
+export async function GET(_: Request, ctx: RouteParams) {
+  const accountId = await requireAccountId();
+  const { id: propertyId, txId } = await ctx.params;
 
-  const p = await Promise.resolve(ctx.params as any);
-  const propertyId = p.id as string;
-  const txId = p.txId as string;
-
-  const form = await req.formData();
-
-  const dateStr = String(form.get("date") ?? "").trim();
-  const categoryId = String(form.get("categoryId") ?? "").trim();
-  const month = String(form.get("month") ?? "").trim();
-  const payee = String(form.get("payee") ?? "").trim() || null;
-  const memo = String(form.get("memo") ?? "").trim() || null;
-
-  const rawAmount = toNumber(form.get("amount"));
-  if (!dateStr || !categoryId || Number.isNaN(rawAmount)) {
-    return NextResponse.redirect(new URL(`/properties/${propertyId}/ledger?msg=invalid`, req.url));
-  }
-
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
-    select: { id: true, type: true },
-  });
-  if (!category) {
-    return NextResponse.redirect(new URL(`/properties/${propertyId}/ledger?msg=invalid`, req.url));
-  }
-
-  // Normalize amount sign based on category type.
-  const base = Math.abs(rawAmount);
-
-  let amount = base;
-  if (category.type === "expense") amount = -base;
-
-  await prisma.transaction.updateMany({
-    where: { id: txId, propertyId },
-    data: {
-      date: new Date(dateStr + "T00:00:00.000Z"),
-      categoryId,
-      amount,
-      payee,
-      memo,
-      statementMonth: month || null,
-      source: "manual",
+  const txn = await prisma.transaction.findFirst({
+    where: {
+      id: txId,
+      propertyId,
+      deletedAt: null,
+      property: { accountId },
     },
   });
 
-  const qs = month && /^\d{4}-\d{2}$/.test(month) ? `&month=${encodeURIComponent(month)}` : "";
-  return NextResponse.redirect(new URL(`/properties/${propertyId}/ledger?msg=updated${qs}`, req.url));
+  if (!txn) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(txn);
+}
+
+export async function PATCH(req: Request, ctx: RouteParams) {
+  const accountId = await requireAccountId();
+  const { id: propertyId, txId } = await ctx.params;
+
+  // Body should be a partial Transaction update.
+  // We keep it permissive since this is an internal API route, but scoped.
+  const data = (await req.json()) as Record<string, unknown>;
+
+  const result = await prisma.transaction.updateMany({
+    where: {
+      id: txId,
+      propertyId,
+      deletedAt: null,
+      property: { accountId },
+    },
+    data,
+  });
+
+  if (result.count === 0) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Return the updated row (still scoped)
+  const updated = await prisma.transaction.findFirst({
+    where: {
+      id: txId,
+      propertyId,
+      deletedAt: null,
+      property: { accountId },
+    },
+  });
+
+  return NextResponse.json(updated);
 }

@@ -7,6 +7,7 @@ import RedfinLogo from "@/components/logos/RedfinLogo";
 import PropertyThumb from "@/components/properties/PropertyThumb";
 import { ArrowLeft, Pencil, Plus } from "lucide-react";
 import LinkButton from "@/components/ui/LinkButton";
+import { requireAccountId } from "@/lib/account";
 
 const moneyFmt = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
@@ -74,9 +75,10 @@ export default async function PropertyDetailPage({
   const { id } = await params;
 
   const user = await requireUser();
+  const accountId = await requireAccountId();
 
-  const property = await prisma.property.findUnique({
-    where: { id },
+  const property = await prisma.property.findFirst({
+    where: { id, accountId },
     include: {
       leases: {
         orderBy: [{ startDate: "desc" }],
@@ -102,7 +104,14 @@ export default async function PropertyDetailPage({
   if (!property) notFound();
 
   const activeLeases = await prisma.lease.findMany({
-    where: { propertyId: id, status: "active" },
+  where: {
+    propertyId: id,
+    status: "active",
+    property: {
+      is: { accountId },
+    },
+},
+
     orderBy: [{ startDate: "desc" }],
     include: { leaseTenants: { include: { tenant: true } } },
   });

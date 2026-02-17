@@ -37,3 +37,21 @@ export async function requireUser() {
 
   return user;
 }
+
+export async function requireAccountId(): Promise<string> {
+  const user = await requireUser();
+
+  const membership = await prisma.accountMember.findFirst({
+    where: { userId: user.id },
+    orderBy: [{ role: "asc" }, { createdAt: "asc" }], // owner should sort before member if enum is owner,member
+    select: { accountId: true },
+  });
+
+  if (!membership) {
+    throw new Error("No account associated with user");
+  }
+
+  return membership.accountId;
+}
+
+

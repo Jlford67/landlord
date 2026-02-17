@@ -7,6 +7,7 @@ import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import IconButton from "@/components/ui/IconButton";
 import { BookOpen, Building2, Search, Trash2 } from "lucide-react";
 import LinkButton from "@/components/ui/LinkButton";
+import { requireAccountId } from "@/lib/account";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -53,6 +54,7 @@ export default async function PropertiesPage({
   searchParams?: Promise<SearchParams>;
 }) {
   const user = await requireUser();
+  const accountId = await requireAccountId();
   if (!user) redirect("/login");
 
   const sp = searchParams ? await searchParams : {};
@@ -62,6 +64,7 @@ export default async function PropertiesPage({
   const properties = await prisma.property.findMany({
     where: q
       ? {
+          accountId,
           OR: [
             { nickname: { contains: q } },
             { street: { contains: q } },
@@ -70,7 +73,7 @@ export default async function PropertiesPage({
             { zip: { contains: q } },
           ],
         }
-      : undefined,
+      : { accountId },
     orderBy: { createdAt: "desc" },
     take: 200,
   });

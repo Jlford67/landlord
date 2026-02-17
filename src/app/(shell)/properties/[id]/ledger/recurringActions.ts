@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { dueDateForMonth, getScheduledRecurringForMonth } from "@/lib/recurring";
 import { createRecurringSchema, updateRecurringSchema } from "@/lib/validation/recurring";
 
@@ -18,6 +18,17 @@ function signedAmount(amountCents: number, categoryType: string) {
   if (categoryType === "income") return Math.abs(base);
   if (categoryType === "expense") return -Math.abs(base);
   return base;
+}
+
+async function assertPropertyAccess(propertyId: string, accountId: string) {
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
+    select: { id: true },
+  });
+
+  if (!property) {
+    throw new Error("Not found");
+  }
 }
 
 function redirectToLedger(propertyId: string, month: string, msg?: string, extra?: Record<string, string | undefined>) {
@@ -45,10 +56,12 @@ type RecurringForm = {
 };
 
 export async function createRecurringTransaction(formData: FormData) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   try {
     const propertyId = String(formData.get("propertyId") || "").trim();
+    await assertPropertyAccess(propertyId, accountId);
+
     const categoryId = String(formData.get("categoryId") || "").trim();
 
     const amount = String(formData.get("amount") ?? "0").trim();
@@ -133,7 +146,7 @@ export async function createRecurringTransaction(formData: FormData) {
 }
 
 export async function updateRecurringTransaction(formData: FormData) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const raw: RecurringForm & { id: string } = {
     id: String(formData.get("id") || ""),
@@ -156,49 +169,68 @@ export async function updateRecurringTransaction(formData: FormData) {
 
   const data = parsed.data;
 
-  await prisma.recurringTransaction.update({
-    where: { id: data.id, propertyId: data.propertyId },
+  await assertPropertyAccess(data.propertyId, accountId);
+
+  const result = await prisma.recurringTransaction.updateMany({
+    where: {
+      id: data.id,
+      propertyId: data.propertyId,
+      property: { accountId },
+    },
     data: {
       categoryId: data.categoryId,
       amountCents: data.amount,
       memo: data.memo,
       dayOfMonth: data.dayOfMonth,
       startMonth: data.startMonth,
-      endMonth: data.endMonth || undefined,
       isActive: data.isActive,
     },
   });
+
+  if (result.count === 0) {
+    return redirectToLedger(data.propertyId, viewMonth, "recurring_error", { detail: "not_found" });
+  }
 
   const viewMonth = raw.currentMonth || data.startMonth;
   redirectToLedger(data.propertyId, viewMonth, "recurring_updated");
 }
 
 export async function toggleRecurringTransaction(formData: FormData) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const id = String(formData.get("id") || "");
   const propertyId = String(formData.get("propertyId") || "");
+  await assertPropertyAccess(propertyId, accountId);
   const month = String(formData.get("month") || ym(new Date()));
   const isActive = String(formData.get("isActive") || "") === "true";
 
-  await prisma.recurringTransaction.update({
-    where: { id, propertyId },
+  const result = await prisma.recurringTransaction.updateMany({
+    where: { id, propertyId, property: { accountId } },
     data: { isActive },
   });
+
+  if (result.count === 0) {
+    return redirectToLedger(propertyId, month, "recurring_error", { detail: "not_found" });
+  }
 
   redirectToLedger(propertyId, month, "recurring_toggled");
 }
 
 export async function deleteRecurringTransaction(formData: FormData) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const id = String(formData.get("id") || "");
   const propertyId = String(formData.get("propertyId") || "");
+  await assertPropertyAccess(propertyId, accountId);
   const month = String(formData.get("month") || ym(new Date()));
 
-  await prisma.recurringTransaction.delete({
-    where: { id, propertyId },
+  const result = await prisma.recurringTransaction.deleteMany({
+    where: { id, propertyId, property: { accountId } },
   });
+
+  if (result.count === 0) {
+    return redirectToLedger(propertyId, month, "recurring_error", { detail: "not_found" });
+  }
 
   redirectToLedger(propertyId, month, "recurring_deleted");
 }
@@ -246,9 +278,11 @@ async function postRecurringForMonthInternal(propertyId: string, month: string) 
 }
 
 export async function postRecurringForMonth(formData: FormData) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const propertyId = String(formData.get("propertyId") || "");
+  await assertPropertyAccess(propertyId, accountId);
+
   const month = String(formData.get("month") || ym(new Date()));
 
   try {
@@ -280,15 +314,16 @@ function addMonths(month: string, delta: number) {
 }
 
 export async function postRecurringCatchUp(formData: FormData) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const propertyId = String(formData.get("propertyId") || "");
+  await assertPropertyAccess(propertyId, accountId);
   const throughMonth = String(formData.get("throughMonth") || ym(new Date()));
 
   if (!propertyId) throw new Error("Missing propertyId");
 
   const first = await prisma.recurringTransaction.findFirst({
-    where: { propertyId, isActive: true },
+    where: { propertyId, isActive: true, property: { accountId } },
     orderBy: [{ startMonth: "asc" }],
     select: { startMonth: true },
   });

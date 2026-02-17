@@ -67,10 +67,9 @@ export async function saveAnnualLine(formData: FormData): Promise<AnnualLineResu
     if (!ownership) return { error: "Ownership not found." };
   }
 
-  const signedAmount = cat.type === "expense" ? -amountAbs : amountAbs;
-
-  await prisma.annualCategoryAmount.create({
-    data: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
+  const existing = await prisma.annualCategoryAmount.findFirst({
+    where: { propertyId, year, categoryId, propertyOwnershipId },
+    select: { id: true },
   });
 
   if (existing) {
@@ -123,26 +122,6 @@ export async function upsertAnnualEntry(formData: FormData) {
     if (!ownership) throw new Error("Ownership not found");
   }
 
-  const signedAmount = signedAmountForType(cat.type, amountRaw);
-
-<<<<<<< HEAD
-  if (entryId) {
-    const existing = await prisma.annualCategoryAmount.findFirst({
-      where: { id: entryId, propertyId },
-      select: { id: true },
-    });
-
-    if (!existing) throw new Error("Annual entry not found");
-
-    await prisma.annualCategoryAmount.update({
-      where: { id: existing.id },
-      data: { amount: signedAmount, note, propertyOwnershipId, year, categoryId },
-    });
-  } else {
-    await prisma.annualCategoryAmount.create({
-      data: { propertyId, year, categoryId, amount: signedAmount, note, propertyOwnershipId },
-    });
-=======
   const [existing, matching] = await Promise.all([
     entryId
       ? prisma.annualCategoryAmount.findFirst({
@@ -174,7 +153,6 @@ export async function upsertAnnualEntry(formData: FormData) {
 
   if (existing && matching && existing.id !== matching.id) {
     await prisma.annualCategoryAmount.delete({ where: { id: existing.id } });
->>>>>>> codex/add-edit-functionality-to-annual-amounts
   }
 
   revalidatePath(`/properties/${propertyId}/ledger`);
@@ -235,13 +213,14 @@ export async function updateAnnualLine(formData: FormData): Promise<AnnualLineRe
     return { error: "That category and ownership already has a line for this year." };
   }
 
-  const signedAmount = signedAmountForType(cat.type, amountRaw);
+  const signedAmountUpdate = signedAmountForType(cat.type, amountRaw);
 
   try {
     await prisma.annualCategoryAmount.update({
       where: { id: entryId },
-      data: { categoryId, amount: signedAmount, note, propertyOwnershipId },
+      data: { categoryId, amount: signedAmountUpdate, note, propertyOwnershipId },
     });
+
   } catch (error) {
     return { error: asActionError(error, "Unable to update this line. Please try again.") };
   }

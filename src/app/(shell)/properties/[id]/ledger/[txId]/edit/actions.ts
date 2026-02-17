@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, requireAccountId } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 function toUtcDateFromYmd(ymd: string) {
@@ -12,6 +12,7 @@ function toUtcDateFromYmd(ymd: string) {
 export async function updateTransaction(formData: FormData) {
   await requireUser();
 
+  const accountId = await requireAccountId();
   const propertyId = String(formData.get("propertyId") ?? "");
   const txId = String(formData.get("txId") ?? "");
   const dateYmd = String(formData.get("date") ?? "");
@@ -41,7 +42,12 @@ export async function updateTransaction(formData: FormData) {
   if (category.type === "expense") amount = -abs;
 
   await prisma.transaction.updateMany({
-    where: { id: txId, propertyId },
+    where: {
+      id: txId,
+      propertyId,
+      deletedAt: null,
+      property: { accountId },
+    },
     data: {
       date: toUtcDateFromYmd(dateYmd),
       categoryId,

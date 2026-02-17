@@ -13,7 +13,7 @@ import YearlySummaryClient from "./YearlySummaryClient";
 import NotificationsToastClient from "@/components/notifications/NotificationsToastClient";
 import { generateNotificationsIfNeeded, getTodayInAppNotifications } from "../settings/actions";
 import LinkButton from "@/components/ui/LinkButton";
-
+import { requireAccountId } from "@/lib/auth";
 
 /* ---------------- date helpers ---------------- */
 
@@ -106,7 +106,7 @@ async function getYearDrilldown({ propertyId, year, kind }: DrilldownParams) {
   const start = new Date(Date.UTC(year, 0, 1));
   const end = new Date(Date.UTC(year + 1, 0, 1));
 
-  const whereProperty = propertyId ? { propertyId } : {};
+  const whereProperty = propertyId ? { propertyId, property: { accountId } } : { property: { accountId } };
   const txnAmountFilter = kind === "income" ? { gt: 0 } : { lt: 0 };
   const annualCategoryType = kind; // income or expense
 
@@ -211,6 +211,7 @@ export default async function DashboardPage({
 }: {
   searchParams?: Promise<{ propertyId?: string }>;
 }) {
+  const accountId = await requireAccountId();
   const sp = (await searchParams) ?? {};
   await generateNotificationsIfNeeded();
   const todayInApp = await getTodayInAppNotifications();
@@ -234,6 +235,7 @@ export default async function DashboardPage({
   /* -------- properties -------- */
 
   const properties = await prisma.property.findMany({
+    where: { accountId },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
@@ -251,8 +253,8 @@ export default async function DashboardPage({
   }));
 
   const whereProperty = selectedPropertyId
-    ? { propertyId: selectedPropertyId }
-    : {};
+    ? { propertyId: selectedPropertyId, property: { accountId } }
+    : { property: { accountId } };
 
   const featuredProperty =
     selectedPropertyId
@@ -275,7 +277,7 @@ export default async function DashboardPage({
     }),
     featuredPropertyId
       ? prisma.lease.findMany({
-          where: { propertyId: featuredPropertyId, status: LeaseStatus.active },
+          where: { propertyId: featuredPropertyId, status: LeaseStatus.active, property: { accountId } },
           orderBy: [{ startDate: "desc" }, { id: "desc" }],
           select: { id: true, endDate: true, rentAmount: true, unitLabel: true },
         })
@@ -312,7 +314,8 @@ export default async function DashboardPage({
     ? await prisma.annualCategoryAmount.findMany({
         where: {
           propertyId: selectedPropertyId,
-          category: { type: { not: "transfer" } }, // exclude transfers
+          property: { accountId },
+          category: { type: { not: "transfer" } },
         },
         select: {
           year: true,

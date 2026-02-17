@@ -8,7 +8,14 @@ const adapter = new PrismaBetterSqlite3({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  console.log("delegates:", {
+    account: typeof prisma.account,
+    accountMember: typeof prisma.accountMember,
+    user: typeof prisma.user,
+  });
+
   const account = await prisma.account.upsert({
+
     where: { name: "Primary Account" },
     update: {},
     create: { name: "Primary Account" },
@@ -38,12 +45,8 @@ async function main() {
   }
 
   const updatedProperties = await prisma.property.updateMany({
-    where: {
-      accountId: null,
-    },
-    data: {
-      accountId: account.id,
-    },
+    where: { accountId: null },
+    data: { accountId: account.id },
   });
 
   console.log(`Backfill complete for account ${account.id}`);

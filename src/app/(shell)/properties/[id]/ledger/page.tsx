@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, requireAccountId } from "@/lib/auth";
 import RecurringPanel from "@/components/ledger/RecurringPanel";
 import TransactionRowActions from "@/components/ledger/TransactionRowActions";
 import PropertyHeader from "@/components/properties/PropertyHeader";
@@ -101,6 +101,7 @@ export default async function PropertyLedgerPage({
 }) {
   await requireUser();
 
+  const accountId = await requireAccountId();
   const { id: propertyId } = await params;
   const sp = await searchParams;
 
@@ -115,8 +116,8 @@ export default async function PropertyLedgerPage({
   const fallbackYear = monthToYear(month);
   const year = normalizeYear(sp.year, fallbackYear);
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
     select: {
       id: true,
       nickname: true,
@@ -166,6 +167,7 @@ export default async function PropertyLedgerPage({
         propertyId,
         deletedAt: null,
         date: { gte: start, lt: end },
+        property: { accountId },
       },
       orderBy: [{ date: "desc" }, { id: "desc" }],
       include: { category: true },
@@ -188,7 +190,10 @@ export default async function PropertyLedgerPage({
 
     try {
       recurringItems = await prisma.recurringTransaction.findMany({
-        where: { propertyId },
+        where: {
+          propertyId,
+          property: { accountId },
+        },
         include: { category: true, postings: true },
         orderBy: [{ isActive: "desc" }, { dayOfMonth: "asc" }, { createdAt: "asc" }],
       });
@@ -207,7 +212,11 @@ export default async function PropertyLedgerPage({
   if (view === "annual") {
     const [annualEntries, allCategories] = await Promise.all([
       prisma.annualCategoryAmount.findMany({
-        where: { propertyId, year },
+        where: {
+          propertyId,
+          year,
+          property: { accountId },
+        },
         include: {
           category: { select: { id: true, name: true, type: true, parentId: true } },
           propertyOwnership: { include: { entity: { select: { name: true } } } },

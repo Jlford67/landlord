@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, requireAccountId } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 function toUtcDateFromYmd(ymd: string) {
@@ -13,6 +13,7 @@ function toUtcDateFromYmd(ymd: string) {
 export async function createTransaction(formData: FormData) {
   await requireUser();
 
+  const accountId = await requireAccountId();
   const propertyId = String(formData.get("propertyId") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "");
   const dateYmd = String(formData.get("date") ?? "");
@@ -24,6 +25,14 @@ export async function createTransaction(formData: FormData) {
   const amountNum = Number(amountRaw);
 
   if (!propertyId) throw new Error("Missing propertyId");
+
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
+    select: { id: true },
+  });
+
+  if (!property) throw new Error("Property not found");
+
   if (!categoryId) throw new Error("Missing categoryId");
   if (!dateYmd) throw new Error("Missing date");
   if (!Number.isFinite(amountNum)) throw new Error("Amount must be a number");

@@ -7,7 +7,7 @@ import IconButton from "@/components/ui/IconButton";
 import LinkButton from "@/components/ui/LinkButton";
 import { BookOpen, Search } from "lucide-react";
 import LedgerHeaderActions from "./LedgerHeaderActions";
-
+import { requireAccountId } from "@/lib/auth";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -24,23 +24,28 @@ export default async function LedgerPickerPage({
   searchParams?: Promise<SearchParams>;
 }) {
   const user = await requireUser();
+  const accountId = await requireAccountId();
+
   if (!user) redirect("/login");
 
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
 
   const properties = await prisma.property.findMany({
-    where: q
-      ? {
-          OR: [
-            { nickname: { contains: q } },
-            { street: { contains: q } },
-            { city: { contains: q } },
-            { state: { contains: q } },
-            { zip: { contains: q } },
-          ],
-        }
-      : undefined,
+    where: {
+      accountId,
+      ...(q
+        ? {
+            OR: [
+              { nickname: { contains: q } },
+              { street: { contains: q } },
+              { city: { contains: q } },
+              { state: { contains: q } },
+              { zip: { contains: q } },
+            ],
+          }
+        : {}),
+    },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     take: 200,
     select: {
