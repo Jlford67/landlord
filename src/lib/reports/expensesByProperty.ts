@@ -1,4 +1,5 @@
 import { CategoryType } from "@prisma/client";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
 
@@ -24,6 +25,7 @@ export async function getExpensesByProperty(params: {
     totalExpense: number;
   };
 }> {
+  const accountId = requireAccountId();
   const includeTransfers = Boolean(params.includeTransfers);
 
   let startDate = params.startDate;
@@ -39,7 +41,10 @@ export async function getExpensesByProperty(params: {
     : ["expense"];
 
   const properties = await prisma.property.findMany({
-    where: params.propertyId ? { id: params.propertyId } : undefined,
+    where: {
+      accountId,
+      id: params.propertyId || undefined,
+    },
     select: {
       id: true,
       nickname: true,
@@ -63,7 +68,7 @@ export async function getExpensesByProperty(params: {
   );
 
   const categories = await prisma.category.findMany({
-    where: { type: { in: allowedCategoryTypes } },
+    where: { accountId, type: { in: allowedCategoryTypes } },
     select: { id: true },
   });
 
