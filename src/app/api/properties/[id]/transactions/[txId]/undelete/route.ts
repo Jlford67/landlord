@@ -1,28 +1,38 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { requireAccountId } from "@/lib/auth";
 
-export async function POST(
-  req: Request,
-  ctx: { params: Promise<{ id: string; txId: string }> | { id: string; txId: string } }
-) {
-  await requireUser();
+type RouteParams = {
+  params: Promise<{ id: string; txId: string }>;
+};
 
-  const p = await Promise.resolve(ctx.params as any);
-  const propertyId = String(p.id ?? "");
-  const txId = String(p.txId ?? "");
+// Support POST (common for undelete) and PATCH (in case something calls it that way)
+export async function POST(_: Request, ctx: RouteParams) {
+  return handleUndelete(ctx);
+}
 
-  const form = await req.formData();
-  const month = String(form.get("month") ?? "").trim();
+export async function PATCH(_: Request, ctx: RouteParams) {
+  return handleUndelete(ctx);
+}
 
-  // Undo delete (soft-delete uses deletedAt)
-  await prisma.transaction.updateMany({
-    where: { id: txId, propertyId },
+async function handleUndelete(ctx: RouteParams) {
+  const accountId = await requireAccountId();
+  const { id: propertyId, txId } = await ctx.params;
+
+  const result = await prisma.transaction.updateMany({
+    where: {
+      id: txId,
+      propertyId,
+      // only undelete things that are actually deleted
+      deletedAt: { not: null },
+      property: { accountId },
+    },
     data: { deletedAt: null },
   });
 
-  const qsMonth = month && /^\d{4}-\d{2}$/.test(month) ? `&month=${encodeURIComponent(month)}` : "";
-  return NextResponse.redirect(
-    new URL(`/properties/${propertyId}/ledger?msg=restored${qsMonth}`, req.url)
-  );
+  if (result.count === 0) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

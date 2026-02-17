@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 function toNumber(v: FormDataEntryValue | null) {
   if (v == null) return NaN;
@@ -21,10 +21,22 @@ export async function POST(
   req: Request,
   ctx: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const p = await Promise.resolve(ctx.params as any);
   const propertyId = String(p.id);
+
+  // ✅ Enforce property belongs to this account (prevents cross-account POST)
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
+    select: { id: true },
+  });
+
+  if (!property) {
+    return NextResponse.redirect(
+      new URL(`/properties/${propertyId}/ledger?msg=not_found`, req.url)
+    );
+  }
 
   const form = await req.formData();
 
@@ -99,7 +111,7 @@ export async function POST(
   // Redirect to the month of the transaction date so the user always sees what they just added.
   const monthFromDate = dateStr.slice(0, 7);
   const redirectMonth =
-    monthFromDate && /^\d{4}-\d{2}$/.test(monthFromDate) ? monthFromDate : "";
+    monthFromDate && /^\d{4}-\d{2}-\d{2}$/.test(monthFromDate) ? monthFromDate : "";
 
   const redirectQs = redirectMonth ? `&month=${encodeURIComponent(redirectMonth)}` : "";
 

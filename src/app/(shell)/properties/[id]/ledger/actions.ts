@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, requireAccountId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -13,6 +13,7 @@ function toInt(v: FormDataEntryValue | null): number {
 
 export async function deleteAnnualEntry(formData: FormData) {
   await requireUser();
+  const accountId = await requireAccountId();
 
   const propertyId = String(formData.get("propertyId") ?? "");
   const year = toInt(formData.get("year"));
@@ -22,7 +23,11 @@ export async function deleteAnnualEntry(formData: FormData) {
   if (!id || !propertyId || !year) throw new Error("Missing required fields");
 
   const existing = await prisma.annualCategoryAmount.findFirst({
-    where: { id, propertyId },
+    where: {
+      id,
+      propertyId,
+      property: { accountId },
+    },
     select: { id: true },
   });
 

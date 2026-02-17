@@ -1,28 +1,40 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { requireAccountId } from "@/lib/auth";
 
-export async function POST(
-  req: Request,
-  ctx: { params: Promise<{ id: string; txId: string }> | { id: string; txId: string } }
-) {
-  await requireUser();
+type RouteParams = {
+  params: Promise<{ id: string; txId: string }>;
+};
 
-  const p = await Promise.resolve(ctx.params as any);
-  const propertyId = p.id as string;
-  const txId = p.txId as string;
+// Prefer POST for “delete” actions (since the folder is /delete/),
+// but also support DELETE in case something calls it directly.
+export async function POST(_: Request, ctx: RouteParams) {
+  return handleSoftDelete(ctx);
+}
 
-  const form = await req.formData();
-  const month = String(form.get("month") ?? "").trim();
+export async function DELETE(_: Request, ctx: RouteParams) {
+  return handleSoftDelete(ctx);
+}
 
-  // Soft-delete (only if it belongs to this property and isn't already deleted)
-  await prisma.transaction.updateMany({
-    where: { id: txId, propertyId, deletedAt: null },
+async function handleSoftDelete(ctx: RouteParams) {
+  const accountId = await requireAccountId();
+  const { id: propertyId, txId } = await ctx.params;
+
+  // Soft-delete scoped to account + property + not-already-deleted
+  const result = await prisma.transaction.updateMany({
+    where: {
+      id: txId,
+      propertyId,
+      deletedAt: null,
+      property: { accountId },
+    },
     data: { deletedAt: new Date() },
   });
 
-  const qsMonth = month && /^\d{4}-\d{2}$/.test(month) ? `&month=${encodeURIComponent(month)}` : "";
-  return NextResponse.redirect(
-    new URL(`/properties/${propertyId}/ledger?msg=deleted&undoId=${encodeURIComponent(txId)}${qsMonth}`, req.url)
-  );
+  if (result.count === 0) {
+    // Either not found, already deleted, wrong propertyId, or wrong accountId
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

@@ -15,6 +15,11 @@ enum UserRole {
   readonly
 }
 
+enum AccountMemberRole {
+  owner
+  member
+}
+
 enum LeaseStatus {
   upcoming
   active
@@ -63,9 +68,33 @@ model User {
   role         UserRole @default(owner)
   createdAt    DateTime @default(now())
 
+  accountMemberships AccountMember[]
   notificationRules NotificationRule[]
   notifications     Notification[]
   sessions          Session[]
+}
+
+model Account {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  members    AccountMember[]
+  properties Property[]
+}
+
+model AccountMember {
+  id        String            @id @default(cuid())
+  accountId String
+  userId    String
+  role      AccountMemberRole @default(member)
+  createdAt DateTime          @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, userId])
+  @@index([userId])
 }
 
 model Entity {
@@ -80,6 +109,7 @@ model Entity {
 
 model Property {
   id                        String    @id @default(cuid())
+  accountId                 String?
   nickname                  String?
   street                    String
   city                      String
@@ -105,6 +135,7 @@ model Property {
 
   createdAt                 DateTime  @default(now())
 
+  account               Account?              @relation(fields: [accountId], references: [id])
   ownerships            PropertyOwnership[]
   loans                 Loan[]
   taxAccounts           PropertyTaxAccount[]
@@ -115,6 +146,8 @@ model Property {
   recurringTransactions RecurringTransaction[]
   notifications         Notification[]
   annualCategoryAmounts AnnualCategoryAmount[]
+
+  @@index([accountId])
 }
 
 model PropertyOwnership {
