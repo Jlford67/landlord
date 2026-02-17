@@ -1,4 +1,5 @@
 import { CategoryType } from "@prisma/client";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type IncomeByCategoryInput = {
@@ -98,6 +99,7 @@ function normalizeDate(value?: string | Date | null): Date | null {
 export async function getIncomeByCategoryReport(
   input: IncomeByCategoryInput
 ): Promise<IncomeByCategoryResult> {
+  const accountId = requireAccountId();
   const now = new Date();
   const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
   const defaultEnd = new Date(
@@ -120,7 +122,7 @@ export async function getIncomeByCategoryReport(
     : ["income"];
 
   const categories = await prisma.category.findMany({
-    where: { type: { in: allowedTypes } },
+    where: { accountId, type: { in: allowedTypes } },
     select: { id: true, name: true, type: true },
   });
 
@@ -148,6 +150,34 @@ export async function getIncomeByCategoryReport(
   );
   const allowedCategoryIds = categories.map((c) => c.id);
 
+  const scopedProperties = await prisma.property.findMany({
+    where: {
+      accountId,
+      id: input.propertyId || undefined,
+    },
+    select: { id: true },
+  });
+  const scopedPropertyIds = scopedProperties.map((property) => property.id);
+
+  if (scopedPropertyIds.length === 0) {
+    return {
+      input: {
+        startDate,
+        endDate,
+        start: toYmd(startDate),
+        end: toYmd(endDate),
+        propertyId: input.propertyId ?? null,
+        includeTransfers,
+      },
+      rows: [],
+      totals: {
+        transactionalIncomeCents: 0,
+        annualIncomeCents: 0,
+        totalIncomeCents: 0,
+      },
+    };
+  }
+
   const transactionalMap = new Map<string, number>();
 
   const endDateExclusive = endExclusive(endDate);
@@ -155,7 +185,7 @@ export async function getIncomeByCategoryReport(
   const transactions = await prisma.transaction.groupBy({
     by: ["categoryId"],
     where: {
-      propertyId: input.propertyId || undefined,
+      propertyId: { in: scopedPropertyIds },
       categoryId: { in: allowedCategoryIds },
       deletedAt: null,
       date: {
@@ -187,7 +217,7 @@ export async function getIncomeByCategoryReport(
   if (years.length > 0) {
     const annualRows = await prisma.annualCategoryAmount.findMany({
       where: {
-        propertyId: input.propertyId || undefined,
+        propertyId: { in: scopedPropertyIds },
         categoryId: { in: allowedCategoryIds },
         year: { in: years },
       },
