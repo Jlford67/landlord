@@ -1,4 +1,5 @@
 import { CategoryType } from "@prisma/client";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type ExpensesByCategoryFilters = {
@@ -45,6 +46,7 @@ function overlapDaysInYear(rangeStart: Date, rangeEnd: Date, year: number) {
 export async function getExpensesByCategoryReport(
   filters: ExpensesByCategoryFilters
 ): Promise<ExpensesByCategoryResult> {
+  const accountId = requireAccountId();
   const includeTransfers = Boolean(filters.includeTransfers);
   const endExclusive = addDaysUTC(filters.endDate, 1);
 
@@ -53,7 +55,7 @@ export async function getExpensesByCategoryReport(
     : ["expense"];
 
   const categories = await prisma.category.findMany({
-    where: { type: { in: allowedTypes } },
+    where: { accountId, type: { in: allowedTypes } },
     select: {
       id: true,
       name: true,
@@ -72,10 +74,23 @@ export async function getExpensesByCategoryReport(
     return { rows: [], total: 0 };
   }
 
+  const scopedProperties = await prisma.property.findMany({
+    where: {
+      accountId,
+      id: filters.propertyId || undefined,
+    },
+    select: { id: true },
+  });
+  const scopedPropertyIds = scopedProperties.map((property) => property.id);
+
+  if (scopedPropertyIds.length === 0) {
+    return { rows: [], total: 0 };
+  }
+
   const grouped = await prisma.transaction.groupBy({
     by: ["categoryId"],
     where: {
-      propertyId: filters.propertyId || undefined,
+      propertyId: { in: scopedPropertyIds },
       categoryId: { in: allowedCategoryIds },
       deletedAt: null,
       date: {
@@ -99,7 +114,7 @@ export async function getExpensesByCategoryReport(
   if (years.length > 0) {
     const annualRows = await prisma.annualCategoryAmount.findMany({
       where: {
-        propertyId: filters.propertyId || undefined,
+        propertyId: { in: scopedPropertyIds },
         categoryId: { in: allowedCategoryIds },
         year: { in: years },
       },
