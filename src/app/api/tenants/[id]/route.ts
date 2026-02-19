@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 export async function POST(
   req: Request,
   ctx: { params: { id: string } } | { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const accountId = await requireAccountId();
 
     const paramsMaybePromise = (ctx as any).params;
     const p =
@@ -18,6 +17,23 @@ export async function POST(
 
     const id = p?.id;
     if (!id) return NextResponse.json({ error: "Missing tenant id" }, { status: 400 });
+
+    const scopedTenant = await prisma.tenant.findFirst({
+      where: {
+        id,
+        leaseTenants: {
+          some: {
+            lease: {
+              property: {
+                accountId,
+              },
+            },
+          },
+        },
+      },
+      select: { id: true },
+    });
+    if (!scopedTenant) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const formData = await req.formData();
 
@@ -31,8 +47,19 @@ export async function POST(
       return NextResponse.json({ error: "First and last name are required" }, { status: 400 });
     }
 
-    await prisma.tenant.update({
-      where: { id },
+    const updateResult = await prisma.tenant.updateMany({
+      where: {
+        id,
+        leaseTenants: {
+          some: {
+            lease: {
+              property: {
+                accountId,
+              },
+            },
+          },
+        },
+      },
       data: {
         firstName,
         lastName,
@@ -41,6 +68,9 @@ export async function POST(
         notes: notesRaw.length ? notesRaw : null,
       },
     });
+    if (updateResult.count === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     return NextResponse.redirect(new URL(`/tenants/${id}`, req.url));
   } catch (err: any) {
