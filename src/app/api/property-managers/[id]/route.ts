@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 function toStr(value: FormDataEntryValue | null) {
   const s = String(value ?? "").trim();
@@ -8,18 +8,39 @@ function toStr(value: FormDataEntryValue | null) {
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await ctx.params;
 
   const form = await req.formData();
   const name = String(form.get("name") ?? "").trim();
   if (!name) return new Response("name required", { status: 400 });
 
-  const existing = await prisma.propertyManagerCompany.findUnique({ select: { id: true }, where: { id } });
-  if (!existing) return NextResponse.redirect(new URL("/property-managers?msg=notfound", req.url));
+  const existing = await prisma.propertyManagerCompany.findFirst({
+    select: { id: true },
+    where: {
+      id,
+      assignments: {
+        some: {
+          property: {
+            accountId,
+          },
+        },
+      },
+    },
+  });
+  if (!existing) return new Response("Not found", { status: 404 });
 
-  await prisma.propertyManagerCompany.update({
-    where: { id },
+  const updateResult = await prisma.propertyManagerCompany.updateMany({
+    where: {
+      id,
+      assignments: {
+        some: {
+          property: {
+            accountId,
+          },
+        },
+      },
+    },
     data: {
       name,
       phone: toStr(form.get("phone")),
@@ -32,6 +53,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       notes: toStr(form.get("notes")),
     },
   });
+  if (updateResult.count === 0) return new Response("Not found", { status: 404 });
 
   return NextResponse.redirect(new URL(`/property-managers/${id}/edit?msg=updated`, req.url));
 }
