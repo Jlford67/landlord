@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { LeaseStatus } from "@prisma/client";
 
 const FAR_FUTURE = new Date("9999-12-31");
@@ -22,10 +22,7 @@ export async function POST(
   ctx: { params: { id: string } } | { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     // Next 16: params may be a Promise
     const paramsMaybePromise = (ctx as any).params;
@@ -37,6 +34,14 @@ export async function POST(
     const propertyId: string | undefined = unwrappedParams?.id;
     if (!propertyId) {
       return NextResponse.json({ error: "Missing property id" }, { status: 400 });
+    }
+
+    const property = await prisma.property.findFirst({
+      where: { id: propertyId, accountId },
+      select: { id: true },
+    });
+    if (!property) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     const formData = await req.formData();
@@ -120,10 +125,28 @@ export async function POST(
         ? (statusRaw as LeaseStatus)
         : "active";
 
-    await prisma.$transaction(async (tx) => {
-      const prop = await tx.property.findUnique({ where: { id: propertyId } });
-      if (!prop) throw new Error(`Property not found: ${propertyId}`);
+    if (tenantIds.length > 0) {
+      const crossAccountTenant = await prisma.tenant.findFirst({
+        where: {
+          id: { in: tenantIds },
+          leaseTenants: {
+            some: {
+              lease: {
+                property: {
+                  accountId: { not: accountId },
+                },
+              },
+            },
+          },
+        },
+        select: { id: true },
+      });
+      if (crossAccountTenant) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+    }
 
+    await prisma.$transaction(async (tx) => {
       const created = await tx.lease.create({
         data: {
           propertyId, // IMPORTANT: use unwrapped propertyId
