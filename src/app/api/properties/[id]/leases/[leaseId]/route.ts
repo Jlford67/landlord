@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { LeaseStatus } from "@prisma/client";
 
 function parseDateOnly(value: string): Date {
@@ -16,8 +16,7 @@ export async function POST(
     | { params: Promise<{ id: string; leaseId: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const accountId = await requireAccountId();
 
     const paramsMaybePromise = (ctx as any).params;
     const p =
@@ -32,6 +31,22 @@ export async function POST(
       return NextResponse.json({ error: "Missing route params" }, { status: 400 });
     }
 
+    const property = await prisma.property.findFirst({
+      where: { id: propertyId, accountId },
+      select: { id: true },
+    });
+    if (!property) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const lease = await prisma.lease.findFirst({
+      where: { id: leaseId, propertyId },
+      select: { id: true },
+    });
+    if (!lease) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const formData = await req.formData();
     const action = (formData.get("_action")?.toString() || "update").trim();
 
@@ -40,10 +55,13 @@ export async function POST(
       const endDateRaw = (formData.get("endDate")?.toString() || "").trim();
       const endDate = endDateRaw ? parseDateOnly(endDateRaw) : new Date();
 
-      await prisma.lease.update({
-        where: { id: leaseId },
+      const endResult = await prisma.lease.updateMany({
+        where: { id: leaseId, propertyId },
         data: { status: "ended", endDate },
       });
+      if (endResult.count === 0) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
 
       return NextResponse.redirect(new URL(`/properties/${propertyId}/leases`, req.url));
     }
@@ -61,6 +79,27 @@ export async function POST(
     const tenantIds = Array.from(
       new Set(formData.getAll("tenantIds").map((v) => v.toString()).filter(Boolean))
     );
+
+    if (tenantIds.length > 0) {
+      const crossAccountTenant = await prisma.tenant.findFirst({
+        where: {
+          id: { in: tenantIds },
+          leaseTenants: {
+            some: {
+              lease: {
+                property: {
+                  accountId: { not: accountId },
+                },
+              },
+            },
+          },
+        },
+        select: { id: true },
+      });
+      if (crossAccountTenant) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+    }
 
     if (!startDateRaw || !rentAmountRaw || !dueDayRaw) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -90,12 +129,8 @@ export async function POST(
         : "active";
 
     await prisma.$transaction(async (tx) => {
-      const lease = await tx.lease.findUnique({ where: { id: leaseId } });
-      if (!lease) throw new Error(`Lease not found: ${leaseId}`);
-      if (lease.propertyId !== propertyId) throw new Error("Lease/property mismatch");
-
-      await tx.lease.update({
-        where: { id: leaseId },
+      const updateResult = await tx.lease.updateMany({
+        where: { id: leaseId, propertyId },
         data: {
           startDate,
           endDate,
@@ -108,6 +143,7 @@ export async function POST(
           notes: notesRaw.length ? notesRaw : null,
         },
       });
+      if (updateResult.count === 0) throw new Error("Not found");
 
       const existing = await tx.leaseTenant.findMany({
         where: { leaseId },
