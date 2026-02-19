@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import TenantPicker, { TenantLite } from "@/components/TenantPicker";
 import AddTenantButton from "@/components/AddTenantButton";
@@ -38,19 +38,19 @@ export default async function EditLeasePage({
   params: Promise<Params>;
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = requireAccountId();
 
   const { id: propertyId, leaseId } = await params;
   const sp = searchParams ? await searchParams : {};
 
-  const property = await prisma.property.findUnique({ where: { id: propertyId } });
+  const property = await prisma.property.findFirst({ where: { id: propertyId, accountId } });
   if (!property) notFound();
 
-  const lease = await prisma.lease.findUnique({
-    where: { id: leaseId },
+  const lease = await prisma.lease.findFirst({
+    where: { id: leaseId, propertyId, property: { accountId } },
     include: { leaseTenants: { include: { tenant: true } } },
   });
-  if (!lease || lease.propertyId !== propertyId) notFound();
+  if (!lease) notFound();
 
   // Defaults from query string (used when returning from Add Tenant),
   // otherwise fall back to current lease values.
@@ -83,7 +83,17 @@ export default async function EditLeasePage({
   let initialSelectedTenants: TenantLite[] = [];
   if (tenantIdsFromQuery.length) {
     const rows = await prisma.tenant.findMany({
-      where: { id: { in: tenantIdsFromQuery } },
+      where: {
+        id: { in: tenantIdsFromQuery },
+        leaseTenants: {
+          some: {
+            lease: {
+              propertyId,
+              property: { accountId },
+            },
+          },
+        },
+      },
       select: { id: true, firstName: true, lastName: true, email: true },
     });
 
