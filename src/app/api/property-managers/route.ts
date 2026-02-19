@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 function toStr(value: FormDataEntryValue | null) {
   const s = String(value ?? "").trim();
@@ -8,7 +8,7 @@ function toStr(value: FormDataEntryValue | null) {
 }
 
 export async function POST(req: Request) {
-  await requireUser();
+  await requireAccountId();
 
   const form = await req.formData();
 
