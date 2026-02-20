@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
@@ -38,8 +38,8 @@ function fmtDate(d?: Date | null) {
 
 async function deleteInsurancePolicy(id: string) {
   "use server";
-  await requireUser();
-  await prisma.insurancePolicy.delete({ where: { id } });
+  const accountId = await requireAccountId();
+  await prisma.insurancePolicy.deleteMany({ where: { id, property: { accountId } } });
   redirect("/insurance?msg=deleted");
 }
 
@@ -95,7 +95,7 @@ export default async function InsurancePage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
   const propertyId = getStr(sp, "propertyId").trim();
@@ -111,6 +111,7 @@ export default async function InsurancePage({
         q || propertyId
           ? {
               AND: [
+                { property: { accountId } },
                 q
                   ? {
                       OR: [
@@ -131,10 +132,10 @@ export default async function InsurancePage({
                       ],
                     }
                   : {},
-                propertyId ? { propertyId } : {},
+                propertyId ? { propertyId, property: { accountId } } : {},
               ],
             }
-          : undefined,
+          : { property: { accountId } },
       include: {
         property: {
           select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
@@ -144,12 +145,13 @@ export default async function InsurancePage({
       take: 500,
     }),
     prisma.property.findMany({
+      where: { accountId },
       orderBy: [{ nickname: "asc" }],
       select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
     }),
     propertyId
-      ? prisma.property.findUnique({
-          where: { id: propertyId },
+      ? prisma.property.findFirst({
+          where: { id: propertyId, accountId },
           select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
         })
       : Promise.resolve(null),

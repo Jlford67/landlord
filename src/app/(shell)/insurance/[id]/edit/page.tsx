@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import MountedInsuranceForm from "@/components/insurance/MountedInsuranceForm";
 import PremiumMoneyInput from "@/components/insurance/PremiumMoneyInput";
@@ -47,12 +47,13 @@ export default async function EditInsurancePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await params;
 
   const [policy, properties] = await Promise.all([
-    prisma.insurancePolicy.findUnique({ where: { id } }),
+    prisma.insurancePolicy.findFirst({ where: { id, property: { accountId } } }),
     prisma.property.findMany({
+      where: { accountId },
       orderBy: [{ nickname: "asc" }],
       select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
     }),
@@ -60,8 +61,8 @@ export default async function EditInsurancePage({
 
   if (!policy) notFound();
 
-  const selectedProperty = await prisma.property.findUnique({
-    where: { id: policy.propertyId },
+  const selectedProperty = await prisma.property.findFirst({
+    where: { id: policy.propertyId, accountId },
     select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
   });
 

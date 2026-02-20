@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { toDate } from "../route";
 
 function toFloat(value: FormDataEntryValue | null) {
@@ -16,12 +16,18 @@ function toStr(value: FormDataEntryValue | null) {
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await ctx.params;
 
   const form = await req.formData();
   const propertyId = String(form.get("propertyId") ?? "").trim();
   if (!propertyId) return new Response("propertyId required", { status: 400 });
+
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
+    select: { id: true },
+  });
+  if (!property) return NextResponse.redirect(new URL("/insurance?msg=notfound", req.url));
 
   const dueDate = toDate(form.get("dueDate"), "dueDate");
   if ("error" in dueDate) return new Response(dueDate.error, { status: 400 });
@@ -30,11 +36,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if ("error" in paidDate) return new Response(paidDate.error, { status: 400 });
   const autoPayMonthly = form.get("autoPayMonthly") === "on";
 
-  const existing = await prisma.insurancePolicy.findUnique({ select: { id: true }, where: { id } });
+  const existing = await prisma.insurancePolicy.findFirst({
+    select: { id: true },
+    where: { id, property: { accountId } },
+  });
   if (!existing) return NextResponse.redirect(new URL("/insurance?msg=notfound", req.url));
 
-  await prisma.insurancePolicy.update({
-    where: { id },
+  const updateResult = await prisma.insurancePolicy.updateMany({
+    where: { id, property: { accountId } },
     data: {
       propertyId,
       insurer: toStr(form.get("insurer")),
@@ -52,6 +61,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       autoPayMonthly,
     },
   });
+  if (updateResult.count === 0) return NextResponse.redirect(new URL("/insurance?msg=notfound", req.url));
 
   return NextResponse.redirect(new URL("/insurance?msg=updated", req.url));
 }

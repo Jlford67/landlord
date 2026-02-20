@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ function propertyDisplayName(property: {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
   const propertyId = url.searchParams.get("propertyId")?.trim() ?? "";
@@ -25,6 +25,7 @@ export async function GET(req: Request) {
       q || propertyId
         ? {
             AND: [
+              { property: { accountId } },
               q
                 ? {
                     OR: [
@@ -45,10 +46,10 @@ export async function GET(req: Request) {
                     ],
                   }
                 : {},
-              propertyId ? { propertyId } : {},
+              propertyId ? { propertyId, property: { accountId } } : {},
             ],
           }
-        : undefined,
+        : { property: { accountId } },
     include: {
       property: {
         select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
