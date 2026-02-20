@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { toDate } from "../route";
 
 function toFloat(value: FormDataEntryValue | null) {
@@ -16,12 +16,18 @@ function toStr(value: FormDataEntryValue | null) {
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await ctx.params;
 
   const form = await req.formData();
   const propertyId = String(form.get("propertyId") ?? "").trim();
   if (!propertyId) return new Response("propertyId required", { status: 400 });
+
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
+    select: { id: true },
+  });
+  if (!property) return NextResponse.redirect(new URL("/property-tax?msg=notfound", req.url));
 
   const dueDate = toDate(form.get("dueDate"), "dueDate");
   if ("error" in dueDate) return new Response(dueDate.error, { status: 400 });
@@ -29,11 +35,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const lastPaid = toDate(form.get("lastPaid"), "lastPaid");
   if ("error" in lastPaid) return new Response(lastPaid.error, { status: 400 });
 
-  const existing = await prisma.propertyTaxAccount.findUnique({ select: { id: true }, where: { id } });
+  const existing = await prisma.propertyTaxAccount.findFirst({
+    select: { id: true },
+    where: { id, property: { accountId } },
+  });
   if (!existing) return NextResponse.redirect(new URL("/property-tax?msg=notfound", req.url));
 
-  await prisma.propertyTaxAccount.update({
-    where: { id },
+  const updateResult = await prisma.propertyTaxAccount.updateMany({
+    where: { id, property: { accountId } },
     data: {
       propertyId,
       name: toStr(form.get("name")),
@@ -52,6 +61,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       zip: toStr(form.get("zip")),
     },
   });
+  if (updateResult.count === 0) return NextResponse.redirect(new URL("/property-tax?msg=notfound", req.url));
 
   return NextResponse.redirect(new URL("/property-tax?msg=updated", req.url));
 }
