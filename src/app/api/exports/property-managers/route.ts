@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 
 export const runtime = "nodejs";
@@ -15,62 +15,70 @@ function propertyDisplayName(property: {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
   const propertyId = url.searchParams.get("propertyId")?.trim() ?? "";
 
   const companies = await prisma.propertyManagerCompany.findMany({
-    where:
-      q || propertyId
-        ? {
-            AND: [
-              q
-                ? {
-                    OR: [
-                      { name: { contains: q } },
-                      { phone: { contains: q } },
-                      { email: { contains: q } },
-                      { website: { contains: q } },
-                      {
-                        contacts: {
-                          some: {
-                            OR: [
-                              { name: { contains: q } },
-                              { email: { contains: q } },
-                              { phone: { contains: q } },
-                            ],
-                          },
-                        },
+    where: {
+      AND: [
+        {
+          assignments: {
+            some: {
+              property: { accountId },
+            },
+          },
+        },
+        ...(q
+          ? [
+              {
+                OR: [
+                  { name: { contains: q } },
+                  { phone: { contains: q } },
+                  { email: { contains: q } },
+                  { website: { contains: q } },
+                  {
+                    contacts: {
+                      some: {
+                        OR: [
+                          { name: { contains: q } },
+                          { email: { contains: q } },
+                          { phone: { contains: q } },
+                        ],
                       },
-                      {
-                        assignments: {
-                          some: {
-                            property: {
-                              OR: [
-                                { nickname: { contains: q } },
-                                { street: { contains: q } },
-                                { city: { contains: q } },
-                                { state: { contains: q } },
-                                { zip: { contains: q } },
-                              ],
-                            },
-                          },
-                        },
-                      },
-                    ],
-                  }
-                : {},
-              propertyId
-                ? {
-                    assignments: {
-                      some: { propertyId },
                     },
-                  }
-                : {},
-            ],
-          }
-        : undefined,
+                  },
+                  {
+                    assignments: {
+                      some: {
+                        property: {
+                          OR: [
+                            { nickname: { contains: q } },
+                            { street: { contains: q } },
+                            { city: { contains: q } },
+                            { state: { contains: q } },
+                            { zip: { contains: q } },
+                          ],
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+        ...(propertyId
+          ? [
+              {
+                assignments: {
+                  some: { propertyId, property: { accountId } },
+                },
+              },
+            ]
+          : []),
+      ],
+    },
     include: {
       contacts: {
         select: {
