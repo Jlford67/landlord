@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -17,24 +16,26 @@ export default async function LedgerPickerPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  const user = await requireUser();
-  if (!user) redirect("/login");
-
+  const accountId = await requireAccountId();
+  
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
 
   const properties = await prisma.property.findMany({
-    where: q
-      ? {
-          OR: [
-            { nickname: { contains: q } },
-            { street: { contains: q } },
-            { city: { contains: q } },
-            { state: { contains: q } },
-            { zip: { contains: q } },
-          ],
-        }
-      : undefined,
+    where: {
+      accountId,
+      ...(q
+        ? {
+            OR: [
+              { nickname: { contains: q } },
+              { street: { contains: q } },
+              { city: { contains: q } },
+              { state: { contains: q } },
+              { zip: { contains: q } },
+            ],
+          }
+        : {}),
+    },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     take: 200,
     select: {

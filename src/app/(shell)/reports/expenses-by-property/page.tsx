@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { fmtMoney, propertyLabel } from "@/lib/format";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import {
   addDaysUTC,
   calculateProratedAnnualExpense,
@@ -74,7 +74,7 @@ export default async function ExpensesByPropertyPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  const user = await requireUser();
+  const accountId = await requireAccountId();
 
   const sp = (await searchParams) ?? {};
 
@@ -107,6 +107,7 @@ export default async function ExpensesByPropertyPage({
   const exportHref = `/api/exports/reports/expenses-by-property?${exportParams.toString()}`;
 
   const properties = await prisma.property.findMany({
+    where: { accountId },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
@@ -124,7 +125,7 @@ export default async function ExpensesByPropertyPage({
   }));
 
   const report = await getExpensesByProperty({
-    userId: user.id,
+    userId: accountId,
     startDate,
     endDate,
     includeTransfers,

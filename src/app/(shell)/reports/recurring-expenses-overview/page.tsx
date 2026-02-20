@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { fmtMoney, propertyLabel } from "@/lib/format";
 import { getRecurringExpensesOverviewReport } from "@/lib/reports/recurringExpensesOverview";
 import Button from "@/components/ui/Button";
@@ -53,7 +53,7 @@ export default async function RecurringExpensesOverviewPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const sp = (await searchParams) ?? {};
 
@@ -89,6 +89,7 @@ export default async function RecurringExpensesOverviewPage({
   const exportHref = `/api/exports/reports/recurring-expenses-overview?${exportParams.toString()}`;
 
   const properties = await prisma.property.findMany({
+    where: { accountId },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,

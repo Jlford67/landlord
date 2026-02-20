@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { LeaseStatus } from "@prisma/client";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
@@ -52,11 +52,11 @@ export default async function PropertyLeasesPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await params;
 
-  const property = await prisma.property.findUnique({
-    where: { id },
+  const property = await prisma.property.findFirst({
+    where: { id, accountId },
   });
   if (!property) notFound();
 

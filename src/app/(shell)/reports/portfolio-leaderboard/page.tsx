@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { fmtMoney } from "@/lib/format";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import {
   getPortfolioLeaderboardReport,
   type Metric,
@@ -159,7 +159,7 @@ export default async function PortfolioLeaderboardPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  await requireAccountId();
 
   const sp = (await searchParams) ?? {};
 

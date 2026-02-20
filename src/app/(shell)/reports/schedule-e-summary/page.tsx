@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { fmtMoney, propertyLabel } from "@/lib/format";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { getScheduleESummaryReport } from "@/lib/reports/scheduleESummary";
 import Button from "@/components/ui/Button";
 import { ArrowLeft, Download } from "lucide-react";
@@ -61,7 +61,7 @@ export default async function ScheduleESummaryPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const sp = (await searchParams) ?? {};
 
@@ -101,6 +101,7 @@ export default async function ScheduleESummaryPage({
   const exportHref = `/api/exports/reports/schedule-e-summary?${exportParams.toString()}`;
 
   const properties = await prisma.property.findMany({
+    where: { accountId },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { upsertAnnualEntry } from "../../actions";
 
 function currentYearUtc() {
@@ -11,14 +11,14 @@ export default async function EditAnnualEntryPage(props: {
   params: Promise<{ id: string; annualId: string }>;
   searchParams?: Promise<{ year?: string }>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const { id: propertyId, annualId } = await props.params;
   const sp = (await props.searchParams) ?? {};
   const fallbackYear = Number.isFinite(Number(sp.year)) ? Math.trunc(Number(sp.year)) : currentYearUtc();
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
     select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
   });
 

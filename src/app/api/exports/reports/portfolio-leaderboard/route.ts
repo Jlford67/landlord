@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 import {
   getPortfolioLeaderboardReport,
@@ -41,7 +41,7 @@ function parseYmdToDate(value?: string | null): Date | null {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  await requireAccountId();
   const url = new URL(req.url);
 
   const metricRaw = url.searchParams.get("metric");

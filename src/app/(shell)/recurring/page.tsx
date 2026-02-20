@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { propertyLabel } from "@/lib/format";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import IconButton from "@/components/ui/IconButton";
@@ -21,23 +21,26 @@ export default async function RecurringPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
 
   const properties = await prisma.property.findMany({
-    where: q
-      ? {
-          OR: [
-            { nickname: { contains: q } },
-            { street: { contains: q } },
-            { city: { contains: q } },
-            { state: { contains: q } },
-            { zip: { contains: q } },
-          ],
-        }
-      : undefined,
+    where: {
+      accountId,
+      ...(q
+        ? {
+            OR: [
+              { nickname: { contains: q } },
+              { street: { contains: q } },
+              { city: { contains: q } },
+              { state: { contains: q } },
+              { zip: { contains: q } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

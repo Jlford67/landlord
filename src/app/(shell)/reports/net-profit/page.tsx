@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { formatUsd } from "@/lib/money";
 import { AmountCell } from "@/components/ui/AmountCell";
 import {
@@ -31,7 +31,7 @@ export default async function NetProfitPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  await requireAccountId();
 
   const sp = (await searchParams) ?? {};
   const years = parseYears(getStr(sp, "years"));

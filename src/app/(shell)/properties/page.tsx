@@ -2,12 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import IconButton from "@/components/ui/IconButton";
 import { BookOpen, Building2, Search, Trash2 } from "lucide-react";
 import LinkButton from "@/components/ui/LinkButton";
-import { requireAccountId } from "@/lib/account";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -53,10 +52,8 @@ export default async function PropertiesPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  const user = await requireUser();
   const accountId = await requireAccountId();
-  if (!user) redirect("/login");
-
+  
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
   const msg = getMsg(sp);

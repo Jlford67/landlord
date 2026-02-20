@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 function normalize(v: unknown) {
   return String(v ?? "").trim();
@@ -33,13 +33,13 @@ export async function updatePropertyExternalLinks(input: {
   zillowUrl: unknown;
   redfinUrl: unknown;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const z = validate("zillow", normalize(input.zillowUrl));
   const r = validate("redfin", normalize(input.redfinUrl));
 
-  await prisma.property.update({
-    where: { id: input.propertyId },
+  await prisma.property.updateMany({
+    where: { id: input.propertyId, accountId },
     data: { zillowUrl: z, redfinUrl: r },
   });
 

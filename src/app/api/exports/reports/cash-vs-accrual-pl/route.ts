@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { propertyLabel } from "@/lib/format";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 import { getCashVsAccrualPLReport } from "@/lib/reports/cashVsAccrualPL";
@@ -21,7 +21,7 @@ function formatInputDateUTC(d: Date) {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const url = new URL(req.url);
 
   const propertyIdRaw = url.searchParams.get("propertyId");
@@ -54,8 +54,8 @@ export async function GET(req: Request) {
       view,
     }),
     propertyId
-      ? prisma.property.findUnique({
-          where: { id: propertyId },
+      ? prisma.property.findFirst({
+          where: { id: propertyId, accountId },
           select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
         })
       : Promise.resolve(null),

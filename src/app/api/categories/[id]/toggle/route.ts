@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
-  await requireUser();
+  await requireAccountId();
 
   const { id } = await ctx.params;
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import NewTransactionForm from "./NewTransactionForm";
 
@@ -18,7 +18,7 @@ export default async function NewTransactionPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ returnTo?: string }>;
 }) {
-  await requireUser();
+  await requireAccountId();
 
   const { id: propertyId } = await params;
   const sp = await searchParams;

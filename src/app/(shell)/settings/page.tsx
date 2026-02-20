@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import NotificationsSettingsClient from "./NotificationsSettingsClient";
 import NotificationsToastClient from "@/components/notifications/NotificationsToastClient";
 import { generateNotificationsIfNeeded, getSettings, getTodayInAppNotifications } from "./actions";
@@ -45,7 +45,7 @@ type UpcomingItem = {
 };
 
 export default async function SettingsPage() {
-  await requireUser();
+  await requireAccountId();
   await generateNotificationsIfNeeded();
 
   const settings = await getSettings();

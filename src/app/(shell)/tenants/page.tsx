@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
@@ -25,7 +25,7 @@ export default async function TenantsPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  await requireAccountId();
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
   const msg = getStr(sp, "msg").trim();

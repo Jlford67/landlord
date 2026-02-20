@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { propertyLabel } from "@/lib/format";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 import { getIncomeVsExpensesByYear } from "@/lib/reports/incomeVsExpensesByYear";
@@ -15,14 +15,14 @@ function slugify(value: string) {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const url = new URL(req.url);
   const propertyId = url.searchParams.get("propertyId") ?? undefined;
 
   const [property, report] = await Promise.all([
     propertyId
-      ? prisma.property.findUnique({
-          where: { id: propertyId },
+      ? prisma.property.findFirst({
+          where: { id: propertyId, accountId },
           select: {
             id: true,
             nickname: true,

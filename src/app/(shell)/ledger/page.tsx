@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import IconButton from "@/components/ui/IconButton";
 import LinkButton from "@/components/ui/LinkButton";
@@ -23,11 +23,9 @@ export default async function LedgerPickerPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  const user = await requireUser();
   const accountId = await requireAccountId();
 
-  if (!user) redirect("/login");
-
+  
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
 

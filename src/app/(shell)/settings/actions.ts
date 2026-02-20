@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { getCurrentUser, requireAccountId } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import {
   NotificationChannel,
@@ -180,12 +180,12 @@ function buildMessage(
 }
 
 export async function getSettings() {
-  await requireUser();
+  await requireAccountId();
   return getOrCreateSettings();
 }
 
 export async function saveSettings(input: NotificationSettingsInput) {
-  await requireUser();
+  await requireAccountId();
   const settings = await getOrCreateSettings();
 
   const updated = await prisma.notificationSettings.update({
@@ -216,7 +216,10 @@ export async function changePassword(input: {
   newPassword: string;
   confirmPassword: string;
 }) {
-  const user = await requireUser();
+  const user = await getCurrentUser();
+  if (!user) {
+    return { ok: false, message: "Unable to update password." };
+  }
   const currentPassword = input.currentPassword ?? "";
   const newPassword = input.newPassword ?? "";
   const confirmPassword = input.confirmPassword ?? "";
@@ -257,7 +260,7 @@ export async function changePassword(input: {
 }
 
 export async function sendTestEmail(emailAddress: string | null) {
-  await requireUser();
+  await requireAccountId();
   const to = emailAddress?.trim();
   if (!to) {
     return { ok: false, message: "Add an email address to send a test." };
@@ -270,7 +273,7 @@ export async function sendTestEmail(emailAddress: string | null) {
 }
 
 export async function acknowledgeNotification(id: string) {
-  await requireUser();
+  await requireAccountId();
   await prisma.notificationEvent.updateMany({
     where: { id },
     data: { acknowledgedAt: new Date() },
@@ -281,7 +284,7 @@ export async function acknowledgeNotification(id: string) {
 }
 
 export async function getTodayInAppNotifications() {
-  await requireUser();
+  await requireAccountId();
   const now = new Date();
   const start = startOfDayUTC(now);
   const end = new Date(start);
@@ -298,7 +301,7 @@ export async function getTodayInAppNotifications() {
 }
 
 export async function generateNotificationsIfNeeded() {
-  await requireUser();
+  await requireAccountId();
 
   const settings = await getOrCreateSettings();
   const now = new Date();

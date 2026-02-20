@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser, requireAccountId } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 function toUtcDateFromYmd(ymd: string) {
@@ -10,7 +10,7 @@ function toUtcDateFromYmd(ymd: string) {
 }
 
 export async function updateTransaction(formData: FormData) {
-  await requireUser();
+  await requireAccountId();
 
   const accountId = await requireAccountId();
   const propertyId = String(formData.get("propertyId") ?? "");

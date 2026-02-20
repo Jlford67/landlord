@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 import { getRecurringExpensesOverviewReport } from "@/lib/reports/recurringExpensesOverview";
 
@@ -23,7 +23,7 @@ function centsToDollars(value: number) {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  await requireAccountId();
   const url = new URL(req.url);
 
   const propertyIdRaw = url.searchParams.get("propertyId");

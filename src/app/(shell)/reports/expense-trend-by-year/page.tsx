@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { getExpenseTrendByYear } from "@/lib/reports/expenseTrendByYear";
 import ExpenseTrendClient from "./ExpenseTrendClient";
 import LinkButton from "@/components/ui/LinkButton";
@@ -22,7 +22,7 @@ export default async function ExpenseTrendByYearPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const sp = (await searchParams) ?? {};
   const categoryId = getStr(sp, "categoryId");
@@ -32,6 +32,7 @@ export default async function ExpenseTrendByYearPage({
   const positiveValue = showPositive ? "1" : "0";
 
   const properties = await prisma.property.findMany({
+    where: { accountId },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,

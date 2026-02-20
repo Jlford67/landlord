@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import NewLeaseForm from "@/components/leases/NewLeaseForm";
 import PropertyHeader from "@/components/properties/PropertyHeader";
@@ -54,12 +54,12 @@ export default async function NewLeasePage({
   params: Promise<{ id: string }>;
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const { id } = await params;
   const sp = searchParams ? await searchParams : {};
 
-  const property = await prisma.property.findUnique({ where: { id } });
+  const property = await prisma.property.findFirst({ where: { id, accountId } });
   if (!property) notFound();
 
   // Defaults from query string (used when returning from Add Tenant)

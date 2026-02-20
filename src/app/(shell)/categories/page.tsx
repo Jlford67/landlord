@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import { Tags, Trash2 } from "lucide-react";
 import { AddCategoryForm, CategoryInlineEditor } from "./CategoryClient";
@@ -26,7 +26,7 @@ type CategoryRow = {
 export default async function CategoriesPage(props: {
   searchParams?: Promise<{ msg?: string }>;
 }) {
-  await requireUser();
+  await requireAccountId();
   const sp = (await props.searchParams) ?? {};
   const msg = typeof sp.msg === "string" ? sp.msg : "";
 

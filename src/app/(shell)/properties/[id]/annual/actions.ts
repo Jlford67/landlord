@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 
@@ -36,7 +36,7 @@ function signedAmountForType(type: "income" | "expense", amountRaw: number) {
 }
 
 export async function saveAnnualLine(formData: FormData): Promise<AnnualLineResult> {
-  await requireUser();
+  await requireAccountId();
 
   const propertyId = String(formData.get("propertyId") ?? "");
   const year = toInt(formData.get("year"));
@@ -94,7 +94,7 @@ export async function saveAnnualLine(formData: FormData): Promise<AnnualLineResu
 }
 
 export async function upsertAnnualEntry(formData: FormData) {
-  await requireUser();
+  await requireAccountId();
 
   const propertyId = String(formData.get("propertyId") ?? "");
   const entryId = String(formData.get("entryId") ?? "");
@@ -160,7 +160,7 @@ export async function upsertAnnualEntry(formData: FormData) {
 }
 
 export async function updateAnnualLine(formData: FormData): Promise<AnnualLineResult> {
-  await requireUser();
+  await requireAccountId();
 
   const propertyId = String(formData.get("propertyId") ?? "");
   const entryId = String(formData.get("entryId") ?? "");
@@ -230,7 +230,7 @@ export async function updateAnnualLine(formData: FormData): Promise<AnnualLineRe
 }
 
 export async function deleteAnnualLine(formData: FormData) {
-  await requireUser();
+  await requireAccountId();
 
   const propertyId = String(formData.get("propertyId") ?? "");
   const year = toInt(formData.get("year"));

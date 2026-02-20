@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser, requireAccountId } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import RecurringPanel from "@/components/ledger/RecurringPanel";
 import TransactionRowActions from "@/components/ledger/TransactionRowActions";
 import PropertyHeader from "@/components/properties/PropertyHeader";
@@ -99,7 +99,7 @@ export default async function PropertyLedgerPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ month?: string; view?: string; year?: string }>;
 }) {
-  await requireUser();
+  await requireAccountId();
 
   const accountId = await requireAccountId();
   const { id: propertyId } = await params;

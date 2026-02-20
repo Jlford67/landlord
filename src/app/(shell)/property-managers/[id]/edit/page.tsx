@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import {
   updatePropertyManagerCompany,
 } from "../../actions";
@@ -28,7 +28,7 @@ export default async function EditPropertyManagerPage({
   params: Promise<{ id: string }>;
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  await requireAccountId();
   const { id } = await params;
   const sp = searchParams ? await searchParams : {};
   const msg = typeof sp.msg === "string" ? sp.msg : "";

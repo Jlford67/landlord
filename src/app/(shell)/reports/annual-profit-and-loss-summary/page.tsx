@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import {
   getAnnualProfitAndLossSummary,
   type AnnualProfitAndLossSummaryResult,
@@ -143,7 +143,7 @@ export default async function AnnualProfitAndLossSummaryPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const sp = (await searchParams) ?? {};
 
@@ -173,6 +173,7 @@ export default async function AnnualProfitAndLossSummaryPage({
   const exportHref = `/api/exports/reports/annual-profit-and-loss-summary?${exportParams.toString()}`;
 
   const properties = await prisma.property.findMany({
+    where: { accountId },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,

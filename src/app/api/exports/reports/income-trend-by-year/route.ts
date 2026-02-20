@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 import { getIncomeTrendByYear } from "@/lib/reports/incomeTrendByYear";
 
@@ -14,7 +14,7 @@ function slugify(value: string) {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  await requireAccountId();
   const url = new URL(req.url);
   const categoryId = url.searchParams.get("categoryId") ?? "";
   const propertyId = url.searchParams.get("propertyId") ?? undefined;

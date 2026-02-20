@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, type ExcelSheet } from "@/lib/export/excel";
 import {
   getReturnOnEquityReport,
@@ -15,7 +15,7 @@ function parseYear(value?: string | null): number | null {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  await requireAccountId();
 
   const url = new URL(req.url);
   const now = new Date();

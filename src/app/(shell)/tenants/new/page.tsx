@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import TenantFormMount from "./TenantFormMount";
 
 import { Users } from "lucide-react";
@@ -10,7 +10,7 @@ export default async function NewTenantPage({
 }: {
   searchParams?: Promise<{ returnTo?: string }>;
 }) {
-  await requireUser();
+  await requireAccountId();
 
   const sp = searchParams ? await searchParams : undefined;
   const returnTo = sp?.returnTo || "/properties";
