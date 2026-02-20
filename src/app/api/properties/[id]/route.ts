@@ -142,9 +142,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
     if (propertyManagerCompanyId) {
       await prisma.propertyManagerAssignment.upsert({
-        where: { propertyId: id },
+        where: { propertyId: existing.id },
         create: {
-          propertyId: id,
+          propertyId: existing.id,
           companyId: propertyManagerCompanyId,
           contactId: resolvedContactId,
         },
@@ -154,7 +154,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         },
       });
     } else {
-      await prisma.propertyManagerAssignment.deleteMany({ where: { propertyId: id } });
+      await prisma.propertyManagerAssignment.deleteMany({ where: { propertyId: existing.id } });
     }
 
     return NextResponse.redirect(new URL(`/properties/${id}`, req.url));
