@@ -70,8 +70,8 @@ export async function POST(
     );
   }
 
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
+  const category = await prisma.category.findFirst({
+    where: { id: categoryId, accountId },
     select: { id: true, type: true, active: true },
   });
 
@@ -111,7 +111,7 @@ export async function POST(
   // Redirect to the month of the transaction date so the user always sees what they just added.
   const monthFromDate = dateStr.slice(0, 7);
   const redirectMonth =
-    monthFromDate && /^\d{4}-\d{2}-\d{2}$/.test(monthFromDate) ? monthFromDate : "";
+    monthFromDate && /^\d{4}-\d{2}$/.test(monthFromDate) ? monthFromDate : "";
 
   const redirectQs = redirectMonth ? `&month=${encodeURIComponent(redirectMonth)}` : "";
 
