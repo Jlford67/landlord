@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { updateTransaction } from "./actions";
 
 function ym(d: Date) {
@@ -13,19 +13,19 @@ export default async function EditTransactionPage(props: {
   params: Promise<{ id: string; txId: string }>;
   searchParams?: Promise<{ month?: string }>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const { id: propertyId, txId } = await props.params;
   const sp = (await props.searchParams) ?? {};
   const month = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : ym(new Date());
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
     select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
   });
 
   const txn = await prisma.transaction.findFirst({
-    where: { id: txId, propertyId },
+    where: { id: txId, propertyId, deletedAt: null },
     include: { category: true },
   });
 
