@@ -102,8 +102,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
     let resolvedContactId: string | null = propertyManagerContactId || null;
     if (propertyManagerCompanyId && resolvedContactId) {
-      // PropertyManagerCompany/PropertyManagerContact do not have accountId in schema;
-      // tenant isolation for assignment edits relies on the scoped property ownership check above.
+      // Tenant isolation relies on the property ownership check above.
       const contact = await prisma.propertyManagerContact.findUnique({
         where: { id: resolvedContactId },
         select: { companyId: true },
