@@ -62,7 +62,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       select: { id: true },
       where: { id, accountId },
     });
-    if (!existing) return new Response("Not found", { status: 404 });
+    if (!existing) return NextResponse.redirect(new URL(`/properties?msg=notfound`, req.url));
 
     const form = await req.formData();
 
@@ -102,6 +102,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
     let resolvedContactId: string | null = propertyManagerContactId || null;
     if (propertyManagerCompanyId && resolvedContactId) {
+      // PropertyManagerCompany/PropertyManagerContact do not have accountId in schema;
+      // tenant isolation for assignment edits relies on the scoped property ownership check above.
       const contact = await prisma.propertyManagerContact.findUnique({
         where: { id: resolvedContactId },
         select: { companyId: true },
@@ -137,7 +139,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         redfinUrl,
       },
     });
-    if (updateResult.count === 0) return new Response("Not found", { status: 404 });
+    if (updateResult.count === 0) return NextResponse.redirect(new URL(`/properties?msg=notfound`, req.url));
 
     if (propertyManagerCompanyId) {
       await prisma.propertyManagerAssignment.upsert({
