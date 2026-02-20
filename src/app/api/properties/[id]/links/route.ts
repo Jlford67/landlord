@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const { id } = await ctx.params;
 
@@ -20,13 +20,17 @@ export async function PATCH(
   const zillowUrl = ((body as any)?.zillowUrl ?? "").toString().trim();
   const redfinUrl = ((body as any)?.redfinUrl ?? "").toString().trim();
 
-  await prisma.property.update({
-    where: { id },
+  const updateResult = await prisma.property.updateMany({
+    where: { id, accountId },
     data: {
       zillowUrl: zillowUrl || null,
       redfinUrl: redfinUrl || null,
     },
   });
+
+  if (updateResult.count === 0) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   return NextResponse.json({ ok: true });
 }
