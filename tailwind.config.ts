@@ -1,4 +1,4 @@
-tailwind.config.tsimport type { Config } from "tailwindcss";
+import type { Config } from "tailwindcss";
 
 export default {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],

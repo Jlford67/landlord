@@ -7,7 +7,6 @@ import IconButton from "@/components/ui/IconButton";
 import LinkButton from "@/components/ui/LinkButton";
 import { BookOpen, Search } from "lucide-react";
 import LedgerHeaderActions from "./LedgerHeaderActions";
-import { requireAccountId } from "@/lib/auth";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

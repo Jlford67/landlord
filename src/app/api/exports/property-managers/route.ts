@@ -208,8 +208,6 @@ export async function GET(req: Request) {
           notes: assignment.notes ?? "",
         }))
     ),
-
-    ),
   };
 
   const buffer = buildWorkbookBuffer([companySheet, contactsSheet, assignmentsSheet]);
