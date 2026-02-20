@@ -1,3 +1,4 @@
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "./db";
 
 export function monthCompare(a: string, b: string) {
@@ -42,6 +43,21 @@ export function monthsBetweenInclusive(startMonth: string, endMonth: string) {
   return out;
 }
 
+
+async function getScopedPropertyContext(propertyId: string, accountId?: string) {
+  const scopedAccountId = accountId ?? (await requireAccountId());
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId: scopedAccountId },
+    select: { id: true },
+  });
+
+  if (!property) {
+    throw new Error("Property not found");
+  }
+
+  return { propertyId: property.id, accountId: scopedAccountId };
+}
+
 export function currentYmUtc() {
   const d = new Date();
   const y = d.getUTCFullYear();
@@ -49,9 +65,11 @@ export function currentYmUtc() {
   return `${y}-${m}`;
 }
 
-export async function getScheduledRecurringForMonth(propertyId: string, month: string) {
+export async function getScheduledRecurringForMonth(propertyId: string, month: string, accountId?: string) {
+  const scoped = await getScopedPropertyContext(propertyId, accountId);
+
   const recurrences = await prisma.recurringTransaction.findMany({
-    where: { propertyId, isActive: true },
+    where: { propertyId: scoped.propertyId, isActive: true },
     include: {
       category: true,
       postings: {
@@ -73,13 +91,14 @@ export async function getScheduledRecurringForMonth(propertyId: string, month: s
     }));
 }
 
-export async function postRecurringUpToMonth(propertyId: string, upToMonth?: string) {
+export async function postRecurringUpToMonth(propertyId: string, upToMonth?: string, accountId?: string) {
+  const scoped = await getScopedPropertyContext(propertyId, accountId);
   const targetMonth = upToMonth ?? currentYmUtc();
 
   // Pull all recurring rules for the property that could apply
   const rules = await prisma.recurringTransaction.findMany({
     where: {
-      propertyId,
+      propertyId: scoped.propertyId,
       isActive: true,
       startMonth: { lte: targetMonth },
     },
