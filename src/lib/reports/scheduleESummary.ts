@@ -1,5 +1,6 @@
 import { CategoryType } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { requireAccountId } from "@/lib/auth";
 import { propertyLabel } from "@/lib/format";
 
 export type BucketKey =
@@ -280,6 +281,7 @@ function centsFromAmount(amount: number): number {
 export async function getScheduleESummaryReport(
   input: ScheduleESummaryInput
 ): Promise<ScheduleESummaryReport> {
+  const accountId = requireAccountId();
   const includeTransfers = Boolean(input.includeTransfers);
   const mode = input.mode ?? "combined";
 
@@ -307,18 +309,22 @@ export async function getScheduleESummaryReport(
   }
 
   const includeByProperty = !input.propertyId;
-  const properties = includeByProperty
-    ? await prisma.property.findMany({
-        select: {
-          id: true,
-          nickname: true,
-          street: true,
-          city: true,
-          state: true,
-          zip: true,
-        },
-      })
-    : [];
+  const scopedProperties = await prisma.property.findMany({
+    where: {
+      accountId,
+      id: input.propertyId || undefined,
+    },
+    select: {
+      id: true,
+      nickname: true,
+      street: true,
+      city: true,
+      state: true,
+      zip: true,
+    },
+  });
+  const properties = includeByProperty ? scopedProperties : [];
+  const scopedPropertyIds = scopedProperties.map((p) => p.id);
 
   const propertyMap = new Map(
     properties.map((p) => [
@@ -428,7 +434,7 @@ export async function getScheduleESummaryReport(
   if (mode !== "annualOnly") {
     const transactional = await prisma.transaction.findMany({
       where: {
-        propertyId: input.propertyId || undefined,
+        propertyId: { in: scopedPropertyIds },
         deletedAt: null,
         date: {
           gte: rangeStart,
@@ -470,7 +476,7 @@ export async function getScheduleESummaryReport(
     if (years.length > 0) {
       const annualRows = await prisma.annualCategoryAmount.findMany({
         where: {
-          propertyId: input.propertyId || undefined,
+          propertyId: { in: scopedPropertyIds },
           year: { in: years },
           category: {
             type: { in: ["income", "expense"] },

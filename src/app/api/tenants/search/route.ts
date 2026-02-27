@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 type TenantRow = {
   id: string;
@@ -11,10 +11,7 @@ type TenantRow = {
 
 export async function GET(req: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     const url = new URL(req.url);
     const qRaw = (url.searchParams.get("q") || "").trim();
@@ -29,17 +26,23 @@ export async function GET(req: Request) {
     // SQLite case-insensitive search using LOWER(...) LIKE ...
     const tenants = await prisma.$queryRaw<TenantRow[]>`
       SELECT
-        "id",
-        "firstName",
-        "lastName",
-        "email"
-      FROM "Tenant"
+        DISTINCT t."id",
+        t."firstName",
+        t."lastName",
+        t."email"
+      FROM "Tenant" t
+      INNER JOIN "LeaseTenant" lt ON lt."tenantId" = t."id"
+      INNER JOIN "Lease" l ON l."id" = lt."leaseId"
+      INNER JOIN "Property" p ON p."id" = l."propertyId"
       WHERE
-        lower("firstName") LIKE ${like}
-        OR lower("lastName") LIKE ${like}
-        OR lower(COALESCE("email", '')) LIKE ${like}
-        OR lower(COALESCE("phone", '')) LIKE ${like}
-      ORDER BY "lastName" ASC, "firstName" ASC
+        p."accountId" = ${accountId}
+        AND (
+          lower(t."firstName") LIKE ${like}
+          OR lower(t."lastName") LIKE ${like}
+          OR lower(COALESCE(t."email", '')) LIKE ${like}
+          OR lower(COALESCE(t."phone", '')) LIKE ${like}
+        )
+      ORDER BY t."lastName" ASC, t."firstName" ASC
       LIMIT 20
     `;
 

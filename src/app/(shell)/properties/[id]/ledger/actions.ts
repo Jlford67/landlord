@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser, requireAccountId } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -12,7 +12,7 @@ function toInt(v: FormDataEntryValue | null): number {
 }
 
 export async function deleteAnnualEntry(formData: FormData) {
-  await requireUser();
+  await requireAccountId();
   const accountId = await requireAccountId();
 
   const propertyId = String(formData.get("propertyId") ?? "");

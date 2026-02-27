@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import {
   getReturnOnEquityReport,
   type ValuationSource,
@@ -100,7 +100,7 @@ export default async function ReturnOnEquityPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const sp = (await searchParams) ?? {};
 
@@ -117,6 +117,7 @@ export default async function ReturnOnEquityPage({
 
   const [properties, report] = await Promise.all([
     prisma.property.findMany({
+      where: { accountId },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       select: {
         id: true,

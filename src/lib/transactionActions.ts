@@ -1,10 +1,9 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser, requireAccountId } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 export async function deleteTransaction(id: string) {
-  await requireUser();
   const accountId = await requireAccountId();
 
   await prisma.transaction.updateMany({
@@ -16,4 +15,3 @@ export async function deleteTransaction(id: string) {
     data: { deletedAt: new Date() },
   });
 }
-

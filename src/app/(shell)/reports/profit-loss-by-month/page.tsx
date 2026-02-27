@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { getProfitLossByMonth } from "@/lib/reports/profitLossByMonth";
 import { ArrowLeft, Download } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -49,7 +49,7 @@ export default async function ProfitLossByMonthPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const sp = (await searchParams) ?? {};
 
@@ -80,6 +80,7 @@ export default async function ProfitLossByMonthPage({
   const exportHref = `/api/exports/reports/profit-loss-by-month?${exportParams.toString()}`;
 
   const properties = await prisma.property.findMany({
+    where: { accountId },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,

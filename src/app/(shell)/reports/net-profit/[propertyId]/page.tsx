@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { AmountCell } from "@/components/ui/AmountCell";
 import { formatUsd } from "@/lib/money";
 import {
@@ -33,7 +33,7 @@ export default async function NetProfitDetailPage({
   params: Promise<{ propertyId: string }>;
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  await requireAccountId();
 
   const { propertyId } = await params;
   const sp = (await searchParams) ?? {};

@@ -1,10 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import TopNav from "@/components/TopNav";
 
 export default function TopNavGate({ userEmail }: { userEmail: string }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Hide TopNav on the new shell pages
   const hide =
@@ -12,15 +18,14 @@ export default function TopNavGate({ userEmail }: { userEmail: string }) {
     pathname.startsWith("/dashboard/") ||
     pathname === "/recurring" ||
     pathname.startsWith("/recurring/") ||
-	pathname === "/tenants" ||
+    pathname === "/tenants" ||
     pathname.startsWith("/tenants/") ||
-	pathname === "/ledger" ||
+    pathname === "/ledger" ||
     pathname.startsWith("/ledger/") ||
     pathname === "/properties" ||
     pathname.startsWith("/properties/");
-	
 
-  if (hide) return null;
+  if (!mounted || hide) return null;
 
   return <TopNav userEmail={userEmail} />;
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 function toStr(value: FormDataEntryValue | null) {
   const s = String(value ?? "").trim();
@@ -8,8 +8,23 @@ function toStr(value: FormDataEntryValue | null) {
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ companyId: string }> }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { companyId } = await ctx.params;
+
+  const scopedCompany = await prisma.propertyManagerCompany.findFirst({
+    where: {
+      id: companyId,
+      assignments: {
+        some: {
+          property: {
+            accountId,
+          },
+        },
+      },
+    },
+    select: { id: true },
+  });
+  if (!scopedCompany) return new Response("Not found", { status: 404 });
 
   const form = await req.formData();
   const name = String(form.get("contactName") ?? "").trim();

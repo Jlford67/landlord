@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { createPropertyManagerCompany } from "../actions";
 import PropertyManagerNewMount from "./PropertyManagerNewMount";
 
 export default async function NewPropertyManagerPage() {
-  await requireUser();
+  await requireAccountId();
 
   return (
     <div className="ll_page">

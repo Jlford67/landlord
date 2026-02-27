@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 import {
   addDaysUTC,
@@ -30,7 +30,7 @@ function formatMonthYearUTC(d: Date) {
 }
 
 export async function GET(req: Request) {
-  const user = await requireUser();
+  const accountId = await requireAccountId();
   const url = new URL(req.url);
 
   const propertyIdRaw = url.searchParams.get("propertyId");
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
   }
 
   const report = await getExpensesByProperty({
-    userId: user.id,
+    userId: accountId,
     startDate,
     endDate,
     includeTransfers,

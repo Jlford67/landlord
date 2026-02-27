@@ -54,8 +54,8 @@ export default async function PropertyAnnualPage(props: PageProps) {
 
   const year = normalizeYear(sp.year, currentYearUtc());
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
     select: {
       id: true,
       nickname: true,

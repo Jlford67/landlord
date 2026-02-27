@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 
 import fs from "node:fs/promises";
@@ -45,12 +45,13 @@ export default async function EditPropertyTaxPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await params;
 
   const [account, properties] = await Promise.all([
-    prisma.propertyTaxAccount.findUnique({ where: { id } }),
+    prisma.propertyTaxAccount.findFirst({ where: { id, property: { accountId } } }),
     prisma.property.findMany({
+      where: { accountId },
       orderBy: [{ nickname: "asc" }],
       select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
     }),
@@ -58,8 +59,8 @@ export default async function EditPropertyTaxPage({
 
   if (!account) notFound();
 
-  const selectedProperty = await prisma.property.findUnique({
-    where: { id: account.propertyId },
+  const selectedProperty = await prisma.property.findFirst({
+    where: { id: account.propertyId, accountId },
     select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
   });
 

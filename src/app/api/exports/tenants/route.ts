@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 import type { LeaseStatus } from "@prisma/client";
 
@@ -51,21 +51,32 @@ function selectCurrentLease(leases: LeaseWithProperty[]): LeaseWithProperty | nu
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
 
   const tenants = await prisma.tenant.findMany({
-    where: q
-      ? {
-          OR: [
-            { firstName: { contains: q } },
-            { lastName: { contains: q } },
-            { email: { contains: q } },
-            { phone: { contains: q } },
-          ],
-        }
-      : undefined,
+    where: {
+      leaseTenants: {
+        some: {
+          lease: {
+            property: {
+              accountId,
+            },
+          },
+        },
+      },
+      ...(q
+        ? {
+            OR: [
+              { firstName: { contains: q } },
+              { lastName: { contains: q } },
+              { email: { contains: q } },
+              { phone: { contains: q } },
+            ],
+          }
+        : {}),
+    },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     select: {
       id: true,

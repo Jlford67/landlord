@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type IncomeVsExpensesRow = {
@@ -14,13 +15,28 @@ export type IncomeVsExpensesRow = {
 export async function getIncomeVsExpensesByYear(args: {
   propertyId?: string;
 }): Promise<{ rows: IncomeVsExpensesRow[] }> {
+  const accountId = requireAccountId();
+
+  const properties = await prisma.property.findMany({
+    where: {
+      accountId,
+      id: args.propertyId || undefined,
+    },
+    select: { id: true },
+  });
+  const propertyIds = properties.map((property) => property.id);
+
+  if (propertyIds.length === 0) {
+    return { rows: [] };
+  }
+
   const [incomeCategories, expenseCategories] = await Promise.all([
     prisma.category.findMany({
-      where: { type: "income" },
+      where: { accountId, type: "income" },
       select: { id: true },
     }),
     prisma.category.findMany({
-      where: { type: "expense" },
+      where: { accountId, type: "expense" },
       select: { id: true },
     }),
   ]);
@@ -44,7 +60,7 @@ export async function getIncomeVsExpensesByYear(args: {
     const annualIncomeRows = await prisma.annualCategoryAmount.findMany({
       where: {
         categoryId: { in: incomeCategoryIds },
-        propertyId: args.propertyId || undefined,
+        propertyId: { in: propertyIds },
       },
       select: {
         year: true,
@@ -56,9 +72,7 @@ export async function getIncomeVsExpensesByYear(args: {
       addTotal(incomeTotalsByYear, row.year, Number(row.amount ?? 0));
     });
 
-    const incomePropertyFilter = args.propertyId
-      ? Prisma.sql`AND t.propertyId = ${args.propertyId}`
-      : Prisma.sql``;
+    const incomePropertyFilter = Prisma.sql`AND t.propertyId IN (${Prisma.join(propertyIds)})`;
 
     const incomeTxRows = await prisma.$queryRaw<
       { year: number; total: number | null }[]
@@ -84,7 +98,7 @@ export async function getIncomeVsExpensesByYear(args: {
     const annualExpenseRows = await prisma.annualCategoryAmount.findMany({
       where: {
         categoryId: { in: expenseCategoryIds },
-        propertyId: args.propertyId || undefined,
+        propertyId: { in: propertyIds },
       },
       select: {
         year: true,
@@ -96,9 +110,7 @@ export async function getIncomeVsExpensesByYear(args: {
       addTotal(expenseTotalsByYear, row.year, Number(row.amount ?? 0));
     });
 
-    const expensePropertyFilter = args.propertyId
-      ? Prisma.sql`AND t.propertyId = ${args.propertyId}`
-      : Prisma.sql``;
+    const expensePropertyFilter = Prisma.sql`AND t.propertyId IN (${Prisma.join(propertyIds)})`;
 
     const expenseTxRows = await prisma.$queryRaw<
       { year: number; total: number | null }[]

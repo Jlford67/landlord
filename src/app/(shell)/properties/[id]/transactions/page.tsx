@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 function money(n: number) {
@@ -21,12 +21,13 @@ export default async function PropertyTransactionsPage({
 }: {
   params: { id: string };
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
-  const property = await prisma.property.findUnique({
-    where: { id: params.id },
+  const property = await prisma.property.findFirst({
+    where: { id: params.id, accountId },
     include: {
       transactions: {
+        where: { deletedAt: null },
         orderBy: [{ date: "desc" }],
         take: 200,
         include: { category: true },

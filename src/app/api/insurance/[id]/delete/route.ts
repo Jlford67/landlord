@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await ctx.params;
 
-  await prisma.insurancePolicy.delete({ where: { id } });
+  const deleteResult = await prisma.insurancePolicy.deleteMany({ where: { id, property: { accountId } } });
+  if (deleteResult.count === 0) return NextResponse.redirect(new URL("/insurance?msg=notfound", req.url));
 
   return NextResponse.redirect(new URL("/insurance?msg=deleted", req.url));
 }

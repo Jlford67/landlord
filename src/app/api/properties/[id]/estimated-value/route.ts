@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 function parseEstimatedValue(input: unknown) {
@@ -22,12 +22,11 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireUser();
-  if (!user) return NextResponse.redirect(new URL("/login", req.url));
+  const accountId = await requireAccountId();
 
   const { id } = await ctx.params;
 
-  const property = await prisma.property.findUnique({ where: { id } });
+  const property = await prisma.property.findFirst({ where: { id, accountId } });
   if (!property) return new Response("Property not found", { status: 404 });
 
   const body = await req.json().catch(() => null);
@@ -35,8 +34,8 @@ export async function PATCH(
   if ("error" in parsed) return new Response(parsed.error, { status: 400 });
 
   if (parsed.cents === null) {
-    await prisma.property.update({
-      where: { id },
+    const cleared = await prisma.property.updateMany({
+      where: { id, accountId },
       data: {
         estimatedValueCents: null,
         estimatedValueUpdatedAt: null,
@@ -44,11 +43,12 @@ export async function PATCH(
         estimatedValueProviderRef: null,
       },
     });
+    if (cleared.count === 0) return new Response("Property not found", { status: 404 });
     return NextResponse.json({ ok: true });
   }
 
-  await prisma.property.update({
-    where: { id },
+  const updated = await prisma.property.updateMany({
+    where: { id, accountId },
     data: {
       estimatedValueCents: parsed.cents,
       estimatedValueUpdatedAt: new Date(),
@@ -56,6 +56,8 @@ export async function PATCH(
       estimatedValueProviderRef: null,
     },
   });
+
+  if (updated.count === 0) return new Response("Property not found", { status: 404 });
 
   return NextResponse.json({ ok: true });
 }

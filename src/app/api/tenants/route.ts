@@ -1,11 +1,22 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export async function GET() {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const tenants = await prisma.tenant.findMany({
+    where: {
+      leaseTenants: {
+        some: {
+          lease: {
+            property: {
+              accountId,
+            },
+          },
+        },
+      },
+    },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
 
@@ -13,7 +24,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const formData = await req.formData();
 
@@ -28,6 +39,20 @@ export async function POST(req: Request) {
 
   if (!firstName || !lastName) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const leaseId = (formData.get("leaseId")?.toString() || "").trim();
+  if (leaseId) {
+    const scopedLease = await prisma.lease.findFirst({
+      where: {
+        id: leaseId,
+        property: { accountId },
+      },
+      select: { id: true },
+    });
+    if (!scopedLease) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
   }
 
   await prisma.tenant.create({

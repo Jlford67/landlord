@@ -1,6 +1,7 @@
 import { CategoryType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
+import { requireAccountId } from "@/lib/auth";
 
 export type ProfitLossFilters = {
   propertyId?: string | null;
@@ -62,6 +63,7 @@ export async function getProfitLossByProperty(
   filters: ProfitLossFilters
 ): Promise<ProfitLossByPropertyResult> {
   const includeTransfers = Boolean(filters.includeTransfers);
+  const accountId = requireAccountId();
   const includeAnnualTotals = filters.includeAnnualTotals ?? true;
   const startDate = filters.startDate;
   const endDate = filters.endDate;
@@ -70,6 +72,7 @@ export async function getProfitLossByProperty(
 
   const [categories, properties] = await Promise.all([
     prisma.category.findMany({
+      where: { accountId },
       select: {
         id: true,
         name: true,
@@ -79,6 +82,10 @@ export async function getProfitLossByProperty(
       },
     }),
     prisma.property.findMany({
+      where: {
+        accountId,
+        id: filters.propertyId || undefined,
+      },
       select: {
         id: true,
         nickname: true,
@@ -101,7 +108,9 @@ export async function getProfitLossByProperty(
     .filter((c) => includeTransfers || c.type !== "transfer")
     .map((c) => c.id);
 
-  if (allowedCategoryIds.length === 0) {
+  const propertyIds = properties.map((p) => p.id);
+
+  if (allowedCategoryIds.length === 0 || propertyIds.length === 0) {
     return {
       rows: [],
       subtotalsByProperty: {},
@@ -112,7 +121,7 @@ export async function getProfitLossByProperty(
   const grouped = await prisma.transaction.groupBy({
     by: ["propertyId", "categoryId"],
     where: {
-      propertyId: filters.propertyId || undefined,
+      propertyId: { in: propertyIds },
       categoryId: { in: allowedCategoryIds },
       deletedAt: null,
       date: {
@@ -184,7 +193,7 @@ export async function getProfitLossByProperty(
     if (years.length > 0) {
       const annualRows = await prisma.annualCategoryAmount.findMany({
         where: {
-          propertyId: filters.propertyId || undefined,
+          propertyId: { in: propertyIds },
           categoryId: { in: allowedCategoryIds },
           year: { in: years },
         },

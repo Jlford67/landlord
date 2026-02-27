@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import RowActions from "@/components/ui/RowActions";
@@ -53,7 +53,7 @@ export default async function PropertyManagersPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const sp = searchParams ? await searchParams : {};
   const q = getStr(sp, "q").trim();
   const propertyId = getStr(sp, "propertyId").trim();
@@ -122,12 +122,13 @@ export default async function PropertyManagersPage({
       take: 500,
     }),
     prisma.property.findMany({
+      where: { accountId },
       orderBy: [{ nickname: "asc" }],
       select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
     }),
     propertyId
-      ? prisma.property.findUnique({
-          where: { id: propertyId },
+      ? prisma.property.findFirst({
+          where: { id: propertyId, accountId },
           select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
         })
       : Promise.resolve(null),

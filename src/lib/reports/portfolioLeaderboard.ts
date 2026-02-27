@@ -1,6 +1,7 @@
 import { CategoryType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
+import { requireAccountId } from "@/lib/auth";
 
 export type Metric =
   | "netCashFlow"
@@ -194,6 +195,7 @@ export async function getPortfolioLeaderboardReport(
   input: ReportInput
 ): Promise<Report> {
   const metric = input.metric ?? "netCashFlow";
+  const accountId = requireAccountId();
   const status: StatusFilter = input.status ?? "active";
   const includeTransfers = Boolean(input.includeTransfers);
   const valuation = input.valuation ?? "auto";
@@ -213,13 +215,17 @@ export async function getPortfolioLeaderboardReport(
 
   const [categories, properties] = await Promise.all([
     prisma.category.findMany({
+      where: { accountId },
       select: {
         id: true,
         type: true,
       },
     }),
     prisma.property.findMany({
-      where: status === "all" ? undefined : { status },
+      where: {
+        accountId,
+        ...(status === "all" ? {} : { status }),
+      },
       select: {
         id: true,
         nickname: true,

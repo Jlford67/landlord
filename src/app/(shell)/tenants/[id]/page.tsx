@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 function fmtDate(d?: Date | null) {
@@ -26,7 +26,7 @@ export default async function TenantDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  await requireAccountId();
   const { id } = await params;
 
   const tenant = await prisma.tenant.findUnique({ where: { id } });

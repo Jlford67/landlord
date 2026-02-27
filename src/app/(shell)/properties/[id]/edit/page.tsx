@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PropertyThumb from "@/components/properties/PropertyThumb";
 import PropertyManagerAssignmentFields from "@/components/properties/PropertyManagerAssignmentFields";
 import { ArrowLeft, Save } from "lucide-react";
@@ -32,18 +32,18 @@ export default async function EditPropertyPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await params;
 
   const [property, companies, contacts, assignment] = await Promise.all([
-    prisma.property.findUnique({ where: { id } }),
+    prisma.property.findFirst({ where: { id, accountId } }),
     prisma.propertyManagerCompany.findMany({ orderBy: [{ name: "asc" }], select: { id: true, name: true } }),
     prisma.propertyManagerContact.findMany({
       orderBy: [{ name: "asc" }],
       select: { id: true, companyId: true, name: true, email: true, phone: true },
     }),
-    prisma.propertyManagerAssignment.findUnique({
-      where: { propertyId: id },
+    prisma.propertyManagerAssignment.findFirst({
+      where: { propertyId: id, property: { accountId } },
       select: { companyId: true, contactId: true },
     }),
   ]);

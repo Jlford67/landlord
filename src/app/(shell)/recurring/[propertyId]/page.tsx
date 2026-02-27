@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import RowActions from "@/components/ui/RowActions";
 import LinkButton from "@/components/ui/LinkButton";
@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 export default async function PropertyRecurringPage({ params, searchParams }: PageProps) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const propertyId =
     params.propertyId ??
@@ -20,8 +20,8 @@ export default async function PropertyRecurringPage({ params, searchParams }: Pa
 
   if (!propertyId) notFound();
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
     include: {
       recurringItems: {
         where: { deletedAt: null },

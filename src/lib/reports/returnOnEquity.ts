@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { propertyLabel } from "@/lib/format";
+import { requireAccountId } from "@/lib/auth";
 import { getProfitLossByProperty, type ProfitLossRow } from "@/lib/reports/profitLossByProperty";
 
 export type ValuationSource = "zillow" | "redfin";
@@ -43,10 +44,14 @@ function resolveValuation(
 export async function getReturnOnEquityReport(
   input: ReturnOnEquityInput
 ): Promise<ReturnOnEquityReport> {
+  const accountId = requireAccountId();
   const { startDate, endDate } = rangeFromYear(input.year);
 
   const properties = await prisma.property.findMany({
-    where: input.propertyId ? { id: input.propertyId } : undefined,
+    where: {
+      accountId,
+      id: input.propertyId || undefined,
+    },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
@@ -74,7 +79,7 @@ export async function getReturnOnEquityReport(
 
   if (propertyIds.length > 0) {
     const loans = await prisma.loan.findMany({
-      where: { propertyId: { in: propertyIds } },
+      where: { propertyId: { in: propertyIds }, property: { accountId } },
       select: {
         propertyId: true,
         snapshots: {

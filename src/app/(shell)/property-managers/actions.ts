@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 
@@ -57,7 +57,7 @@ export async function createPropertyManagerCompany(formData: FormData) {
 
 
 export async function updatePropertyManagerCompany(id: string, formData: FormData) {
-  await requireUser();
+  await requireAccountId();
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) throw new Error("Company name is required.");
@@ -81,7 +81,7 @@ export async function updatePropertyManagerCompany(id: string, formData: FormDat
 }
 
 export async function createPropertyManagerContact(companyId: string, formData: FormData) {
-  await requireUser();
+  await requireAccountId();
 
   const name = String(formData.get("contactName") ?? "").trim();
   if (!name) throw new Error("Contact name is required.");
@@ -100,7 +100,7 @@ export async function createPropertyManagerContact(companyId: string, formData: 
 }
 
 export async function updatePropertyManagerContact(contactId: string, companyId: string, formData: FormData) {
-  await requireUser();
+  await requireAccountId();
 
   const name = String(formData.get("contactName") ?? "").trim();
   if (!name) throw new Error("Contact name is required.");
@@ -119,7 +119,7 @@ export async function updatePropertyManagerContact(contactId: string, companyId:
 }
 
 export async function deletePropertyManagerContact(contactId: string, companyId: string) {
-  await requireUser();
+  await requireAccountId();
 
   await prisma.propertyManagerContact.delete({
     where: { id: contactId },
@@ -129,7 +129,7 @@ export async function deletePropertyManagerContact(contactId: string, companyId:
 }
 
 export async function deletePropertyManagerCompany(companyId: string) {
-  await requireUser();
+  await requireAccountId();
 
   await prisma.$transaction([
     prisma.propertyManagerAssignment.deleteMany({ where: { companyId } }),

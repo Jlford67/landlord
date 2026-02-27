@@ -2,12 +2,11 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
-    const user = await requireUser();
-    if (!user) return NextResponse.redirect(new URL("/login", req.url));
+    const accountId = await requireAccountId();
 
     const form = await req.formData();
 
@@ -19,6 +18,7 @@ export async function POST(req: Request) {
 
     await prisma.property.create({
       data: {
+        accountId,
         nickname: nickname || null,
         street,
         city,

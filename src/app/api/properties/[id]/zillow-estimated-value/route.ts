@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 function parseWholeDollars(input: unknown): number | null {
@@ -27,7 +27,7 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const { id } = await ctx.params;
 
@@ -52,13 +52,17 @@ export async function PATCH(
 
   const now = new Date();
 
-  await prisma.property.update({
-    where: { id },
+  const updateResult = await prisma.property.updateMany({
+    where: { id, accountId },
     data:
       dollars === null
         ? { zillowEstimatedValue: null, zillowEstimatedValueUpdatedAt: null }
         : { zillowEstimatedValue: dollars, zillowEstimatedValueUpdatedAt: now },
   });
+
+  if (updateResult.count === 0) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   return NextResponse.json({ ok: true });
 }

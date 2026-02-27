@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 function normalizeType(v: FormDataEntryValue | null) {
   const s = String(v ?? "").trim().toLowerCase();
@@ -32,7 +32,7 @@ function buildDescendants(rows: { id: string; parentId: string | null }[], rootI
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  await requireAccountId();
   const { id } = await ctx.params;
 
   const formData = await req.formData();

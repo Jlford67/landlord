@@ -4,7 +4,7 @@
  * Safe to run. Read-only. Intended for schema/migration debugging.
  */
 
-import { prisma } from "../src/lib/db";
+import { prisma } from "../../src/lib/db";
 
 async function main() {
   const cols = await prisma.$queryRawUnsafe<any[]>(

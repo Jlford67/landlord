@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PageTitleIcon from "@/components/ui/PageTitleIcon";
 import { BarChart3 } from "lucide-react";
 
@@ -175,7 +175,7 @@ function ReportRow({ item, hasDivider }: { item: ReportItem; hasDivider: boolean
 }
 
 export default async function ReportsIndexPage() {
-  await requireUser();
+  await requireAccountId();
 
   return (
     <div className="ll_page">

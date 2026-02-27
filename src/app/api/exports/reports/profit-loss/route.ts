@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { buildWorkbookBuffer, safeFilenameDateUTC, type ExcelSheet } from "@/lib/export/excel";
 import { getProfitLossByProperty } from "@/lib/reports/profitLossByProperty";
 
@@ -12,7 +12,7 @@ function parseDateUTC(value?: string | null): Date | null {
 }
 
 export async function GET(req: Request) {
-  await requireUser();
+  await requireAccountId();
   const url = new URL(req.url);
 
   const propertyId = url.searchParams.get("propertyId") || null;

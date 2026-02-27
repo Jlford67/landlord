@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 function toStr(value: FormDataEntryValue | null) {
@@ -54,12 +54,15 @@ function toDate(value: FormDataEntryValue | null) {
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  const accountId = await requireAccountId();
   const { id } = await ctx.params;
 
   try {
-    const existing = await prisma.property.findUnique({ select: { id: true }, where: { id } });
-    if (!existing) return NextResponse.redirect(new URL("/properties?msg=notfound", req.url));
+    const existing = await prisma.property.findFirst({
+      select: { id: true },
+      where: { id, accountId },
+    });
+    if (!existing) return NextResponse.redirect(new URL(`/properties?msg=notfound`, req.url));
 
     const form = await req.formData();
 
@@ -99,6 +102,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
     let resolvedContactId: string | null = propertyManagerContactId || null;
     if (propertyManagerCompanyId && resolvedContactId) {
+      // Tenant isolation relies on the property ownership check above.
       const contact = await prisma.propertyManagerContact.findUnique({
         where: { id: resolvedContactId },
         select: { companyId: true },
@@ -108,8 +112,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       }
     }
 
-    await prisma.property.update({
-      where: { id },
+    const updateResult = await prisma.property.updateMany({
+      where: { id, accountId },
       data: {
         nickname: toStr(form.get("nickname")),
         street,
@@ -134,12 +138,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         redfinUrl,
       },
     });
+    if (updateResult.count === 0) return NextResponse.redirect(new URL(`/properties?msg=notfound`, req.url));
 
     if (propertyManagerCompanyId) {
       await prisma.propertyManagerAssignment.upsert({
-        where: { propertyId: id },
+        where: { propertyId: existing.id },
         create: {
-          propertyId: id,
+          propertyId: existing.id,
           companyId: propertyManagerCompanyId,
           contactId: resolvedContactId,
         },
@@ -149,7 +154,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         },
       });
     } else {
-      await prisma.propertyManagerAssignment.deleteMany({ where: { propertyId: id } });
+      await prisma.propertyManagerAssignment.deleteMany({ where: { propertyId: existing.id } });
     }
 
     return NextResponse.redirect(new URL(`/properties/${id}`, req.url));

@@ -1,5 +1,6 @@
 import { CategoryType } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { requireAccountId } from "@/lib/auth";
 
 type ProfitLossByMonthFilters = {
   propertyId?: string | null;
@@ -52,6 +53,7 @@ export async function getProfitLossByMonth(
   filters: ProfitLossByMonthFilters
 ): Promise<ProfitLossByMonthResult> {
   const includeTransfers = Boolean(filters.includeTransfers);
+  const accountId = requireAccountId();
   const includeAnnualTotals = filters.includeAnnualTotals ?? true;
 
   let startDate = parseDateUTC(filters.startDate);
@@ -65,6 +67,7 @@ export async function getProfitLossByMonth(
   const normalizedEnd = startOfMonthUTC(endDate);
 
   const allowedCategories = await prisma.category.findMany({
+    where: { accountId },
     select: { id: true, type: true },
   });
 
@@ -101,6 +104,7 @@ export async function getProfitLossByMonth(
   const transactions = await prisma.transaction.findMany({
     where: {
       propertyId: filters.propertyId || undefined,
+      property: { accountId },
       categoryId: { in: allowedCategoryIds },
       deletedAt: null,
       date: {
@@ -140,6 +144,7 @@ export async function getProfitLossByMonth(
       const annualRows = await prisma.annualCategoryAmount.findMany({
         where: {
           propertyId: filters.propertyId || undefined,
+          property: { accountId },
           categoryId: { in: allowedCategoryIds },
           year: { in: years },
         },

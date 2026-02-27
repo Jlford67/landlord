@@ -54,4 +54,3 @@ export async function requireAccountId(): Promise<string> {
   return membership.accountId;
 }
 
-

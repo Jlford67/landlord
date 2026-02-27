@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 
 type DateParseResult = { value: Date | null } | { error: string };
 
@@ -54,12 +54,18 @@ function toStr(value: FormDataEntryValue | null) {
 }
 
 export async function POST(req: Request) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const form = await req.formData();
 
   const propertyId = String(form.get("propertyId") ?? "").trim();
   if (!propertyId) return new Response("propertyId required", { status: 400 });
+
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
+    select: { id: true },
+  });
+  if (!property) return NextResponse.redirect(new URL("/property-tax?msg=notfound", req.url));
 
   const dueDate = toDate(form.get("dueDate"), "dueDate");
   if ("error" in dueDate) return new Response(dueDate.error, { status: 400 });

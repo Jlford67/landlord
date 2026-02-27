@@ -1,11 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export async function deleteTenant(tenantId: string) {
-  await requireUser();
+  await requireAccountId();
 
   const leaseCount = await prisma.leaseTenant.count({ where: { tenantId } });
   if (leaseCount > 0) {

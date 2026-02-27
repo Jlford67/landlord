@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import PropertyHeader from "@/components/properties/PropertyHeader";
 import RecurringPanel from "@/components/ledger/RecurringPanel";
 
@@ -37,15 +37,15 @@ export default async function PropertyRecurringPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ month?: string }>;
 }) {
-  await requireUser();
+  const accountId = await requireAccountId();
 
   const { id: propertyId } = await params;
   const sp = await searchParams;
 
   const month = sp.month ?? ym(new Date());
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, accountId },
     select: { id: true, nickname: true, street: true, city: true, state: true, zip: true },
   });
 
@@ -67,7 +67,7 @@ export default async function PropertyRecurringPage({
 
   // Recurring data (copy/pasted from Ledger logic)
   const categories = await prisma.category.findMany({
-    where: { active: true },
+    where: { accountId, active: true },
     orderBy: [{ type: "asc" }, { name: "asc" }],
   });
 

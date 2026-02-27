@@ -1,4 +1,5 @@
 import { CategoryType } from "@prisma/client";
+import { requireAccountId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type CashVsAccrualPLInput = {
@@ -159,6 +160,7 @@ function listMonthsInclusive(start: Date, end: Date): string[] {
 export async function getCashVsAccrualPLReport(
   input: CashVsAccrualPLInput
 ): Promise<CashVsAccrualPLReport> {
+  const accountId = requireAccountId();
   const now = new Date();
   const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
   const defaultEnd = new Date(
@@ -180,6 +182,7 @@ export async function getCashVsAccrualPLReport(
   const monthsInRange = listMonthsInclusive(startDate, endDate);
 
   const categories = await prisma.category.findMany({
+    where: { accountId },
     select: { id: true, name: true, type: true },
   });
 
@@ -227,10 +230,54 @@ export async function getCashVsAccrualPLReport(
   );
   const allowedCategoryIds = allowedCategories.map((c) => c.id);
 
+  const scopedProperties = await prisma.property.findMany({
+    where: {
+      accountId,
+      id: input.propertyId || undefined,
+    },
+    select: { id: true },
+  });
+  const scopedPropertyIds = scopedProperties.map((property) => property.id);
+
+  if (scopedPropertyIds.length === 0) {
+    const emptyTotals: Totals = { incomeCents: 0, expenseCents: 0, netCents: 0 };
+    return {
+      input: {
+        start: formatYmd(startDate),
+        end: formatYmd(endDate),
+        propertyId: input.propertyId ?? null,
+        includeTransfers,
+        view: input.view === "byCategory" ? "byCategory" : "summary",
+        accrualMode: "fallback",
+      },
+      cash: {
+        totals: emptyTotals,
+        byCategory: input.view === "byCategory" ? [] : undefined,
+        breakdown: {
+          transactionalIncomeCents: 0,
+          transactionalExpenseCents: 0,
+          annualIncomeCents: 0,
+          annualExpenseCents: 0,
+        },
+      },
+      accrual: {
+        totals: emptyTotals,
+        byCategory: input.view === "byCategory" ? [] : undefined,
+        breakdown: {
+          transactionalIncomeCents: 0,
+          transactionalExpenseCents: 0,
+          annualIncomeCents: 0,
+          annualExpenseCents: 0,
+        },
+      },
+      delta: emptyTotals,
+    };
+  }
+
   const [cashTransactions, accrualTransactions, annualRows] = await Promise.all([
     prisma.transaction.findMany({
       where: {
-        propertyId: input.propertyId || undefined,
+        propertyId: { in: scopedPropertyIds },
         categoryId: { in: allowedCategoryIds },
         deletedAt: null,
         date: { gte: startDate, lt: endDateExclusive },
@@ -243,7 +290,7 @@ export async function getCashVsAccrualPLReport(
     }),
     prisma.transaction.findMany({
       where: {
-        propertyId: input.propertyId || undefined,
+        propertyId: { in: scopedPropertyIds },
         categoryId: { in: allowedCategoryIds },
         deletedAt: null,
         OR: [
@@ -259,7 +306,7 @@ export async function getCashVsAccrualPLReport(
     }),
     prisma.annualCategoryAmount.findMany({
       where: {
-        propertyId: input.propertyId || undefined,
+        propertyId: { in: scopedPropertyIds },
         categoryId: { in: allowedCategoryIds },
         year: { in: (() => {
           const years: number[] = [];

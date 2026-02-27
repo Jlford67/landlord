@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireAccountId } from "@/lib/auth";
 import { postRecurringUpToMonth } from "@/lib/recurring";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  await requireAccountId();
   const { id } = await ctx.params;
 
   let body: any = null;
